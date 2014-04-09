@@ -1,37 +1,75 @@
 var ADL = ADL || {};
-ADL.xAPIDashboard = new (function(){
+ADL.XAPIDashboard = new (function(){
 	
 	var self = this;
 	
 	self.context;
-	self.rawStatements;
+	self.rawStatements = [];
 	self.chart;
 	
-	self.init = function(conf, context, cb){
-		ADL.XAPIWrapper.changeConfig(conf);
-		ADL.XAPIWrapper.getStatements(null, null, function(data){
-			
+	self.init = function(context){		
+		self.context = context;
+		self.chart = new Chart(self.context);
+	};
+	
+	self.clearSavedStatements = function(){
+		self.rawStatements = [];
+	};
+	
+	self.addStatements = function(statementsArr){
+		if(statementsArr.response){
 			try{
-				data = JSON.parse(data.response);
+				statementsArr = JSON.parse(statementsArr.response).statements;
 			}
 			catch(e){
 				console.error("Error parsing JSON data", data.response);
 				return;
 			}
-			
-			self.rawStatements = data.statements;
-			console.log(self.rawStatements);
-			
-			self.context = context;
-			self.chart = new Chart(self.context);
-			
-			if(cb){
-				cb();
-			}
-		});
+		}
+		
+		self.rawStatements.push.apply(self.rawStatements, statementsArr);
 	};
 	
-	self.aggregate = function(xAPIField){
+	self.distinct = function(xAPIFieldA, xAPIFieldB, limit){
+		var	keyA, keyB;
+		var tempRelations = {};
+		
+		var obj = {
+			originalKey: xAPIFieldA + ', ' + xAPIFieldB, 
+			labels: [],
+			datasets: [
+				{
+					fillColor : "rgba(151,187,205,0.5)",
+					strokeColor : "rgba(151,187,205,1)",
+					data: [] 
+				}
+			]
+		};		
+		
+		for(var i = 0; i < self.rawStatements.length; i++){
+			
+			keyA = getProperty(self.rawStatements[i], xAPIFieldA);
+			keyB = getProperty(self.rawStatements[i], xAPIFieldB);
+			
+			if(obj.labels.indexOf(keyA) >= 0){
+				if(tempRelations[keyA].indexOf(keyB) < 0){
+					tempRelations[keyA].push(keyB);
+					obj.datasets[0].data[obj.labels.indexOf(keyA)]++;
+				}
+			}
+			
+			else{
+				tempRelations[keyA] = [keyB];
+				
+				obj.labels.push(keyA);
+				obj.datasets[0].data.push(1);
+			}
+		}
+
+		return obj;
+	};
+	
+	self.count = function(xAPIField, limit){
 		
 		var	statementKey;
 		var obj = {
@@ -43,7 +81,8 @@ ADL.xAPIDashboard = new (function(){
 					strokeColor : "rgba(151,187,205,1)",
 					data: [] 
 				}
-			]};
+			]
+		};
 
 		for(var i = 0; i < self.rawStatements.length; i++){
 			

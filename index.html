@@ -5,20 +5,41 @@
 	<script type="text/javascript" src="dashboard.js"></script>
 	<script type="text/javascript">
 		window.onload = function(){
-			var xAPIConf = {
+			var wrapper = ADL.XAPIWrapper;
+			var dashboard = ADL.XAPIDashboard;
+			/*var xAPIConf = {
 				"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 				"user": 'xAPIDashboard',
 				"password": 'abc123'
+			};*/
+			var xAPIConf = {
+				"endpoint" : 'http://12.109.40.37/xAPI/',
+				"user": 'lrsuser',
+				"password": 'The only thing we have to fear'
 			};
 			
-			ADL.xAPIDashboard.init(xAPIConf, document.getElementById("myChart").getContext("2d"));
+			wrapper.changeConfig(xAPIConf);
+			dashboard.init(document.getElementById("myChart").getContext("2d"));
+			
+			wrapper.getStatements(null, null, function getMore(r){
+				var response = JSON.parse(r.response);
+				
+				dashboard.addStatements(response.statements);
+				
+				var data = dashboard.distinct("object.id", "actor.name");
+				dashboard.chart.Bar(data);
+				
+				if(response.more){
+					wrapper.getStatements(null, response.more, getMore);
+				}
+			});
 		}
 	</script>
 </head>
 
 
 <body>
-	<canvas id="myChart" width="1500" height="600"></canvas>
+	<canvas id="myChart" width="2100" height="800"></canvas>
 </body>
 
 </html>
