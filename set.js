@@ -1,18 +1,27 @@
+"use strict";
 /*
  * The Set class exposes various set operations in a friendly syntax
  */
 
 function Set(arr)
 {
-	this.contents = arr;
-
-	
+	this._contents = [];
+	for(var i in arr)
+		this._contents.push(arr[i]);
 }
 
-// simple reduce
+// simple filter
 Set.prototype.select = function(filter)
 {
-	
+	return new Set(
+		this._contents.reduce(
+			function(sum,val){
+				if( filter(val) )
+					sum.push(val);
+				return sum;
+			}
+		, [])
+	);
 };
 
 // returns intersection of this and argument
@@ -41,11 +50,11 @@ Set.prototype.not = function(set)
 Set.distinct = function(xpath)
 {
 	var seen = [];
-	var parts = xpath.split('.');
+	var parts = xpath ? xpath.split('.') : [];
 
 	return function(elem)
 	{
-		curElem = elem;
+		var curElem = elem;
 		for(var i=0; i<parts.length; i++){
 			if( curElem[parts[i]] )
 				curElem = curElem[parts[i]];
@@ -66,5 +75,15 @@ Set.distinct = function(xpath)
 // filters by elem[xpath] == value
 Set.equals = function(xpath, value)
 {
-	
+	var parts = xpath ? xpath.split('.') : [];
+	return function(elem){
+		var curElem = elem;
+		for(var i=0; i<parts.length; i++){
+			if(curElem[parts[i]])
+				curElem = curElem[parts[i]];
+			else
+				return false;
+		}
+		return curElem === value;
+	}
 };
