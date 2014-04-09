@@ -1,3 +1,5 @@
+"use strict";
+
 var ADL = ADL || {};
 ADL.XAPIDashboard = new (function(){
 	
