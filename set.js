@@ -60,11 +60,19 @@ Set.prototype.not = function(set)
 Set.prototype.orderBy = function(xpath, comparator)
 {
 	var parts = xpath ? xpath.split('.') : [];
-	if( !comparator ){
-		comparator = function(a,b){
-			if(a<b) return -1;
-			else if(a>b) return 1;
-			else return 0;
+	var sortFn = comparator;
+	if( /^(?:ascending|descending)$/i.test(comparator) ){
+		sortFn = function(a,b){
+			if(comparator === 'descending'){
+				if(a<b) return 1;
+				else if(a>b) return -1;
+				else return 0;
+			}
+			else {
+				if(a<b) return -1;
+				else if(a>b) return 1;
+				else return 0;
+			}
 		};
 	}
 
