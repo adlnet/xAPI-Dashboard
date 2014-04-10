@@ -23,7 +23,7 @@ Set.prototype.select = function(filter)
 };
 
 // returns intersection of this and argument
-Set.prototype.and = function(set)
+Set.prototype.intersect = function(set)
 {
 	var ret = new Set();
 	for(var i in this._contents){
@@ -36,15 +36,15 @@ Set.prototype.and = function(set)
 };
 
 // returns union of this and argument
-Set.prototype.or = function(set)
+Set.prototype.union = function(set)
 {
 	var ret = new Set(this._contents);
 	ret._contents.push.apply(ret._contents, set._contents);
-	return ret.select(Set.distinct());
+	return ret.selectDistinct();
 };
 
 // returns subtraction of this and argument
-Set.prototype.not = function(set)
+Set.prototype.without = function(set)
 {
 	var ret = new Set();
 	for(var i in this._contents){
@@ -108,6 +108,24 @@ Set.prototype.count = function(){
 Set.prototype.contains = function(item){
 	return this._contents.indexOf(item) !== -1;
 }
+
+// returns a new set with xfrm applied to each element
+// xfrm takes (element, index, origArray)
+Set.prototype.transform = function(xfrm){
+	return new Set( this._contents.map(xfrm) );
+};
+
+Set.prototype.distinctCount = function(xpath){
+	return this.select(Set.distinct(xpath)).count();
+};
+
+Set.prototype.selectDistinct = function(xpath){
+	return this.select(Set.distinct(xpath));
+};
+
+Set.prototype.selectEqual = function(xpath, value){
+	return this.select(Set.equals(xpath,value));
+};
 
 
 
