@@ -1,3 +1,6 @@
 [submodule "xAPIWrapper"]
 	path = xAPIWrapper
 	url = https://github.com/adlnet/xAPIWrapper.git
+[submodule "g.raphael"]
+	path = g.raphael
+	url = https://github.com/DmitryBaranovskiy/g.raphael.git

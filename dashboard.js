@@ -48,25 +48,6 @@ ADL.XAPIDashboard = new (function(){
 			]
 		};		
 		
-		for(var i = 0; i < self.rawStatements.length; i++){
-			
-			keyA = getProperty(self.rawStatements[i], xAPIFieldA);
-			keyB = getProperty(self.rawStatements[i], xAPIFieldB);
-			
-			if(obj.labels.indexOf(keyA) >= 0){
-				if(tempRelations[keyA].indexOf(keyB) < 0){
-					tempRelations[keyA].push(keyB);
-					obj.datasets[0].data[obj.labels.indexOf(keyA)]++;
-				}
-			}
-			
-			else{
-				tempRelations[keyA] = [keyB];
-				
-				obj.labels.push(keyA);
-				obj.datasets[0].data.push(1);
-			}
-		}
 
 		return obj;
 	};
@@ -85,19 +66,6 @@ ADL.XAPIDashboard = new (function(){
 				}
 			]
 		};
-
-		for(var i = 0; i < self.rawStatements.length; i++){
-			
-			statementKey = getProperty(self.rawStatements[i], xAPIField);
-			if(obj.labels.indexOf(statementKey) >= 0){
-				obj.datasets[0].data[obj.labels.indexOf(statementKey)]++;
-			}
-			
-			else{
-				obj.labels.push(statementKey);
-				obj.datasets[0].data.push(1);
-			}
-		}
 
 		return obj;
 	}
