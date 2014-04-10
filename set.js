@@ -5,9 +5,7 @@
 
 function Set(arr)
 {
-	this._contents = [];
-	for(var i in arr)
-		this._contents.push(arr[i]);
+	this._contents = arr ? arr.slice() : [];
 }
 
 // simple filter
@@ -27,20 +25,83 @@ Set.prototype.select = function(filter)
 // returns intersection of this and argument
 Set.prototype.and = function(set)
 {
-	
+	var ret = new Set();
+	for(var i in this._contents){
+		var obj = this._contents[i];
+		if( set.contains(obj) )
+			ret._contents.push(obj);
+	}
+
+	return ret;
 };
 
 // returns union of this and argument
 Set.prototype.or = function(set)
 {
-	
+	var ret = new Set(this._contents);
+	ret._contents.push.apply(ret._contents, set._contents);
+	return ret.select(Set.distinct());
 };
 
 // returns subtraction of this and argument
 Set.prototype.not = function(set)
 {
-	
+	var ret = new Set();
+	for(var i in this._contents){
+		var obj = this._contents[i];
+		if( !set.contains(obj) )
+			ret._contents.push(obj);
+	}
+
+	return ret;
 }
+
+// order the contents of the set by path
+Set.prototype.orderBy = function(xpath, comparator)
+{
+	var parts = xpath ? xpath.split('.') : [];
+	if( !comparator ){
+		comparator = function(a,b){
+			if(a<b) return -1;
+			else if(a>b) return 1;
+			else return 0;
+		};
+	}
+
+	this._contents.sort(function(a,b)
+	{
+		var curA=a, curB=b;
+		for(var i in parts){
+			if( curA[parts[i]] && curB[parts[i]] ){
+				curA = curA[parts[i]];
+				curB = curB[parts[i]];
+			}
+			else if(curA[parts[i]]){
+				return -1;
+			}
+			else if(curB[parts[i]]){
+				return 1;
+			}
+			else {
+				return 0;
+			}
+		}
+		return comparator(curA,curB);
+	});
+	return this;
+};
+
+// the number of elements in the set
+Set.prototype.count = function(){
+	return this._contents.length;
+}
+
+// whether or not a particular item is in the set
+Set.prototype.contains = function(item){
+	return this._contents.indexOf(item) !== -1;
+}
+
+
 
 /*
  * Class methods to generate filters
