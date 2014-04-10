@@ -1,6 +1,3 @@
-[submodule "Chart.js"]
-	path = Chart.js
-	url = https://github.com/nnnick/Chart.js.git
 [submodule "xAPIWrapper"]
 	path = xAPIWrapper
 	url = https://github.com/adlnet/xAPIWrapper.git
