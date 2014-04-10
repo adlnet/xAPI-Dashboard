@@ -3,41 +3,28 @@
 	<script type="text/javascript" src="xAPIWrapper/xapiwrapper.min.js"></script>
 	<script type="text/javascript" src="g.raphael/raphael-min.js"></script>
 	<script type="text/javascript" src="g.raphael/min/g.raphael-min.js"></script>
-	<script type="text/javascript" src="dashboard.js"></script>
+	<script type="text/javascript" src="g.raphael/min/g.bar-min.js"></script>
 	<script type="text/javascript" src="set.js"></script>
+	<script type="text/javascript" src="dashboard.js"></script>
 	<script type="text/javascript">
 		var wrapper = ADL.XAPIWrapper,
 			dashboard = ADL.XAPIDashboard;
 			
 		var xAPIConf = {
-			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
-			"user": 'xAPIDashboard',
-			"password": 'abc123'
+			"endpoint" : 'http://12.109.40.37/xAPI/',
+			"user": 'lrsuser',
+			"password": 'The only thing we have to fear'
 		};
+				
+		wrapper.changeConfig(xAPIConf);
+		window.onload = function(){
+			dashboard.init("bargraph", 0, 0, 1024, 600);
 			
-		window.onload = function(){			
-			wrapper.changeConfig(xAPIConf);
-			//dashboard.init(document.getElementById("myChart").getContext("2d"));
-			
-			wrapper.getStatements(null, null, function getMore(r){
-				var response = JSON.parse(r.response);
-				
-				//dashboard.addStatements(response.statements);
-				
-				var data = dashboard.count("object.id");
-				//dashboard.chart.Bar(data);
-				
-				if(response.more){
-					wrapper.getStatements(null, response.more, getMore);
-				}
+			dashboard.getAllStatements(null, function(){
+				dashboard.count("object.id");
 			});
-		}
+		};
 	</script>
 </head>
-
-
-<body>
-	<canvas id="myChart" width="2100" height="1000"></canvas>
-</body>
-
+<body></body>
 </html>

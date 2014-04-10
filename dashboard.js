@@ -5,18 +5,46 @@ ADL.XAPIDashboard = new (function(){
 	
 	var self = this;
 	
-	self.context;
-	self.rawStatements = [];
-	self.chart;
+	self.chartType;
+	self.raphael;
+	self.set;
 	
-	self.init = function(context){		
-		self.context = context;
-		self.chart = new Chart(self.context);
+	self.x;
+	self.y;	
+	self.width;
+	self.height;
+
+	self.init = function(type, x, y, width, height){		
+		
+		self.x = x ? x : 0;
+		self.y = y ? y : 0;
+		self.height = height ? height : 0;
+		self.width = width ? width : 0;
+		
+		// Creates canvas 640 × 480 at 10, 50
+		self.raphael = Raphael(self.x, self.y, self.width, self.height);
+		self.chartType = /^(piechart|dotchart|linechart|barchart)$/.test(type) ? type : 'barchart';
+		self.set = new Set();
 	};
 	
-	self.clearSavedStatements = function(){
-		self.rawStatements = [];
+	self.getAllStatements = function(query, cb){
+	
+		ADL.XAPIWrapper.getStatements(null, null, function getMore(r){
+			var response = JSON.parse(r.response);
+			self.addStatements(response.statements);
+			
+			if(response.more){
+				wrapper.getStatements(null, response.more, getMore);
+			}
+			
+			else if(cb){
+				cb();
+			}
+		});
 	};
+	
+	//To-do
+	self.clearSavedStatements = function(){};
 	
 	self.addStatements = function(statementsArr){
 		if(statementsArr.response){
@@ -24,61 +52,26 @@ ADL.XAPIDashboard = new (function(){
 				statementsArr = JSON.parse(statementsArr.response).statements;
 			}
 			catch(e){
-				console.error("Error parsing JSON data", data.response);
+				console.error("Error parsing JSON data", statementsArr.response);
 				return;
 			}
 		}
-		
-		self.rawStatements.push.apply(self.rawStatements, statementsArr);
+
+		self.set = self.set.union(new Set(statementsArr));
 	};
 	
-	self.distinct = function(xAPIFieldA, xAPIFieldB, limit){
-		var	keyA, keyB;
-		var tempRelations = {};
-		
-		var obj = {
-			originalKey: xAPIFieldA + ', ' + xAPIFieldB, 
-			labels: [],
-			datasets: [
-				{
-					fillColor : "rgba(151,187,205,0.5)",
-					strokeColor : "rgba(151,187,205,1)",
-					data: [] 
-				}
-			]
-		};		
-		
-
-		return obj;
+	self.sum = function(xAPIFieldA, xAPIFieldB){
+	
+		return [];
 	};
 	
-	self.count = function(xAPIField, limit){
+	self.count = function(xAPIField){
 		
-		var	statementKey;
-		var obj = {
-			originalKey: xAPIField, 
-			labels: [],
-			datasets: [
-				{
-					fillColor : "rgba(151,187,205,0.5)",
-					strokeColor : "rgba(151,187,205,1)",
-					data: [] 
-				}
-			]
-		};
+		var b = self.set.groupBy(xAPIField, function(groupSet){ return groupSet.count(); });
+		var data = [b.contents.map(function(element){
+			return element.result;
+		})];
 
-		return obj;
-	}
-	
-	var getProperty = function(obj, str){
-		var tempArr = str.split('.'),
-			returnObj = obj;
-		
-		for(var i = 0; i < tempArr.length; i++){
-			returnObj = returnObj[tempArr[i]];
-		}
-		
-		return returnObj;
-	}
-	
+		self.raphael[self.chartType](self.x, self.y, self.width, self.height, data);
+	}	
 })();
