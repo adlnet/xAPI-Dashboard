@@ -83,7 +83,9 @@ Set.prototype.orderBy = function(xpath, comparator)
 {
 	var parts = xpath ? xpath.split('.') : [];
 	var sortFn;
-	if( /^(?:ascending|descending)$/i.test(comparator) ){
+	if( typeof(comparator) === 'function' )
+		sortFn = comparator;
+	else {
 		sortFn = function(a,b){
 			if(comparator === 'descending'){
 				if(a<b) return 1;
@@ -96,9 +98,6 @@ Set.prototype.orderBy = function(xpath, comparator)
 				else return 0;
 			}
 		};
-	}
-	else {
-		sortFn = comparator;
 	}
 
 	this.contents.sort(function(a,b)

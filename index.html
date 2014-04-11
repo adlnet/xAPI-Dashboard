@@ -17,7 +17,7 @@
 
 	<script type="text/javascript">
 		var wrapper = ADL.XAPIWrapper,
-			graph = new ADL.XAPIGraph('bar', '#graphContainer svg');
+			dash = new ADL.XAPIDashboard();
 			
 		var xAPIConf = {
 			"endpoint" : 'http://12.109.40.37/xAPI/',
@@ -28,8 +28,8 @@
 		wrapper.changeConfig(xAPIConf);
 		window.onload = function(){
 			
-			graph.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
-				graph.count("object.id", "object.definition.name.en-US",
+			dash.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
+				dash.genCountGraph("#graphContainer svg", "object.id", "object.definition.name.en-US",
 					// preprocess
 					function(data){
 						// we only want world logins, so strip out site logins
@@ -39,8 +39,29 @@
 					function(data){
 						// sort by height, and limit to 15 bars
 						return data.orderBy('result.count', 'descending').select(function(e,i){return i<15});
+					},
+					// customize
+					function(chart){
+						chart
+							.tooltips(true)
+							.showValues(false)
+							.margin({top: 50, bottom: 100});
+
+						chart.xAxis
+							.rotateLabels(45)
+							.width(100);
+	
+						// add a title
+						d3.select('#graphContainer svg')
+							.append('text')
+							.attr('text-anchor', 'middle')
+							.attr('x', '50%')
+							.attr('y', '25px')
+							.style('font-size', '20pt')
+							.text('Total Logins Per World');
 					}
 				);
+
 			});
 		};
 	</script>

@@ -2,11 +2,11 @@
 
 (function(ADL){
 
-	var XAPIGraph = function(type, container){
+	var XAPIDashboard = function(){
 		this.set = new Set();
 	}
 
-	XAPIGraph.prototype.fetchAllStatements = function(query, cb){
+	XAPIDashboard.prototype.fetchAllStatements = function(query, cb){
 		var self = this;
 		ADL.XAPIWrapper.getStatements(query, null, function getMore(r){
 			var response = JSON.parse(r.response);
@@ -23,9 +23,9 @@
 	};
 	
 	//To-do
-	XAPIGraph.prototype.clearSavedStatements = function(){};
+	XAPIDashboard.prototype.clearSavedStatements = function(){};
 	
-	XAPIGraph.prototype.addStatements = function(statementsArr){
+	XAPIDashboard.prototype.addStatements = function(statementsArr){
 		if(statementsArr.response){
 			try{
 				statementsArr = JSON.parse(statementsArr.response).statements;
@@ -39,12 +39,12 @@
 		this.set = this.set.union(new Set(statementsArr));
 	};
 	
-	XAPIGraph.prototype.sum = function(xAPIFieldA, xAPIFieldB){
+	XAPIDashboard.prototype.sum = function(xAPIFieldA, xAPIFieldB){
 	
 		return [];
 	};
 	
-	XAPIGraph.prototype.count = function(groupField, labelField, pre, post){
+	XAPIDashboard.prototype.genCountGraph = function(container, groupField, labelField, pre, post, customize){
 		var b = this.set;
 		if(pre)
 			b = pre(b);
@@ -61,13 +61,12 @@
 			var chart = nv.models.discreteBarChart()
 				.x(function(d){ return new Set([d.result.sample]).transform(Set.getValue(labelField)).contents[0]; })
 				.y(function(d){ return d.result.count; })
-				.showXAxis(false)
-				.staggerLabels(true)
-				.tooltips(true)
-				.showValues(false)
 				.transitionDuration(250);
 
-			d3.select('#graphContainer svg')
+			if( customize )
+				customize(chart);
+
+			d3.select(container)
 				.datum([{
 					'values': b.contents}])
 				.call(chart);
@@ -75,8 +74,8 @@
 			nv.utils.windowResize(chart.update);
 			return chart;
 		});
-	}
+	};
 
-	ADL.XAPIGraph = XAPIGraph;
+	ADL.XAPIDashboard = XAPIDashboard;
 
 })(window.ADL = window.ADL || {});
