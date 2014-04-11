@@ -9,9 +9,10 @@
 	<script type="text/javascript" src="dashboard.js"></script>
 
 	<style>
-		#graphContainer {
+		#graphContainer > div{
 			width: 800px; height: 500px;
 			min-width: 100px; min-height: 100px;
+			margin: 20px;
 		}
 	</style>
 
@@ -29,11 +30,12 @@
 		window.onload = function(){
 			
 			dash.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
-				dash.genCountGraph("#graphContainer svg", "object.id", "object.definition.name.en-US",
+				dash.genCountGraph("#graphContainer #logins svg", "object.id", "object.definition.name.en-US",
 					// preprocess
 					function(data){
 						// we only want world logins, so strip out site logins
-						return data.without( data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox') );
+						return data.selectEqual('verb.id', 'http://vwf.adlnet.gov/xapi/verbs/logged_in')
+							.without( data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox') );
 					},
 					// postprocess
 					function(data){
@@ -53,7 +55,7 @@
 						chart.yAxis.tickFormat(d3.format(',d'));
 
 						// add a title
-						d3.select('#graphContainer svg')
+						d3.select('#graphContainer #logins svg')
 							.append('text')
 							.attr('text-anchor', 'middle')
 							.attr('x', '50%')
@@ -64,12 +66,48 @@
 				);
 
 			});
+
+			dash.fetchAllStatements({'verb': 'http://adlnet.gov/expapi/verbs/registered', 'ascending': true}, function(){
+				dash.genSumGraph('#graphContainer #registrations svg', 'timestamp', null,
+					function(data){
+						return data.selectEqual('verb.id', 'http://adlnet.gov/expapi/verbs/registered');
+					},
+					function(data){
+						data.transform(function(e){
+							e.independent = new Date(Date.parse(e.independent));
+							return e;
+						});
+						console.log(data.transform(Set.getValue('independent')).contents);
+						return data;
+					},
+					function(chart){
+						chart.options({'margin': {'top': 50}});
+
+						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
+
+						// add a title
+						d3.select('#graphContainer #registrations svg')
+							.append('text')
+							.attr('text-anchor', 'middle')
+							.attr('x', '50%')
+							.attr('y', '25px')
+							.style('font-size', '20pt')
+							.text('New Registrations Over Time');
+					}
+				);
+			});
+
 		};
 	</script>
 </head>
 <body>
 	<div id='graphContainer'>
-		<svg></svg>
+		<div id='logins'>
+			<svg></svg>
+		</div>
+		<div id='registrations'>
+			<svg></svg>
+		</div>
 	</div>
 </body>
 </html>

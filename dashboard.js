@@ -39,9 +39,49 @@
 		this.set = this.set.union(new Set(statementsArr));
 	};
 	
-	XAPIDashboard.prototype.sum = function(xAPIFieldA, xAPIFieldB){
+	XAPIDashboard.prototype.genSumGraph = function(container, xAxisField, yAxisField, pre, post, customize){
 	
-		return [];
+		var b = this.set;
+		if(pre)
+			b = pre(b);
+
+		b = b.orderBy(xAxisField).transform(function(elem, index, array){
+			var sum = 0;
+			if(yAxisField){
+				for(var i=0; i<=index; i++){
+					sum += Set.getValue(yAxisField)(array[i]);
+				}
+			}
+
+			return {
+				'independent': Set.getValue(xAxisField)(elem),
+				'dependent': yAxisField ? sum : index
+			};
+		});
+
+		if(post)
+			b = post(b);
+
+		nv.addGraph(function(){
+			var chart = nv.models.lineChart()
+				.options({
+					'x': function(d,i){ return d.independent },
+					'y': function(d,i){ return d.dependent; },
+					'showXAxis': true,
+					'showYAxis': true,
+					'transitionDuration': 250
+				});
+
+			if(customize)
+				customize(chart);
+
+			d3.select(container)
+				.datum([{'key': 'Users registered', 'values': b.contents}])
+				.call(chart);
+
+  			nv.utils.windowResize(chart.update);
+			return chart;
+		});
 	};
 	
 	XAPIDashboard.prototype.genCountGraph = function(container, groupField, labelField, pre, post, customize){
@@ -59,7 +99,7 @@
 
 		nv.addGraph(function(){
 			var chart = nv.models.discreteBarChart()
-				.x(function(d){ return new Set([d.result.sample]).transform(Set.getValue(labelField)).contents[0]; })
+				.x(function(d){ return Set.getValue('result.sample.'+labelField)(d); })
 				.y(function(d){ return d.result.count; })
 				.transitionDuration(250);
 
