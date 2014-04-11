@@ -48,9 +48,10 @@
 							.margin({top: 50, bottom: 100});
 
 						chart.xAxis
-							.rotateLabels(45)
-							.width(100);
-	
+							.rotateLabels(45);
+
+						chart.yAxis.tickFormat(d3.format(',d'));
+
 						// add a title
 						d3.select('#graphContainer svg')
 							.append('text')
