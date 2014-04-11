@@ -29,7 +29,7 @@ ADL.XAPIDashboard = new (function(){
 	
 	self.getAllStatements = function(query, cb){
 	
-		ADL.XAPIWrapper.getStatements(null, null, function getMore(r){
+		ADL.XAPIWrapper.getStatements(query, null, function getMore(r){
 			var response = JSON.parse(r.response);
 			self.addStatements(response.statements);
 			
@@ -65,13 +65,21 @@ ADL.XAPIDashboard = new (function(){
 		return [];
 	};
 	
-	self.count = function(xAPIField){
-		
-		var b = self.set.groupBy(xAPIField, function(groupSet){ return groupSet.count(); });
+	self.count = function(xAPIField, pre, post){
+		var b = self.set;
+		if(pre)
+			b = pre(b);
+
+		b = b.groupBy(xAPIField, function(groupSet){ return groupSet.count(); });
+
+		if(post)
+			b = post(b);
+
 		var data = [b.contents.map(function(element){
 			return element.result;
 		})];
 
 		self.raphael[self.chartType](self.x, self.y, self.width, self.height, data);
+		var axis = Raphael.g.axis(85,230,310,null,null,4,2,['today','yesterday','tomorrow','future'], '|',0);
 	}	
 })();

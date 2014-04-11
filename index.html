@@ -20,8 +20,17 @@
 		window.onload = function(){
 			dashboard.init("bargraph", 0, 0, 1024, 600);
 			
-			dashboard.getAllStatements(null, function(){
-				dashboard.count("object.id");
+			dashboard.getAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
+				dashboard.count("object.id",
+					// preprocess
+					function(data){
+						return data.without( data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox') );
+					},
+					// postprocess
+					function(data){
+						return data.orderBy('result', 'descending');
+					}
+				);
 			});
 		};
 	</script>
