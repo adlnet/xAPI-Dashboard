@@ -1,11 +1,20 @@
 <html>
 <head>
+	<script src="nvd3/lib/d3.v3.js"></script>
+	<script src="nvd3/nv.d3.js"></script>
+	<link rel='stylesheet' href='nvd3/nv.d3.css'></link>
+
 	<script type="text/javascript" src="xAPIWrapper/xapiwrapper.min.js"></script>
-	<script type="text/javascript" src="g.raphael/raphael-min.js"></script>
-	<script type="text/javascript" src="g.raphael/min/g.raphael-min.js"></script>
-	<script type="text/javascript" src="g.raphael/min/g.bar-min.js"></script>
 	<script type="text/javascript" src="set.js"></script>
 	<script type="text/javascript" src="dashboard.js"></script>
+
+	<style>
+		#graphContainer {
+			width: 800px; height: 500px;
+			min-width: 100px; min-height: 100px;
+		}
+	</style>
+
 	<script type="text/javascript">
 		var wrapper = ADL.XAPIWrapper,
 			dashboard = ADL.XAPIDashboard;
@@ -28,12 +37,16 @@
 					},
 					// postprocess
 					function(data){
-						return data.orderBy('result', 'descending');
+						return data.orderBy('result.count', 'descending').select(function(e,i){return i<15});
 					}
 				);
 			});
 		};
 	</script>
 </head>
-<body></body>
+<body>
+	<div id='graphContainer'>
+		<svg></svg>
+	</div>
+</body>
 </html>

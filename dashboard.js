@@ -22,8 +22,8 @@ ADL.XAPIDashboard = new (function(){
 		self.width = width ? width : 0;
 		
 		// Creates canvas 640 × 480 at 10, 50
-		self.raphael = Raphael(self.x, self.y, self.width, self.height);
-		self.chartType = /^(piechart|dotchart|linechart|barchart)$/.test(type) ? type : 'barchart';
+		//self.raphael = Raphael(self.x, self.y, self.width, self.height);
+		//self.chartType = /^(piechart|dotchart|linechart|barchart)$/.test(type) ? type : 'barchart';
 		self.set = new Set();
 	};
 	
@@ -70,16 +70,40 @@ ADL.XAPIDashboard = new (function(){
 		if(pre)
 			b = pre(b);
 
-		b = b.groupBy(xAPIField, function(groupSet){ return groupSet.count(); });
+		b = b.groupBy(xAPIField, function(groupSet){ return {
+			'token': groupSet.contents[0],
+			'count': groupSet.count()
+		}});
 
 		if(post)
 			b = post(b);
 
+		/*
 		var data = [b.contents.map(function(element){
 			return element.result;
 		})];
 
 		self.raphael[self.chartType](self.x, self.y, self.width, self.height, data);
 		var axis = Raphael.g.axis(85,230,310,null,null,4,2,['today','yesterday','tomorrow','future'], '|',0);
+		*/
+
+		nv.addGraph(function(){
+			var chart = nv.models.discreteBarChart()
+				.x(function(d){ return d.result.token.object.definition.name['en-US']; })
+				.y(function(d){ return d.result.count; })
+				.showXAxis(false)
+				.staggerLabels(true)
+				.tooltips(true)
+				.showValues(false)
+				.transitionDuration(250);
+
+			d3.select('#graphContainer svg')
+				.datum([{
+					'values': b.contents}])
+				.call(chart);
+
+			nv.utils.windowResize(chart.update);
+			return chart;
+		});
 	}	
 })();

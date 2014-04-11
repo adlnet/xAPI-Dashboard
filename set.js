@@ -18,8 +18,8 @@ Set.prototype.select = function(filter)
 {
 	return new Set(
 		this.contents.reduce(
-			function(sum,val){
-				if( filter(val) )
+			function(sum,val,index,array){
+				if( filter(val,index,array) )
 					sum.push(val);
 				return sum;
 			}
