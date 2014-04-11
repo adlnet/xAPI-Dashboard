@@ -17,7 +17,7 @@
 
 	<script type="text/javascript">
 		var wrapper = ADL.XAPIWrapper,
-			dashboard = ADL.XAPIDashboard;
+			graph = new ADL.XAPIGraph('bar', '#graphContainer svg');
 			
 		var xAPIConf = {
 			"endpoint" : 'http://12.109.40.37/xAPI/',
@@ -27,16 +27,17 @@
 				
 		wrapper.changeConfig(xAPIConf);
 		window.onload = function(){
-			dashboard.init("bargraph", 0, 0, 1024, 600);
 			
-			dashboard.getAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
-				dashboard.count("object.id",
+			graph.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
+				graph.count("object.id", "object.definition.name.en-US",
 					// preprocess
 					function(data){
+						// we only want world logins, so strip out site logins
 						return data.without( data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox') );
 					},
 					// postprocess
 					function(data){
+						// sort by height, and limit to 15 bars
 						return data.orderBy('result.count', 'descending').select(function(e,i){return i<15});
 					}
 				);
