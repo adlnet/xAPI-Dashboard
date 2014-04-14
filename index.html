@@ -33,7 +33,7 @@
 				dash.genCountGraph("#graphContainer #logins svg", "object.id", "object.definition.name.en-US",
 					// preprocess
 					function(data){
-						// we only want world logins, so strip out site logins
+						// use only logged_in events where the id is not virtual_world_sandbox
 						return data.selectEqual('verb.id', 'http://vwf.adlnet.gov/xapi/verbs/logged_in')
 							.without( data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox') );
 					},
@@ -74,10 +74,10 @@
 					},
 					function(data){
 						data.transform(function(e){
-							e.independent = new Date(Date.parse(e.independent));
+							e.x = new Date(Date.parse(e.x));
 							return e;
 						});
-						console.log(data.transform(Set.getValue('independent')).contents);
+						//console.log(data.transform(Set.getValue('independent')).contents);
 						return data;
 					},
 					function(chart){

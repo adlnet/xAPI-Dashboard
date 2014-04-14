@@ -54,8 +54,8 @@
 			}
 
 			return {
-				'independent': Set.getValue(xAxisField)(elem),
-				'dependent': yAxisField ? sum : index
+				'x': Set.getValue(xAxisField)(elem),
+				'y': yAxisField ? sum : index
 			};
 		});
 
@@ -65,12 +65,14 @@
 		nv.addGraph(function(){
 			var chart = nv.models.lineChart()
 				.options({
-					'x': function(d,i){ return d.independent },
-					'y': function(d,i){ return d.dependent; },
+					'x': function(d,i){ return d.x},
+					'y': function(d,i){ return d.y; },
 					'showXAxis': true,
 					'showYAxis': true,
 					'transitionDuration': 250
 				});
+
+			console.log(Object.keys(chart));
 
 			if(customize)
 				customize(chart);
