@@ -101,7 +101,6 @@
 					'values': data.contents}])
 				.call(chart);
 			
-			debugger;
 			nv.utils.windowResize(chart.update);
 			return chart;
 		});
