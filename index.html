@@ -87,14 +87,17 @@
 						return data.selectEqual('verb.id', 'http://adlnet.gov/expapi/verbs/registered');
 					},
 					function(data){
+						// 441 users as of first track
 						data.transform(function(e){
 							e.x = new Date(Date.parse(e.x));
+							e.y = e.y + 441;
 							return e;
 						});
 						return data;
 					},
 					function(chart){
 						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
+						chart.forceY([0,500]);
 					}
 				);
 			});
