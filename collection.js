@@ -82,46 +82,25 @@
 	// order the contents of the set by path
 	Collection.prototype.orderBy = function(xpath, comparator)
 	{
-		var parts = xpath ? xpath.split('.') : [];
 		var sortFn;
 		if( typeof(comparator) === 'function' )
 			sortFn = comparator;
 		else {
 			sortFn = function(a,b){
-				if(comparator === 'descending'){
-					if(a<b) return 1;
-					else if(a>b) return -1;
-					else return 0;
-				}
-				else {
-					if(a<b) return -1;
-					else if(a>b) return 1;
-					else return 0;
-				}
+				if( !a || a<b )
+					return comparator === 'descending' ? 1 : -1;
+				else if( !b || a>b )
+					return comparator === 'descending' ? -1 : 1;
+				else return 0;
 			};
 		}
 
-		this.contents.sort(function(a,b)
-		{
-			var curA=a, curB=b;
-			for(var i in parts){
-				if( curA[parts[i]] && curB[parts[i]] ){
-					curA = curA[parts[i]];
-					curB = curB[parts[i]];
-				}
-				else if(curA[parts[i]]){
-					return -1;
-				}
-				else if(curB[parts[i]]){
-					return 1;
-				}
-				else {
-					return 0;
-				}
-			}
-			return sortFn(curA,curB);
+		var path = Collection.getValue(xpath);
+		var ret = new Collection(this.contents);
+		ret.contents.sort(function(a,b){
+			return sortFn(path(a), path(b));
 		});
-		return this;
+		return ret;
 	};
 
 	// the number of elements in the set (or subset)
@@ -138,21 +117,9 @@
 	// the total of a particular field
 	Collection.prototype.sum = function(xpath)
 	{
-		var parts = xpath ? xpath.split('.') : [];
 		var sum = 0;
-		for( var i in this.contents )
-		{
-			var elem = this.contents[i];
-			for( var j=0; j<parts.length; j++)
-			{
-				if( elem[parts[j]] )
-					elem = elem[parts[j]];
-				else
-					break;
-			}
-			if( j === parts.length ){
-				sum += elem;
-			}
+		for( var i in this.contents ){
+			sum += Collection.getValue(xpath)(this.contents[i]);
 		}
 
 		return sum;
@@ -193,18 +160,11 @@
 	Collection.distinct = function(xpath)
 	{
 		var seen = [];
-		var parts = xpath ? xpath.split('.') : [];
 
 		return function(elem)
 		{
-			var curElem = elem;
-			for(var i=0; i<parts.length; i++){
-				if( curElem[parts[i]] )
-					curElem = curElem[parts[i]];
-				else
-					return false;
-			}
-
+			var curElem = Collection.getValue(xpath)(elem);
+			
 			if( seen.indexOf(curElem) === -1 ){
 				seen.push(curElem);
 				return true;
@@ -218,16 +178,8 @@
 	// filters by elem[xpath] == value
 	Collection.equals = function(xpath, value)
 	{
-		var parts = xpath ? xpath.split('.') : [];
 		return function(elem){
-			var curElem = elem;
-			for(var i=0; i<parts.length; i++){
-				if(curElem[parts[i]])
-					curElem = curElem[parts[i]];
-				else
-					return false;
-			}
-			return curElem === value;
+			return Collection.getValue(xpath)(elem) === value;
 		}
 	};
 
@@ -241,7 +193,17 @@
 	// transform to get xpath values out of a set
 	Collection.getValue = function(xpath)
 	{
-		var parts = xpath ? xpath.split('.') : [];
+		var parts = [];
+		if(xpath){	
+			parts = xpath.split('.');
+			var i=0; while(i<parts.length){
+				if(/\\$/.test(parts[i]) && parts[i+1])
+					parts.splice(i, 2, /(.*)\\$/.exec(parts[i])[1]+'.'+parts[i+1]);
+				else
+					i++;
+			}
+		}
+
 		return function(elem){
 			var curElem = elem;
 			for(var i=0; i<parts.length; i++){
