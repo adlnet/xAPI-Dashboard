@@ -89,7 +89,12 @@
 
 		nv.addGraph(function(){
 			var chart = nv.models.discreteBarChart()
-				.x(function(d){ return ADL.Collection.getValue('result.sample.'+opts.labelField)(d); })
+				.x(function(d){ 
+					if(opts.labelField)
+						return ADL.Collection.getValue('result.sample.'+opts.labelField)(d);
+					else
+						return d.groupValue;
+				})
 				.y(function(d){ return d.result.count; })
 				.staggerLabels(true)
 				.transitionDuration(250);

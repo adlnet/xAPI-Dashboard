@@ -35,7 +35,6 @@
 			dash1.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
 				dash1.genBarGraph("#graphContainer #logins svg", {
 					groupField: "object.id", 
-					labelField: "object.definition.name.en-US",
 					pre: function(data){
 							// take the raw xapi data
 							return data
@@ -48,12 +47,23 @@
 					post: function(data){
 							// sort by height, and limit to 15 bars
 							return data
+								.transform(function(e){
+									e.groupValue = /[^\/]+$/.exec(e.groupValue)[0];
+									return e;
+								})
 								.orderBy('result.count', 'descending')
 								.select(set.first(15));
 						},
 					customize: function(chart){
 							chart
 								.tooltips(true)
+								.tooltipContent(function(key,x,y,e,chart){
+									return '<h3>'
+										+e.point.result.sample.object.definition.name['en-US']
+										+'</h3><p>'
+										+y
+										+'</p>';
+								})
 								.showValues(false)
 								.staggerLabels(false)
 								.margin({bottom: 150});
