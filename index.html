@@ -29,7 +29,8 @@
 				
 		wrapper.changeConfig(xAPIConf);
 		var dash1 = new ADL.XAPIDashboard(),
-			dash2 = new ADL.XAPIDashboard();
+			dash2 = new ADL.XAPIDashboard(),
+			set = ADL.Collection;
 
 		window.onload = function(){
 			
@@ -50,11 +51,7 @@
 							// sort by height, and limit to 15 bars
 							return data
 								.orderBy('result.count', 'descending')
-								.select(
-									function(element,index){
-										return index<15;
-									}
-								);
+								.select(set.first(15));
 						},
 					customize: function(chart){
 							chart

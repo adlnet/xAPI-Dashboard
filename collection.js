@@ -182,6 +182,22 @@
 			return Collection.getValue(xpath)(elem) === value;
 		}
 	};
+	
+	// filter to get first n elements
+	Collection.first = function(n)
+	{
+		return function(elem, index){
+			return index < n;
+		};
+	};	
+	
+	// filter to get last n elements
+	Collection.last = function(n)
+	{
+		return function(elem, index, array){
+			return index >= array.length - n;
+		};
+	};
 
 	// return elem s.t. startVal <= elem < endVal
 	Collection.between = function(xpath, startVal, endVal)
