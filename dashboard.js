@@ -3,7 +3,7 @@
 (function(ADL){
 
 	var XAPIDashboard = function(){
-		this.set = new Set();
+		this.statements = new ADL.Collection();
 	}
 
 	XAPIDashboard.prototype.fetchAllStatements = function(query, cb){
@@ -36,12 +36,12 @@
 			}
 		}
 
-		this.set = this.set.union(new Set(statementsArr));
+		this.statements = this.statements.union(new ADL.Collection(statementsArr));
 	};
 	
 	XAPIDashboard.prototype.genSumGraph = function(container, xAxisField, yAxisField, pre, post, customize){
 	
-		var b = this.set;
+		var b = this.statements;
 		if(pre)
 			b = pre(b);
 
@@ -49,12 +49,12 @@
 			var sum = 0;
 			if(yAxisField){
 				for(var i=0; i<=index; i++){
-					sum += Set.getValue(yAxisField)(array[i]);
+					sum += ADL.Collection.getValue(yAxisField)(array[i]);
 				}
 			}
 
 			return {
-				'x': Set.getValue(xAxisField)(elem),
+				'x': ADL.Collection.getValue(xAxisField)(elem),
 				'y': yAxisField ? sum : index
 			};
 		});
@@ -85,7 +85,7 @@
 	};
 	
 	XAPIDashboard.prototype.genCountGraph = function(container, groupField, labelField, pre, post, customize){
-		var b = this.set;
+		var b = this.statements;
 		if(pre)
 			b = pre(b);
 
@@ -99,7 +99,7 @@
 
 		nv.addGraph(function(){
 			var chart = nv.models.discreteBarChart()
-				.x(function(d){ return Set.getValue('result.sample.'+labelField)(d); })
+				.x(function(d){ return ADL.Collection.getValue('result.sample.'+labelField)(d); })
 				.y(function(d){ return d.result.count; })
 				.transitionDuration(250);
 
