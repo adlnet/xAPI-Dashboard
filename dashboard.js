@@ -72,8 +72,6 @@
 					'transitionDuration': 250
 				});
 
-			console.log(Object.keys(chart));
-
 			if(customize)
 				customize(chart);
 

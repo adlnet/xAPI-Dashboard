@@ -14,6 +14,9 @@
 			min-width: 100px; min-height: 100px;
 			margin: 20px;
 		}
+		h1 {
+			text-align: center;
+		}
 	</style>
 
 	<script type="text/javascript">
@@ -33,35 +36,46 @@
 				dash.genCountGraph("#graphContainer #logins svg", "object.id", "object.definition.name.en-US",
 					// preprocess
 					function(data){
-						// use only logged_in events where the id is not virtual_world_sandbox
-						return data.selectEqual('verb.id', 'http://vwf.adlnet.gov/xapi/verbs/logged_in')
-							.without( data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox') );
+						// take the raw xapi data
+						return data
+							// select only the statements whose verb id is logged_in
+							.selectEqual('verb.id', 'http://vwf.adlnet.gov/xapi/verbs/logged_in')
+							// and then remove
+							.without(
+								// the statements whose object id is virtual_world_sandbox
+								data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox')
+							)
+						;
 					},
 					// postprocess
 					function(data){
 						// sort by height, and limit to 15 bars
-						return data.orderBy('result.count', 'descending').select(function(e,i){return i<15});
+						return data
+							.orderBy('result.count', 'descending')
+							.select(
+								function(element,index){
+									return index<15;
+								}
+							);
 					},
 					// customize
 					function(chart){
 						chart
 							.tooltips(true)
 							.showValues(false)
-							.margin({top: 50, bottom: 100});
+							.margin({bottom: 150});
 
 						chart.xAxis
 							.rotateLabels(45);
 
 						chart.yAxis.tickFormat(d3.format(',d'));
 
-						// add a title
-						d3.select('#graphContainer #logins svg')
-							.append('text')
-							.attr('text-anchor', 'middle')
-							.attr('x', '50%')
-							.attr('y', '25px')
-							.style('font-size', '20pt')
-							.text('Total Logins Per World');
+						chart.discretebar.dispatch.on('elementClick', function(e){
+							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
+								window.location.assign(e.point.result.sample.object.definition.moreInfo);
+							}
+						});
+
 					}
 				);
 
@@ -77,22 +91,10 @@
 							e.x = new Date(Date.parse(e.x));
 							return e;
 						});
-						//console.log(data.transform(Set.getValue('independent')).contents);
 						return data;
 					},
 					function(chart){
-						chart.options({'margin': {'top': 50}});
-
 						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
-
-						// add a title
-						d3.select('#graphContainer #registrations svg')
-							.append('text')
-							.attr('text-anchor', 'middle')
-							.attr('x', '50%')
-							.attr('y', '25px')
-							.style('font-size', '20pt')
-							.text('New Registrations Over Time');
 					}
 				);
 			});
@@ -103,9 +105,11 @@
 <body>
 	<div id='graphContainer'>
 		<div id='logins'>
+			<h1>Total Logins To Popular Worlds</h1>
 			<svg></svg>
 		</div>
 		<div id='registrations'>
+			<h1>New Registrations Over  Time</h1>
 			<svg></svg>
 		</div>
 	</div>
