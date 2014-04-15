@@ -34,56 +34,53 @@
 		window.onload = function(){
 			
 			dash1.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
-				dash1.genCountGraph("#graphContainer #logins svg", "object.id", "object.definition.name.en-US",
-					// preprocess
-					function(data){
-						// take the raw xapi data
-						return data
-							// and then remove
-							.without(
-								// the statements whose object id is virtual_world_sandbox
-								data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox')
-							)
-						;
-					},
-					// postprocess
-					function(data){
-						// sort by height, and limit to 15 bars
-						return data
-							.orderBy('result.count', 'descending')
-							.select(
-								function(element,index){
-									return index<15;
+				dash1.genBarGraph("#graphContainer #logins svg", {
+					groupField: "object.id", 
+					labelField: "object.definition.name.en-US",
+					pre: function(data){
+							// take the raw xapi data
+							return data
+								// and then remove
+								.without(
+									// the statements whose object id is virtual_world_sandbox
+									data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox')
+								);
+						},
+					post: function(data){
+							// sort by height, and limit to 15 bars
+							return data
+								.orderBy('result.count', 'descending')
+								.select(
+									function(element,index){
+										return index<15;
+									}
+								);
+						},
+					customize: function(chart){
+							chart
+								.tooltips(true)
+								.showValues(false)
+								.margin({bottom: 150});
+
+							chart.xAxis
+								.rotateLabels(45);
+
+							chart.yAxis.tickFormat(d3.format(',d'));
+
+							chart.discretebar.dispatch.on('elementClick', function(e){
+								if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
+									window.location.assign(e.point.result.sample.object.definition.moreInfo);
 								}
-							);
-					},
-					// customize
-					function(chart){
-						chart
-							.tooltips(true)
-							.showValues(false)
-							.margin({bottom: 150});
+							});
 
-						chart.xAxis
-							.rotateLabels(45);
-
-						chart.yAxis.tickFormat(d3.format(',d'));
-
-						chart.discretebar.dispatch.on('elementClick', function(e){
-							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
-								window.location.assign(e.point.result.sample.object.definition.moreInfo);
-							}
-						});
-
-					}
-				);
-
+						}
+				});
 			});
 
 			dash2.fetchAllStatements({'verb': 'http://adlnet.gov/expapi/verbs/registered', 'ascending': true}, function(){
-				dash2.genSumGraph('#graphContainer #registrations svg', 'timestamp', null,
-					null,
-					function(data){
+				dash2.genLineGraph('#graphContainer #registrations svg', {
+					xAxisField: 'timestamp', 
+					post: function(data){
 						// 441 users as of first track
 						data.transform(function(e){
 							e.x = new Date(Date.parse(e.x));
@@ -92,11 +89,11 @@
 						});
 						return data;
 					},
-					function(chart){
+					customize: function(chart){
 						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
 						chart.forceY([0,500]);
 					}
-				);
+				});
 			});
 
 		};

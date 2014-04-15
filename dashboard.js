@@ -39,28 +39,19 @@
 		this.statements = this.statements.union(new ADL.Collection(statementsArr));
 	};
 	
-	XAPIDashboard.prototype.genSumGraph = function(container, xAxisField, yAxisField, pre, post, customize){
+	// opts.xAxisField is a required string
+	// opts.yAxisField is an optional string
+	// opts.operation, opts.pre, opts.post, opts.customize are optional functions
+	XAPIDashboard.prototype.genLineGraph = function(container, opts){
 	
-		var b = this.statements;
-		if(pre)
-			b = pre(b);
+		var data = this.statements;
+		if(opts.pre)
+			data = opts.pre(data);
 
-		b = b.orderBy(xAxisField).transform(function(elem, index, array){
-			var sum = 0;
-			if(yAxisField){
-				for(var i=0; i<=index; i++){
-					sum += ADL.Collection.getValue(yAxisField)(array[i]);
-				}
-			}
+		data = opts.operation ? opts.operation(data, opts) : XAPIDashboard.sum(data, opts);
 
-			return {
-				'x': ADL.Collection.getValue(xAxisField)(elem),
-				'y': yAxisField ? sum : index
-			};
-		});
-
-		if(post)
-			b = post(b);
+		if(opts.post)
+			data = opts.post(data);
 
 		nv.addGraph(function(){
 			var chart = nv.models.lineChart()
@@ -72,11 +63,11 @@
 					'transitionDuration': 250
 				});
 
-			if(customize)
-				customize(chart);
+			if(opts.customize)
+				opts.customize(chart);
 
 			d3.select(container)
-				.datum([{'key': 'Users registered', 'values': b.contents}])
+				.datum([{'key': 'Users registered', 'values': data.contents}])
 				.call(chart);
 
   			nv.utils.windowResize(chart.update);
@@ -84,35 +75,62 @@
 		});
 	};
 	
-	XAPIDashboard.prototype.genCountGraph = function(container, groupField, labelField, pre, post, customize){
-		var b = this.statements;
-		if(pre)
-			b = pre(b);
+	// opts.groupField and opts.labelField are required strings
+	// opts.operation, opts.pre, opts.post, opts.customize are optional functions
+	XAPIDashboard.prototype.genBarGraph = function(container, opts){
+		var data = this.statements;
+		if(opts.pre)
+			data = opts.pre(data);
 
-		b = b.groupBy(groupField, function(groupSet){ return {
-			'sample': groupSet.contents[0],
-			'count': groupSet.count()
-		}});
+		data = opts.operation ? opts.operation(data, opts) : XAPIDashboard.count(data, opts);
 
-		if(post)
-			b = post(b);
+		if(opts.post)
+			data = opts.post(data);
 
 		nv.addGraph(function(){
 			var chart = nv.models.discreteBarChart()
-				.x(function(d){ return ADL.Collection.getValue('result.sample.'+labelField)(d); })
+				.x(function(d){ return ADL.Collection.getValue('result.sample.'+opts.labelField)(d); })
 				.y(function(d){ return d.result.count; })
 				.transitionDuration(250);
 
-			if( customize )
-				customize(chart);
+			if( opts.customize )
+				opts.customize(chart);
 
 			d3.select(container)
 				.datum([{
-					'values': b.contents}])
+					'values': data.contents}])
 				.call(chart);
-
+			
+			debugger;
 			nv.utils.windowResize(chart.update);
 			return chart;
+		});
+	};
+	
+	/*
+	 * Class methods to perform graph "formatting" operations
+	 */
+	 
+	XAPIDashboard.count = function(statements, opts){
+		return statements.groupBy(opts.groupField, function(groupSet){ return {
+				'sample': groupSet.contents[0],
+				'count': groupSet.count()
+			}});
+	};	 
+	
+	XAPIDashboard.sum = function(statements, opts){
+		return statements.orderBy(opts.xAxisField).transform(function(elem, index, array){
+			var sum = 0;
+			if(opts.yAxisField){
+				for(var i=0; i<=index; i++){
+					sum += ADL.Collection.getValue(opts.yAxisField)(array[i]);
+				}
+			}
+
+			return {
+				'x': ADL.Collection.getValue(opts.xAxisField)(elem),
+				'y': opts.yAxisField ? sum : index
+			};
 		});
 	};
 
