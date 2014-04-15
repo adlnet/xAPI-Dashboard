@@ -23,8 +23,6 @@
 		var wrapper = ADL.XAPIWrapper;
 		var xAPIConf = {
 			"endpoint" : 'http://12.109.40.37/xAPI/',
-			"user": 'lrsuser',
-			"password": 'The only thing we have to fear'
 		};
 				
 		wrapper.changeConfig(xAPIConf);
@@ -57,6 +55,7 @@
 							chart
 								.tooltips(true)
 								.showValues(false)
+								.staggerLabels(false)
 								.margin({bottom: 150});
 
 							chart.xAxis
