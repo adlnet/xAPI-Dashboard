@@ -125,6 +125,30 @@
 		return sum;
 	}
 
+	// the largest value of field in the set
+	Collection.prototype.max = function(xpath)
+	{
+		var max = -Infinity;
+		for( var i in this.contents ){
+			var val = Collection.getValue(xpath)(this.contents[i]);
+			if( val > max )
+				max = val;
+		}
+		return max;
+	}
+
+	// the smallest value of field in the set
+	Collection.prototype.min = function(xpath)
+	{
+		var min = Infinity;
+		for( var i in this.contents ){
+			var val = Collection.getValue(xpath)(this.contents[i]);
+			if( val < min )
+				min = val;
+		}
+		return min;
+	}
+
 	// the average of a particular field
 	Collection.prototype.average = function(xpath)
 	{
