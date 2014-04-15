@@ -20,9 +20,7 @@
 	</style>
 
 	<script type="text/javascript">
-		var wrapper = ADL.XAPIWrapper,
-			dash = new ADL.XAPIDashboard();
-			
+		var wrapper = ADL.XAPIWrapper;
 		var xAPIConf = {
 			"endpoint" : 'http://12.109.40.37/xAPI/',
 			"user": 'lrsuser',
@@ -30,16 +28,17 @@
 		};
 				
 		wrapper.changeConfig(xAPIConf);
+		var dash1 = new ADL.XAPIDashboard(),
+			dash2 = new ADL.XAPIDashboard();
+
 		window.onload = function(){
 			
-			dash.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
-				dash.genCountGraph("#graphContainer #logins svg", "object.id", "object.definition.name.en-US",
+			dash1.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
+				dash1.genCountGraph("#graphContainer #logins svg", "object.id", "object.definition.name.en-US",
 					// preprocess
 					function(data){
 						// take the raw xapi data
 						return data
-							// select only the statements whose verb id is logged_in
-							.selectEqual('verb.id', 'http://vwf.adlnet.gov/xapi/verbs/logged_in')
 							// and then remove
 							.without(
 								// the statements whose object id is virtual_world_sandbox
@@ -81,11 +80,9 @@
 
 			});
 
-			dash.fetchAllStatements({'verb': 'http://adlnet.gov/expapi/verbs/registered', 'ascending': true}, function(){
-				dash.genSumGraph('#graphContainer #registrations svg', 'timestamp', null,
-					function(data){
-						return data.selectEqual('verb.id', 'http://adlnet.gov/expapi/verbs/registered');
-					},
+			dash2.fetchAllStatements({'verb': 'http://adlnet.gov/expapi/verbs/registered', 'ascending': true}, function(){
+				dash2.genSumGraph('#graphContainer #registrations svg', 'timestamp', null,
+					null,
 					function(data){
 						// 441 users as of first track
 						data.transform(function(e){
