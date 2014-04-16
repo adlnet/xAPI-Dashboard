@@ -1,6 +1,0 @@
-[submodule "xAPIWrapper"]
-	path = xAPIWrapper
-	url = https://github.com/adlnet/xAPIWrapper.git
-[submodule "nvd3"]
-	path = nvd3
-	url = https://github.com/novus/nvd3.git

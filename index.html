@@ -1,10 +1,10 @@
 <html>
 <head>
-	<script src="d3.v3.min.js"></script>
-	<script src="nvd3/nv.d3.js"></script>
-	<link rel='stylesheet' href='nvd3/nv.d3.css'></link>
+	<script src="lib/d3.v3.js" charset="utf8"></script>
+	<script src="lib/nv.d3.js"></script>
+	<link rel='stylesheet' href='lib/nv.d3.css'></link>
+	<script type="text/javascript" src="lib/xapiwrapper.min.js"></script>
 
-	<script type="text/javascript" src="xAPIWrapper/xapiwrapper.min.js"></script>
 	<script type="text/javascript" src="collection.js"></script>
 	<script type="text/javascript" src="dashboard.js"></script>
 
@@ -21,11 +21,9 @@
 
 	<script type="text/javascript">
 		var wrapper = ADL.XAPIWrapper;
-		var xAPIConf = {
+		wrapper.changeConfig({
 			"endpoint" : 'http://12.109.40.37/xAPI/',
-		};
-				
-		wrapper.changeConfig(xAPIConf);
+		});
 		var dash1 = new ADL.XAPIDashboard(),
 			dash2 = new ADL.XAPIDashboard(),
 			set = ADL.Collection;
