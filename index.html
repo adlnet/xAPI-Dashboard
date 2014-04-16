@@ -36,50 +36,54 @@
 				dash1.genBarGraph("#graphContainer #logins svg", {
 					groupField: "object.id", 
 					pre: function(data){
-							// take the raw xapi data
-							return data
-								// and then remove
-								.without(
-									// the statements whose object id is virtual_world_sandbox
-									data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox')
-								);
-						},
+						// take the raw xapi data
+						return data
+							// and then remove
+							.without(
+								// the statements whose object id is virtual_world_sandbox
+								data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox')
+							);
+					},
 					post: function(data){
+						return data
+							// tack world name to id for labeling purposes
+							.transform(function(e){
+								e.groupValue = e.result.sample.object.definition.name['en-US']
+									+'#'+/[^\/]+$/.exec(e.groupValue)[0];
+								return e;
+							})
 							// sort by height, and limit to 15 bars
-							return data
-								.transform(function(e){
-									e.groupValue = /[^\/]+$/.exec(e.groupValue)[0];
-									return e;
-								})
-								.orderBy('result.count', 'descending')
-								.select(set.first(15));
-						},
+							.orderBy('result.count', 'descending')
+							.select(set.first(15));
+					},
 					customize: function(chart){
-							chart
-								.tooltips(true)
-								.tooltipContent(function(key,x,y,e,chart){
-									return '<h3>'
-										+e.point.result.sample.object.definition.name['en-US']
-										+'</h3><p>'
-										+y
-										+'</p>';
-								})
-								.showValues(false)
-								.staggerLabels(false)
-								.margin({bottom: 150});
+						chart
+							.tooltips(true)
+							.tooltipContent(function(key,x,y,e,chart){
+								return '<h3>'
+									+e.point.result.sample.object.definition.name['en-US']
+									+'</h3><p>'
+									+y
+									+'</p>';
+							})
+							.showValues(false)
+							.staggerLabels(false)
+							.margin({bottom: 150});
 
-							chart.xAxis
-								.rotateLabels(45);
+						chart.xAxis
+							.rotateLabels(45);
+						chart.xAxis
+							.tickFormat(function(d){ return d.split('#')[0] });
 
-							chart.yAxis.tickFormat(d3.format(',d'));
+						chart.yAxis.tickFormat(d3.format(',d'));
 
-							chart.discretebar.dispatch.on('elementClick', function(e){
-								if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
-									window.location.assign(e.point.result.sample.object.definition.moreInfo);
-								}
-							});
+						chart.discretebar.dispatch.on('elementClick', function(e){
+							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
+								window.location.assign(e.point.result.sample.object.definition.moreInfo);
+							}
+						});
 
-						}
+					}
 				});
 			});
 
