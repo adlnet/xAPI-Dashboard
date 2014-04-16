@@ -19,74 +19,60 @@
 		}
 	</style>
 
+	<script src='lrs-data.js'></script>
+
 	<script type="text/javascript">
-		var wrapper = ADL.XAPIWrapper;
-		wrapper.changeConfig({
-			"endpoint" : 'http://12.109.40.37/xAPI/',
+		var wrapper = new XAPIWrapper({
+			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
-		var dash1 = new ADL.XAPIDashboard(),
-			dash2 = new ADL.XAPIDashboard(),
+		var dash = new ADL.XAPIDashboard(),
 			set = ADL.Collection;
 
 		window.onload = function(){
-			
-			dash1.fetchAllStatements({'verb': 'http://vwf.adlnet.gov/xapi/verbs/logged_in'}, function(){
-				dash1.genBarGraph("#graphContainer #logins svg", {
-					groupField: "object.id", 
-					pre: function(data){
-						// take the raw xapi data
-						return data
-							// and then remove
-							.without(
-								// the statements whose object id is virtual_world_sandbox
-								data.selectEqual('object.id', 'http://vwf.adlnet.gov/xapi/virtual_world_sandbox')
-							);
-					},
+		
+			//dash.fetchAllStatements({'since': new Date(Date.now() - 1000*60*60*24*30).toISOString()}, wrapper, function(){
+			dash.addStatements(window.statements);
+
+				dash.genBarGraph("#graphContainer #verbs svg", {
+					groupField: "verb.id", 
 					post: function(data){
 						return data
-							// tack world name to id for labeling purposes
-							.transform(function(e){
-								e.groupValue = e.result.sample.object.definition.name['en-US']
-									+'#'+/[^\/]+$/.exec(e.groupValue)[0];
-								return e;
-							})
 							// sort by height, and limit to 15 bars
 							.orderBy('result.count', 'descending')
-							.select(set.first(15));
+							.select(set.first(10));
 					},
 					customize: function(chart){
 						chart
 							.tooltips(true)
 							.tooltipContent(function(key,x,y,e,chart){
 								return '<h3>'
-									+e.point.result.sample.object.definition.name['en-US']
+									+e.point.result.sample.verb.id
 									+'</h3><p>'
 									+y
 									+'</p>';
 							})
 							.showValues(false)
 							.staggerLabels(false)
+							.color(['#1f77b4'])
 							.margin({bottom: 150});
 
 						chart.xAxis
 							.rotateLabels(45);
 						chart.xAxis
-							.tickFormat(function(d){ return d.split('#')[0] });
+							.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
 
 						chart.yAxis.tickFormat(d3.format(',d'));
 
-						chart.discretebar.dispatch.on('elementClick', function(e){
+						/*chart.discretebar.dispatch.on('elementClick', function(e){
 							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
 								window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
 							}
-						});
+						});*/
 
 					}
 				});
-			});
 
-			dash2.fetchAllStatements({'verb': 'http://adlnet.gov/expapi/verbs/registered', 'ascending': true}, function(){
-				dash2.genLineGraph('#graphContainer #registrations svg', {
+				dash.genLineGraph('#graphContainer #registrations svg', {
 					xAxisField: 'timestamp', 
 					post: function(data){
 						// 441 users as of first track
@@ -102,19 +88,19 @@
 						chart.forceY([0,500]);
 					}
 				});
-			});
 
+			//});
 		};
 	</script>
 </head>
 <body>
 	<div id='graphContainer'>
-		<div id='logins'>
-			<h1>Total Logins To Popular Worlds</h1>
+		<div id='verbs'>
+			<h1>Most Popular Verbs of the Last 30 Days</h1>
 			<svg></svg>
 		</div>
 		<div id='registrations'>
-			<h1>New Registrations Over  Time</h1>
+			<h1>New Registrations Over Time</h1>
 			<svg></svg>
 		</div>
 	</div>

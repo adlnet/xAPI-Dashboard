@@ -6,9 +6,15 @@
 		this.statements = new ADL.Collection();
 	}
 
-	XAPIDashboard.prototype.fetchAllStatements = function(query, cb){
+	XAPIDashboard.prototype.fetchAllStatements = function(query, wrapper, cb){
 		var self = this;
-		ADL.XAPIWrapper.getStatements(query, null, function getMore(r){
+		if( !wrapper || typeof(wrapper) === 'function' ){
+			if(typeof(wrapper) === 'function' && !cb)
+				cb = wrapper;
+			wrapper = ADL.XAPIWrapper;
+		}
+
+		wrapper.getStatements(query, null, function getMore(r){
 			var response = JSON.parse(r.response);
 			self.addStatements(response.statements);
 			
