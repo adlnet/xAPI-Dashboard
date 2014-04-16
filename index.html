@@ -79,7 +79,7 @@
 
 						chart.discretebar.dispatch.on('elementClick', function(e){
 							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
-								window.location.assign(e.point.result.sample.object.definition.moreInfo);
+								window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
 							}
 						});
 
