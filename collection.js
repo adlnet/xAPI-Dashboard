@@ -91,7 +91,7 @@
 			var group = this.selectRange(xpath, arr[i], arr[i+1]);
 			ret.contents.push({
 				'in': arr[i],
-				'out': cb(group),
+				'out': cb(group, arr[i], arr[i+1]),
 				'sample': group.contents[0]
 			});
 		}
