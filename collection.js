@@ -80,30 +80,56 @@
 	};
 	
 	// aggregate and run callback
-	Collection.prototype.groupByRange = function(xpath, start, end, interval, cb)
-	{
-		//Will assume only date for now
-		//add logic to support other types
-		var start = Date.parse(start),
-			end = Date.parse(end);
-			
-		var startObj, nextIntObj;
+	Collection.prototype.groupByRange = function(xpath, arr, cb)
+	{			
 		var ret = new Collection();
 
-		while( start < end )
+		for( var i = 0; i < arr.length - 1; i++ )
 		{
-			startObj = new Date(start);
-			nextIntObj = new Date(start + interval);
-
 			ret.contents.push({
-				'groupValue': startObj.toISOString() + ", " + nextIntObj.toISOString(),
-				'result': cb(this.selectRange(xpath, startObj.toISOString(), nextIntObj.toISOString()))
+				'groupValue': arr[i] + "," + arr[i+1],
+				'result': cb(this.selectRange(xpath, arr[i], arr[i+1]))
 			});
-			
-			start += interval;
 		}
 		
 		return ret;
+	};
+	
+	//Convenience function to generate input for groupByRange
+	//if start is parsable by date:
+	//	it is assumed that end is also a date and i is an increment value in ms
+	//	format is used to call: Date.prototype[format]() - Default to 'toISOString' if falsy.
+	Collection.genRange = function(start, end, i, format){
+		var outArr = [],
+			isDate = false;
+		
+		if(typeof start == "string"){
+			if(!format || ['toDateString', 'toGMTString', 'toISOString', 'toJSON', 'toLocaleDateString', 'toLocaleString', 'toLocaleTimeString', 'toString', 'toTimeString', 'toUTC'].indexOf(format) == -1){
+				format = 'toISOString';
+			}
+			
+			//if i is unsuitable to act as an increment for dates, then default to a day
+			i = typeof i == "number" && i > 0 ? i : 1000 * 60 * 60 * 24; 
+		
+			if(!isNaN(Date.parse(start)) && !isNaN(Date.parse(end))){
+				start = Date.parse(start); 
+				end = Date.parse(end); 
+				isDate = true;
+			}
+			
+			else{
+				console.error("Date cannot parse arbitrary strings (Collection.genRange)");
+				return [];
+			}
+		}
+		
+		while(start < end){
+			//May want to eventually update this if it severely impacts performance
+			outArr.push(isDate ? (new Date(start))[format]() : start);
+			start += i;
+		}
+		
+		return outArr;
 	};
 
 	// order the contents of the set by path
