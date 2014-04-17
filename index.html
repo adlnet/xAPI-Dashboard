@@ -30,9 +30,8 @@
 
 		window.onload = function(){
 		
-			//dash.fetchAllStatements({'since': new Date(Date.now() - 1000*60*60*24*30).toISOString()}, wrapper, function(){
-			dash.addStatements(window.statements);
-
+			function generateGraphs()
+			{
 				dash.genBarGraph("#graphContainer #verbs svg", {
 					groupField: "verb.id", 
 					post: function(data){
@@ -91,8 +90,15 @@
 						chart.forceY([0,500]);
 					}
 				});
+			}
 
-			//});
+			if( window.statements ){
+				dash.addStatements(window.statements);
+				generateGraphs();
+			}
+			else {
+				dash.fetchAllStatements({'since': new Date(Date.now() - 1000*60*60*24*30).toISOString()}, wrapper, generateGraphs);
+			}
 		};
 	</script>
 </head>
