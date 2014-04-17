@@ -139,10 +139,19 @@
 	
 	XAPIDashboard.countRange = function(statements, opts){
 		var rangeArr = ADL.Collection.genRange(opts.range.start, opts.range.end, opts.range.increment);
-		return statements.groupByRange(opts.groupField, rangeArr, function(groupSet){ 
+		return statements.groupByRange(opts.groupField, rangeArr, function(groupSet, start, end){ 
 			return groupSet.count()
 		});
+	};	 	
+	
+	XAPIDashboard.average = function(statements, opts){
+		var rangeArr = ADL.Collection.genRange(opts.range.start, opts.range.end, opts.range.increment);
+		return statements.groupByRange(opts.groupField, rangeArr, function(groupSet, start, end){ 
+			return groupSet.count() / opts.range.unit;
+		});
 	};	 
+	
+	
 	
 	ADL.XAPIDashboard = XAPIDashboard;
 
