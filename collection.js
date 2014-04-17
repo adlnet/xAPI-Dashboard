@@ -193,10 +193,14 @@
 	Collection.prototype.selectEqual = function(xpath, value){
 		return this.select(Collection.equals(xpath,value));
 	};
+
 	Collection.prototype.selectRange = function(xpath, startValue, endValue){
 		return this.select(Collection.range(xpath,startValue, endValue));
 	};
 
+	Collection.prototype.selectMatch = function(xpath, re){
+		return this.select(Collection.match(xpath, re));
+	};
 
 
 	/*
@@ -229,7 +233,15 @@
 			return Collection.getValue(xpath)(elem) === value;
 		}
 	};
-	
+
+	// filters by elem[xpath] matches re
+	Collection.match = function(xpath, re)
+	{
+		return function(elem){
+			return re.test( Collection.getValue(xpath,elem) );
+		}
+	};
+
 	// filter to get first n elements
 	Collection.first = function(n)
 	{
@@ -255,6 +267,10 @@
 		}
 	};
 
+
+	/*
+	 * Miscellaneous functions
+	 */
 
 	// transform to get xpath values out of a set
 	Collection.getValue = function(xpath)
