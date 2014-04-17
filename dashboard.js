@@ -28,8 +28,9 @@
 		});
 	};
 	
-	//To-do
-	XAPIDashboard.prototype.clearSavedStatements = function(){};
+	XAPIDashboard.prototype.clearSavedStatements = function(){
+		this.contents = new Collection();
+	};
 	
 	XAPIDashboard.prototype.addStatements = function(statementsArr){
 		if(statementsArr.response){
@@ -42,7 +43,13 @@
 			}
 		}
 
-		this.statements = this.statements.union(new ADL.Collection(statementsArr));
+		// pre-transform timestamps
+		var newStatements = new ADL.Collection(statementsArr).transform(function(e){
+			e.timestamp = new Date(Date.parse(e.timestamp));
+			e.stored = new Date(Date.parse(e.stored));
+			return e;
+		});
+		this.statements = this.statements.union( newStatements );
 	};
 	
 	// default aggregator requires opts.groupField

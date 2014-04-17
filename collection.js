@@ -90,7 +90,7 @@
 		{
 			var group = this.selectRange(xpath, arr[i], arr[i+1]);
 			ret.contents.push({
-				'in': arr[i] + "," + arr[i+1],
+				'in': arr[i],
 				'out': cb(group),
 				'sample': group.contents[0]
 			});
@@ -263,6 +263,8 @@
 	{
 		return function(elem, index, array){
 			var val = Collection.getValue(xpath)(elem);
+			if( typeof(val) === 'string' )
+				val = val.toLowerCase();
 			return startVal <= val && val < endVal;
 		}
 	};
@@ -302,7 +304,7 @@
 	//if start is parsable by date:
 	//	it is assumed that end is also a date and increment is an increment value in ms
 	//	format is used to call: Date.prototype[format]() - Default to 'toISOString' if falsy.
-	Collection.genRange = function(start, end, increment, format){
+	/*Collection.genRange = function(start, end, increment, format){
 		var outArr = [],
 			isDate = false;
 		
@@ -334,6 +336,29 @@
 		outArr.push(isDate ? (new Date(end))[format]() : end);
 		
 		return outArr;
+	};*/
+
+	Collection.genRange = function(start, end, i)
+	{
+		var increment = function(x,i){ return x+i; },
+		test = function(cur, end){ return cur < end; };
+
+		if( start instanceof Date ){
+			increment = function(x,i){ return new Date( x.getTime()+i ); };
+		}
+		else if( typeof(start) === 'string' ){
+			start = start.toLowerCase().charAt(0);
+			end = end ? end.toLowerCase().charAt(0) : '{';
+			increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
+		}
+
+		var groupArr = [];
+		while( test(start, end) ){
+			groupArr.push(start);
+			start = increment(start,i);
+		}
+		groupArr.push(end);
+		return groupArr;
 	};
 
 	ADL.Collection = Collection;

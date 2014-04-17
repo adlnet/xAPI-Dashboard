@@ -77,11 +77,7 @@
 				dash.genLineGraph('#graphContainer #registrations svg', {
 					xField: 'timestamp',
 					pre: function(data){
-						console.log('pre');
-						return data.orderBy('timestamp').transform(function(stmt){
-							stmt.timestamp = Date.parse(stmt.timestamp);
-							return stmt;
-						});
+						return data.orderBy('timestamp');
 					},
 					//aggregate: ADL.XAPIDashboard.accumulate,
 					aggregate: function(statements,opts){
@@ -93,14 +89,14 @@
 						});
 						return test;
 					},
-					post: function(data){
+					/*post: function(data){
 						return data.transform(function(e){
 							e.in = parseInt(e.in.split(',')[0]);
 							return e;
 						});
-					},
+					},*/
 					customize: function(chart){
-						chart.xAxis.tickFormat(function(d){ console.log(d); return d3.time.format('%b %d')(new Date(d)) });
+						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
 						chart.interpolate('monotone').showLegend(false);
 					}
 				});
