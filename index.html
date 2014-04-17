@@ -17,6 +17,9 @@
 		h1 {
 			text-align: center;
 		}
+		#registrations .nvd3 .nv-series-0 circle {
+			fill-opacity: 1;
+		}
 	</style>
 
 	<script src='lrs-data.js'></script>
@@ -37,7 +40,7 @@
 					post: function(data){
 						return data
 							// sort by height, and limit to 15 bars
-							.orderBy('result.count', 'descending')
+							.orderBy('out', 'descending')
 							.select(set.first(10));
 					},
 					customize: function(chart){
@@ -74,20 +77,31 @@
 				dash.genLineGraph('#graphContainer #registrations svg', {
 					xField: 'timestamp',
 					pre: function(data){
-						return data.orderBy('timestamp');
+						console.log('pre');
+						return data.orderBy('timestamp').transform(function(stmt){
+							stmt.timestamp = Date.parse(stmt.timestamp);
+							return stmt;
+						});
 					},
-					aggregate: ADL.XAPIDashboard.accumulate,
+					//aggregate: ADL.XAPIDashboard.accumulate,
+					aggregate: function(statements,opts){
+						var start = statements.contents[0].timestamp,
+							end = statements.contents[statements.contents.length-1].timestamp;
+						var range = ADL.Collection.genRange(start,end, 1000*60*60*24);
+						var test = statements.groupByRange('timestamp', range, function(group){
+							return group.count();
+						});
+						return test;
+					},
 					post: function(data){
-						data.transform(function(e){
-							e.in = new Date(Date.parse(e.in));
+						return data.transform(function(e){
+							e.in = parseInt(e.in.split(',')[0]);
 							return e;
 						});
-						console.log(data);
-						return data;
 					},
 					customize: function(chart){
-						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
-						chart.forceY([0,500]);
+						chart.xAxis.tickFormat(function(d){ console.log(d); return d3.time.format('%b %d')(new Date(d)) });
+						chart.interpolate('monotone').showLegend(false);
 					}
 				});
 			}
@@ -109,7 +123,7 @@
 			<svg></svg>
 		</div>
 		<div id='registrations'>
-			<h1>Number of Statements Over Time</h1>
+			<h1>New Statements Per Day</h1>
 			<svg></svg>
 		</div>
 	</div>

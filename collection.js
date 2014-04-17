@@ -315,6 +315,7 @@
 			outArr.push(isDate ? (new Date(start))[format]() : start);
 			start += increment;
 		}
+		outArr.push(isDate ? (new Date(end))[format]() : end);
 		
 		return outArr;
 	};

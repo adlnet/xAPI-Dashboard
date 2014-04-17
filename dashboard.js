@@ -72,7 +72,7 @@
 				opts.customize(chart);
 
 			d3.select(container)
-				.datum([{'key': 'Users registered', 'values': data.contents}])
+				.datum([{'values': data.contents}])
 				.call(chart);
 
   			nv.utils.windowResize(chart.update);
