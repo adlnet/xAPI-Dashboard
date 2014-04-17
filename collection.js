@@ -70,9 +70,11 @@
 		for( var i in pathVals )
 		{
 			var val = pathVals[i];
+			var group = this.selectEqual(xpath,val);
 			ret.contents.push({
-				'groupValue': val,
-				'result': cb(this.selectEqual(xpath, val))
+				'in': val,
+				'out': cb(group),
+				'sample': group.contents[0]
 			});
 		}
 
@@ -86,50 +88,15 @@
 
 		for( var i = 0; i < arr.length - 1; i++ )
 		{
+			var group = this.selectRange(xpath, arr[i], arr[i+1]);
 			ret.contents.push({
-				'groupValue': arr[i] + "," + arr[i+1],
-				'result': cb(this.selectRange(xpath, arr[i], arr[i+1]))
+				'in': arr[i] + "," + arr[i+1],
+				'out': cb(group),
+				'sample': group.contents[0]
 			});
 		}
 		
 		return ret;
-	};
-	
-	//Convenience function to generate input for groupByRange
-	//if start is parsable by date:
-	//	it is assumed that end is also a date and i is an increment value in ms
-	//	format is used to call: Date.prototype[format]() - Default to 'toISOString' if falsy.
-	Collection.genRange = function(start, end, i, format){
-		var outArr = [],
-			isDate = false;
-		
-		if(typeof start == "string"){
-			if(!format || ['toDateString', 'toGMTString', 'toISOString', 'toJSON', 'toLocaleDateString', 'toLocaleString', 'toLocaleTimeString', 'toString', 'toTimeString', 'toUTC'].indexOf(format) == -1){
-				format = 'toISOString';
-			}
-			
-			//if i is unsuitable to act as an increment for dates, then default to a day
-			i = typeof i == "number" && i > 0 ? i : 1000 * 60 * 60 * 24; 
-		
-			if(!isNaN(Date.parse(start)) && !isNaN(Date.parse(end))){
-				start = Date.parse(start); 
-				end = Date.parse(end); 
-				isDate = true;
-			}
-			
-			else{
-				console.error("Date cannot parse arbitrary strings (Collection.genRange)");
-				return [];
-			}
-		}
-		
-		while(start < end){
-			//May want to eventually update this if it severely impacts performance
-			outArr.push(isDate ? (new Date(start))[format]() : start);
-			start += i;
-		}
-		
-		return outArr;
 	};
 
 	// order the contents of the set by path
@@ -313,6 +280,43 @@
 			}
 			return curElem;
 		};
+	};
+	
+	//Convenience function to generate input for groupByRange
+	//if start is parsable by date:
+	//	it is assumed that end is also a date and increment is an increment value in ms
+	//	format is used to call: Date.prototype[format]() - Default to 'toISOString' if falsy.
+	Collection.genRange = function(start, end, increment, format){
+		var outArr = [],
+			isDate = false;
+		
+		if(typeof start == "string"){
+			if(!format || ['toDateString', 'toGMTString', 'toISOString', 'toJSON', 'toLocaleDateString', 'toLocaleString', 'toLocaleTimeString', 'toString', 'toTimeString', 'toUTC'].indexOf(format) == -1){
+				format = 'toISOString';
+			}
+			
+			//if increment is unsuitable to act as an increment for dates, then default to a day
+			increment = typeof increment == "number" && increment > 0 ? increment : 1000 * 60 * 60 * 24; 
+		
+			if(!isNaN(Date.parse(start)) && !isNaN(Date.parse(end))){
+				start = Date.parse(start); 
+				end = Date.parse(end); 
+				isDate = true;
+			}
+			
+			else{
+				console.error("Date cannot parse arbitrary strings (Collection.genRange)");
+				return [];
+			}
+		}
+		
+		while(start < end){
+			//May want to eventually update this if it severely impacts performance
+			outArr.push(isDate ? (new Date(start))[format]() : start);
+			start += increment;
+		}
+		
+		return outArr;
 	};
 
 	ADL.Collection = Collection;

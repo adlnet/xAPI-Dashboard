@@ -45,16 +45,15 @@
 		this.statements = this.statements.union(new ADL.Collection(statementsArr));
 	};
 	
-	// opts.xAxisField is a required string
-	// opts.yAxisField is an optional string
-	// opts.operation, opts.pre, opts.post, opts.customize are optional functions
+	// default aggregator requires opts.groupField
+	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
 	XAPIDashboard.prototype.genLineGraph = function(container, opts){
 	
 		var data = this.statements;
 		if(opts.pre)
 			data = opts.pre(data);
 
-		data = opts.operation ? opts.operation(data, opts) : XAPIDashboard.sum(data, opts);
+		data = (opts.aggregate ? opts.aggregate : XAPIDashboard.accumulate)(data, opts);
 
 		if(opts.post)
 			data = opts.post(data);
@@ -62,8 +61,8 @@
 		nv.addGraph(function(){
 			var chart = nv.models.lineChart()
 				.options({
-					'x': function(d,i){ return d.x},
-					'y': function(d,i){ return d.y; },
+					'x': function(d,i){ return d.in; },
+					'y': function(d,i){ return d.out; },
 					'showXAxis': true,
 					'showYAxis': true,
 					'transitionDuration': 250
@@ -81,27 +80,22 @@
 		});
 	};
 	
-	// opts.groupField and opts.labelField are required strings
-	// opts.operation, opts.pre, opts.post, opts.customize are optional functions
+	// default aggregator requires opts.xField
+	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
 	XAPIDashboard.prototype.genBarGraph = function(container, opts){
 		var data = this.statements;
 		if(opts.pre)
 			data = opts.pre(data);
 
-		data = opts.operation ? opts.operation(data, opts) : XAPIDashboard.count(data, opts);
+		data = (opts.aggregate ? opts.aggregate : XAPIDashboard.count)(data, opts);
 
 		if(opts.post)
 			data = opts.post(data);
 
 		nv.addGraph(function(){
 			var chart = nv.models.discreteBarChart()
-				.x(function(d){ 
-					if(opts.labelField)
-						return ADL.Collection.getValue('result.sample.'+opts.labelField)(d);
-					else
-						return d.groupValue;
-				})
-				.y(function(d){ return d.result.count; })
+				.x(function(d){ return d.in; })
+				.y(function(d){ return d.out; })
 				.staggerLabels(true)
 				.transitionDuration(250);
 
@@ -123,28 +117,19 @@
 	 */
 	 
 	XAPIDashboard.count = function(statements, opts){
-		return statements.groupBy(opts.groupField, function(groupSet){ return {
-				'sample': groupSet.contents[0],
-				'count': groupSet.count()
-			}});
-	};	 
-	
-	XAPIDashboard.sum = function(statements, opts){
-		return statements.orderBy(opts.xAxisField).transform(function(elem, index, array){
-			var sum = 0;
-			if(opts.yAxisField){
-				for(var i=0; i<=index; i++){
-					sum += ADL.Collection.getValue(opts.yAxisField)(array[i]);
-				}
-			}
+		return statements.groupBy(opts.groupField, function(groupSet){ return groupSet.count(); });
+	};
 
+	XAPIDashboard.accumulate = function(statements, opts){
+		return statements.transform(function(elem,index,array){
 			return {
-				'x': ADL.Collection.getValue(opts.xAxisField)(elem),
-				'y': opts.yAxisField ? sum : index
+				'in': ADL.Collection.getValue(opts.xField)(elem),
+				'out': opts.yField ? statements.select(ADL.Collection.first(index+1)).sum(opts.yField) : index+1,
+				'sample': elem
 			};
 		});
 	};
-
+	
 	ADL.XAPIDashboard = XAPIDashboard;
 
 })(window.ADL = window.ADL || {});

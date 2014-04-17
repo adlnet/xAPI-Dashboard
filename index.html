@@ -30,9 +30,8 @@
 
 		window.onload = function(){
 		
-			//dash.fetchAllStatements({'since': new Date(Date.now() - 1000*60*60*24*30).toISOString()}, wrapper, function(){
-			dash.addStatements(window.statements);
-
+			function generateGraphs()
+			{
 				dash.genBarGraph("#graphContainer #verbs svg", {
 					groupField: "verb.id", 
 					post: function(data){
@@ -46,7 +45,7 @@
 							.tooltips(true)
 							.tooltipContent(function(key,x,y,e,chart){
 								return '<h3>'
-									+e.point.result.sample.verb.id
+									+e.point.sample.verb.id
 									+'</h3><p>'
 									+y
 									+'</p>';
@@ -73,14 +72,17 @@
 				});
 
 				dash.genLineGraph('#graphContainer #registrations svg', {
-					xAxisField: 'timestamp', 
+					xField: 'timestamp',
+					pre: function(data){
+						return data.orderBy('timestamp');
+					},
+					aggregate: ADL.XAPIDashboard.accumulate,
 					post: function(data){
-						// 441 users as of first track
 						data.transform(function(e){
-							e.x = new Date(Date.parse(e.x));
-							e.y = e.y + 441;
+							e.in = new Date(Date.parse(e.in));
 							return e;
 						});
+						console.log(data);
 						return data;
 					},
 					customize: function(chart){
@@ -88,8 +90,15 @@
 						chart.forceY([0,500]);
 					}
 				});
+			}
 
-			//});
+			if( window.statements ){
+				dash.addStatements(window.statements);
+				generateGraphs();
+			}
+			else {
+				dash.fetchAllStatements({'since': new Date(Date.now() - 1000*60*60*24*30).toISOString()}, wrapper, generateGraphs);
+			}
 		};
 	</script>
 </head>
@@ -100,7 +109,7 @@
 			<svg></svg>
 		</div>
 		<div id='registrations'>
-			<h1>New Registrations Over Time</h1>
+			<h1>Number of Statements Over Time</h1>
 			<svg></svg>
 		</div>
 	</div>
