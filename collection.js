@@ -70,9 +70,11 @@
 		for( var i in pathVals )
 		{
 			var val = pathVals[i];
+			var group = this.selectEqual(xpath,val);
 			ret.contents.push({
-				'groupValue': val,
-				'result': cb(this.selectEqual(xpath, val))
+				'in': val,
+				'out': cb(group),
+				'sample': group.contents[0]
 			});
 		}
 
