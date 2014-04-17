@@ -78,6 +78,33 @@
 
 		return ret;
 	};
+	
+	// aggregate and run callback
+	Collection.prototype.groupByRange = function(xpath, start, end, interval, cb)
+	{
+		//Will assume only date for now
+		//add logic to support other types
+		var start = Date.parse(start),
+			end = Date.parse(end);
+			
+		var startObj, nextIntObj;
+		var ret = new Collection();
+
+		while( start < end )
+		{
+			startObj = new Date(start);
+			nextIntObj = new Date(start + interval);
+
+			ret.contents.push({
+				'groupValue': startObj.toISOString() + ", " + nextIntObj.toISOString(),
+				'result': cb(this.selectRange(xpath, startObj.toISOString(), nextIntObj.toISOString()))
+			});
+			
+			start += interval;
+		}
+		
+		return ret;
+	};
 
 	// order the contents of the set by path
 	Collection.prototype.orderBy = function(xpath, comparator)
@@ -173,6 +200,9 @@
 	Collection.prototype.selectEqual = function(xpath, value){
 		return this.select(Collection.equals(xpath,value));
 	};
+	Collection.prototype.selectRange = function(xpath, startValue, endValue){
+		return this.select(Collection.range(xpath,startValue, endValue));
+	};
 
 
 
@@ -224,9 +254,12 @@
 	};
 
 	// return elem s.t. startVal <= elem < endVal
-	Collection.between = function(xpath, startVal, endVal)
+	Collection.range = function(xpath, startVal, endVal)
 	{
-		
+		return function(elem, index, array){
+			var val = Collection.getValue(xpath)(elem);
+			return startVal <= val && val < endVal;
+		}
 	};
 
 
