@@ -125,7 +125,7 @@
 	 
 	XAPIDashboard.count = function(statements, opts){
 		return statements.groupBy(opts.groupField, function(groupSet){ return groupSet.count(); });
-	};
+	};	 
 
 	XAPIDashboard.accumulate = function(statements, opts){
 		return statements.transform(function(elem,index,array){
@@ -136,6 +136,13 @@
 			};
 		});
 	};
+	
+	XAPIDashboard.countRange = function(statements, opts){
+		var rangeArr = ADL.Collection.genRange(opts.range.start, opts.range.end, opts.range.increment);
+		return statements.groupByRange(opts.groupField, rangeArr, function(groupSet){ 
+			return groupSet.count()
+		});
+	};	 
 	
 	ADL.XAPIDashboard = XAPIDashboard;
 
