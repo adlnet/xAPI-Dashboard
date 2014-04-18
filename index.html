@@ -1,12 +1,7 @@
 <html>
 <head>
-	<script src="lib/d3.v3.js" charset="utf8"></script>
-	<script src="lib/nv.d3.js"></script>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
-	<script type="text/javascript" src="lib/xapiwrapper.min.js"></script>
-
-	<script type="text/javascript" src="collection.js"></script>
-	<script type="text/javascript" src="dashboard.js"></script>
+	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
 
 	<style>
 		#graphContainer > div{
@@ -22,7 +17,7 @@
 		}
 	</style>
 
-	<script src='lrs-data.js'></script>
+	<script src='extra/lrs-data.js'></script>
 
 	<script type="text/javascript">
 		var wrapper = new XAPIWrapper({
@@ -73,13 +68,15 @@
 
 					}
 				});
-
+				
 				dash.genLineGraph('#graphContainer #registrations svg', {
 					xField: 'timestamp',
-					pre: function(data){
-						return data.orderBy('timestamp');
+					range: {
+						start: dash.statements.min("timestamp"),
+						end: dash.statements.max("timestamp")
 					},
-					//aggregate: ADL.XAPIDashboard.accumulate,
+					aggregate: ADL.XAPIDashboard.countRange,
+					/* aggregate: ADL.XAPIDashboard.accumulate,
 					aggregate: function(statements,opts){
 						var start = statements.contents[0].timestamp,
 							end = statements.contents[statements.contents.length-1].timestamp;
@@ -88,8 +85,8 @@
 							return group.count();
 						});
 						return test;
-					},
-					/*post: function(data){
+					}, 
+					post: function(data){
 						return data.transform(function(e){
 							e.in = parseInt(e.in.split(',')[0]);
 							return e;

@@ -60,7 +60,7 @@ everything before the last slash.
 
 After all that effort, the final result was worth it:
 
-![Example Bar Chart](chart_initial.png)
+![Example Bar Chart](extra/chart_initial.png)
 
 It's still not perfect though. It would be nice if the bars were sorted by height. This is simple
 to do using the provided *Collection* methods.
@@ -146,7 +146,7 @@ elements.
 
 Throw a header on there, and we get this final result:
 
-![Final Bar Chart](chart_final.png)
+![Final Bar Chart](extra/chart_final.png)
 
 
 ## Resources
