@@ -1,6 +1,6 @@
 {
   "name": "xAPI-Dashboard",
-  "version": "0.0.1",
+  "version": "0.1.0-alpha",
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-contrib-jshint": "~0.6.3",

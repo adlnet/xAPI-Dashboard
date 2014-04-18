@@ -71,27 +71,13 @@
 				
 				dash.genLineGraph('#graphContainer #registrations svg', {
 					xField: 'timestamp',
+					//the range object specifies the start, end, and increment to be used by range aggregators
 					range: {
 						start: dash.statements.min("timestamp"),
-						end: dash.statements.max("timestamp")
+						end: dash.statements.max("timestamp"),
+						increment: set.day
 					},
 					aggregate: ADL.XAPIDashboard.countRange,
-					/* aggregate: ADL.XAPIDashboard.accumulate,
-					aggregate: function(statements,opts){
-						var start = statements.contents[0].timestamp,
-							end = statements.contents[statements.contents.length-1].timestamp;
-						var range = ADL.Collection.genRange(start,end, 1000*60*60*24);
-						var test = statements.groupByRange('timestamp', range, function(group){
-							return group.count();
-						});
-						return test;
-					}, 
-					post: function(data){
-						return data.transform(function(e){
-							e.in = parseInt(e.in.split(',')[0]);
-							return e;
-						});
-					},*/
 					customize: function(chart){
 						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
 						chart.interpolate('monotone').showLegend(false);
@@ -104,7 +90,7 @@
 				generateGraphs();
 			}
 			else {
-				dash.fetchAllStatements({'since': new Date(Date.now() - 1000*60*60*24*30).toISOString()}, wrapper, generateGraphs);
+				dash.fetchAllStatements({'since': new Date(Date.now() - set.day * 30).toISOString()}, wrapper, generateGraphs);
 			}
 		};
 	</script>

@@ -23150,7 +23150,7 @@ nv.models.stackedAreaChart = function() {
 		test = function(cur, end){ return cur < end; };
 
 		if( start instanceof Date ){
-			i = i > 0 ? i : 1000 * 60 * 60 * 24;
+			i = i > 0 ? i : Collection.day;
 			increment = function(x,i){ return new Date( x.getTime()+i ); };
 		}
 		else if( typeof(start) === 'string' ){
@@ -23168,6 +23168,12 @@ nv.models.stackedAreaChart = function() {
 		groupArr.push(end);
 		return groupArr;
 	};
+	
+	Collection.second = 1000;
+	Collection.minute = Collection.second * 60;
+	Collection.hour = Collection.minute * 60;
+	Collection.day = Collection.hour * 24;
+	Collection.week = Collection.day * 7;
 
 	ADL.Collection = Collection;
 
@@ -23203,7 +23209,7 @@ nv.models.stackedAreaChart = function() {
 	};
 	
 	XAPIDashboard.prototype.clearSavedStatements = function(){
-		this.contents = new Collection();
+		this.statements = new ADL.Collection();
 	};
 	
 	XAPIDashboard.prototype.addStatements = function(statementsArr){

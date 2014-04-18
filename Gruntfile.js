@@ -14,7 +14,7 @@ module.exports = function(grunt) {
 	},
     uglify: {
       options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        banner: '/*! <%= pkg.name %> v<%= pkg.version %> | Built on <%= grunt.template.today("mm-dd-yyyy") %> */\n'
       },
       build: {
         src: 'dist/xapidashboard.js',

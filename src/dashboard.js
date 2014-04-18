@@ -29,7 +29,7 @@
 	};
 	
 	XAPIDashboard.prototype.clearSavedStatements = function(){
-		this.contents = new Collection();
+		this.statements = new ADL.Collection();
 	};
 	
 	XAPIDashboard.prototype.addStatements = function(statementsArr){
