@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<script type="text/javascript" src="../extra/knockout-3.1.0.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../dist/xapidashboard.min.js"></script>
+	<script type="text/javascript" src="model.js"></script>
+	
+	<link rel='stylesheet' href='../lib/nv.d3.css'></link>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">	
+	<link rel="stylesheet" href="style.css">	
+	<style>
+		#graphContainer > div{
+			width: 800px; height: 500px;
+			min-width: 100px; min-height: 100px;
+			margin: 20px;
+		}
+		#registrations .nvd3 .nv-series-0 circle {
+			fill-opacity: 1;
+		}
+	</style>
+	<script src='../extra/lrs-data.js'></script>
+</head>
+<body>
+	<div id="container" >
+		<div class="sidebar">
+		
+			<button data-bind="click:setModalType('Add LRS')" data-toggle="modal" data-target="#myModal">New LRS</button>
+		</div>
+		<div class="main">
+		
+			<div id='graphContainer'>
+				<div id='verbs'>
+					<h1>Most Popular Verbs of the Last 30 Days</h1>
+					<svg></svg>
+				</div>
+			</div>
+		</div>		
+	</div>
+	
+	<!-- Modal -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<h4 class="modal-title" id="myModalLabel" data-bind="text:currentModalType"></h4>
+		  </div>
+		  <div class="modal-body">
+				<!--ko if: currentModalType() == "Add LRS" -->
+				
+					<input type="text" placeholder="End point" /><br/>
+					<input type="text" placeholder="Username" /><br/>
+					<input type="text" placeholder="Password" /><br/>
+				<!-- /ko -->
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<button type="button" class="btn btn-primary">Save changes</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+
+	<script type="text/javascript">
+		var wrapper = new XAPIWrapper({
+			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
+		});
+		var dash = new ADL.XAPIDashboard(),
+			set = ADL.Collection;
+	</script>
+</body>
+</html>

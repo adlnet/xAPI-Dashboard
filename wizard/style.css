@@ -1,0 +1,31 @@
+.sidebar{
+
+	float:left;
+	width:12%;
+	background-color: #eee;
+	height: 100%;
+	margin: 0;
+	padding : 20px;
+	border-right: 1px solid #ccc;
+	display:block;
+}
+
+.main{
+
+	float:right;
+	width:88%;
+	padding:10px;
+	margin:0;
+}
+
+.modal-body{
+	min-height: 300px;
+}
+
+.modal-body > *{
+	margin:15px auto;
+	float:left;
+	clear:both;
+	min-width: 40%;
+	height: 30px;
+}
