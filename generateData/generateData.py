@@ -1,6 +1,7 @@
 #!/bin/env python
 import random, json, datetime as dt
 from uuid import uuid4
+from math import sqrt
 
 random.seed()
 nameData = []
@@ -26,7 +27,7 @@ class Student(object):
 		self.deviation = deviation
 
 	def answerQuestion(self, difficulty):
-		return random.normalvariate(self.average,self.deviation) > difficulty
+		return random.normalvariate(self.average,sqrt(self.deviation)) >= difficulty
 
 
 
@@ -34,8 +35,8 @@ class Class(object):
 	def __init__(self, numStudents, classAverage, classDeviation):
 		self.students = []
 		for i in range(numStudents):
-			studentAverage = random.normalvariate(classAverage, classDeviation)
-			studentDeviation = 15
+			studentAverage = random.normalvariate(classAverage, sqrt(classDeviation))
+			studentDeviation = 1
 			self.students.append( Student( studentAverage, studentDeviation ) )
 
 	def takeTest(self, test):
@@ -104,8 +105,13 @@ def genStatements(results):
 
 		for student,time in times.items():
 			xapiStatements.append( genStatement(student,'completed',testid,time) )
-			passed = 'passed' if averages[student] > 60 else 'failed'
+			passed = 'passed' if averages[student] >= 60 else 'failed'
 			xapiStatements.append( genStatement(student,passed,testid,time,averages[student]) )
+
+
+	def sortKey(e):
+		return e['stored']
+	xapiStatements.sort(key=sortKey, reverse=True)
 
 	return xapiStatements
 
@@ -141,7 +147,7 @@ def genStatement(student, verb, activity, time, score=None):
 		stmt['result'] = {
 			'success': score
 		}
-	elif isinstance(score, int):
+	elif isinstance(score, (int,long,float)):
 		stmt['result'] = {
 			'score': {
 				'raw': score,
@@ -157,13 +163,15 @@ def genStatement(student, verb, activity, time, score=None):
 def main():
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [25,25,25,50,50,50]) )
+	battery.tests.append( Test('test1', [50 for i in range(100)]) )
 
-	myclass = Class(10, 80, 20)
+	myclass = Class(100, 50, 1)
 
 	results = battery.run(myclass)
 	statements = genStatements(results)
 	print json.dumps(statements, indent=4)
+	#for s in myclass.students:
+	#	print s.name, s.average, s.deviation
 
 if __name__ == '__main__':
 	main()
