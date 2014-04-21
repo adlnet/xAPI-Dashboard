@@ -9,12 +9,8 @@ query language to manipulate it.
 Generating your first chart is easy. First, include the libraries:
 
 ```html
-<script src="d3.v3.min.js"></script>
-<script src="nvd3/nv.d3.js"></script>
 <link rel='stylesheet' href='nvd3/nv.d3.css'></link>
-<script type="text/javascript" src="xAPIWrapper/xapiwrapper.min.js"></script>
-<script type="text/javascript" src="collection.js"></script>
-<script type="text/javascript" src="dashboard.js"></script>
+<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
 ```
 
 Next, you should fetch your data from an LRS. You can either retrieve them yourself, or use the
@@ -60,7 +56,7 @@ everything before the last slash.
 
 After all that effort, the final result was worth it:
 
-![Example Bar Chart](chart_initial.png)
+![Example Bar Chart](extra/chart_initial.png)
 
 It's still not perfect though. It would be nice if the bars were sorted by height. This is simple
 to do using the provided *Collection* methods.
@@ -146,7 +142,7 @@ elements.
 
 Throw a header on there, and we get this final result:
 
-![Final Bar Chart](chart_final.png)
+![Final Bar Chart](extra/chart_final.png)
 
 
 ## Resources

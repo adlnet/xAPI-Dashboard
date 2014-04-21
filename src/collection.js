@@ -340,15 +340,20 @@
 
 	Collection.genRange = function(start, end, i)
 	{
-		var increment = function(x,i){ return x+i; },
+		var increment = function(x,i){ 
+			i = i > 0 ? i : 1;
+			return x+i; 
+		},
 		test = function(cur, end){ return cur < end; };
 
 		if( start instanceof Date ){
+			i = i > 0 ? i : Collection.day;
 			increment = function(x,i){ return new Date( x.getTime()+i ); };
 		}
 		else if( typeof(start) === 'string' ){
 			start = start.toLowerCase().charAt(0);
 			end = end ? end.toLowerCase().charAt(0) : '{';
+			i = i > 0 ? i : 1;
 			increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
 		}
 
@@ -360,6 +365,12 @@
 		groupArr.push(end);
 		return groupArr;
 	};
+	
+	Collection.second = 1000;
+	Collection.minute = Collection.second * 60;
+	Collection.hour = Collection.minute * 60;
+	Collection.day = Collection.hour * 24;
+	Collection.week = Collection.day * 7;
 
 	ADL.Collection = Collection;
 
