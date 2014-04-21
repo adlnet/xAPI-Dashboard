@@ -2,22 +2,23 @@
 <head>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
 	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
+	<script src='http://code.jquery.com/jquery-2.1.0.min.js'></script>
 
 	<style>
-		#graphContainer > div{
-			width: 800px; height: 500px;
+		#graphContainer {
+			display: flex;
+			flex-wrap: wrap;
+		}
+		#graphContainer svg {
+			width: 500px; height: 300px;
 			min-width: 100px; min-height: 100px;
-			margin: 20px;
 		}
 		h1 {
 			text-align: center;
 		}
-		#registrations .nvd3 .nv-series-0 circle {
-			fill-opacity: 1;
-		}
 	</style>
 
-	<script src='extra/lrs-data.js'></script>
+	<script src='extra/gen-lrs-data.js'></script>
 
 	<script type="text/javascript">
 		var wrapper = new XAPIWrapper({
@@ -30,7 +31,29 @@
 		
 			function generateGraphs()
 			{
-				dash.genBarGraph("#graphContainer #verbs svg", {
+				$('#analytics #averageScore span').text(
+					dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
+						dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed')).average('result.score.raw')
+				);
+
+				$('#graphContainer #first h1').text('Test Results');
+				dash.genBarGraph('#graphContainer #first svg', {
+					pre: function(data){
+						return data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
+							data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed'));
+					},
+					aggregate: function(statements){
+						return statements
+							.groupByRange('result.score.raw', ADL.Collection.genRange(0,101,5), function(group){
+								return group.count();
+							});
+					},
+					customize: function(chart){
+						chart.staggerLabels(false);
+					}
+				});
+
+				/*dash.genBarGraph("#graphContainer #verbs svg", {
 					groupField: "verb.id", 
 					post: function(data){
 						return data
@@ -60,11 +83,11 @@
 
 						chart.yAxis.tickFormat(d3.format(',d'));
 
-						/*chart.discretebar.dispatch.on('elementClick', function(e){
+						chart.discretebar.dispatch.on('elementClick', function(e){
 							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
 								window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
 							}
-						});*/
+						});
 
 					}
 				});
@@ -82,7 +105,7 @@
 						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
 						chart.interpolate('monotone').showLegend(false);
 					}
-				});
+				});*/
 			}
 
 			if( window.statements ){
@@ -96,13 +119,16 @@
 	</script>
 </head>
 <body>
+	<div id='analytics'>
+		<p id='averageScore'>Average student score: <span></span>%</p>
+	</div>
 	<div id='graphContainer'>
-		<div id='verbs'>
-			<h1>Most Popular Verbs of the Last 30 Days</h1>
+		<div id='first'>
+			<h1></h1>
 			<svg></svg>
 		</div>
-		<div id='registrations'>
-			<h1>New Statements Per Day</h1>
+		<div id='second'>
+			<h1></h1>
 			<svg></svg>
 		</div>
 	</div>

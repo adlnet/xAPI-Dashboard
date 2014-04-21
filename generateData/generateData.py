@@ -1,5 +1,5 @@
 #!/bin/env python
-import random, json, datetime as dt
+import sys, random, json, datetime as dt
 from uuid import uuid4
 from math import sqrt
 
@@ -16,28 +16,26 @@ class EST(dt.tzinfo):
 
 
 class Student(object):
-	def __init__(self, average, deviation):
+	def __init__(self, average, variance):
 
 		self.firstName = random.choice(nameData['firstNames'])
 		self.lastName = random.choice(nameData['lastNames'])
-		self.name = '{} {}'.format(self.firstName, self.lastName)
-		self.email = '{}.{}@myschool.edu'.format(self.firstName.lower(), self.lastName.lower())
+		self.name = u'{} {}'.format(self.firstName, self.lastName)
+		self.email = u'{}.{}@myschool.edu'.format(self.firstName.lower(), self.lastName.lower())
 
 		self.average = average
-		self.deviation = deviation
+		self.variance = variance
 
 	def answerQuestion(self, difficulty):
-		return random.normalvariate(self.average,sqrt(self.deviation)) >= difficulty
-
+		return random.normalvariate(self.average,sqrt(self.variance)) >= difficulty
 
 
 class Class(object):
-	def __init__(self, numStudents, classAverage, classDeviation):
+	def __init__(self, numStudents, classAverage, classVariance, studentVariance):
 		self.students = []
 		for i in range(numStudents):
-			studentAverage = random.normalvariate(classAverage, sqrt(classDeviation))
-			studentDeviation = 1
-			self.students.append( Student( studentAverage, studentDeviation ) )
+			studentAverage = random.normalvariate(classAverage, sqrt(classVariance))
+			self.students.append( Student( studentAverage, studentVariance ) )
 
 	def takeTest(self, test):
 		results = TestResults(len(test))
@@ -83,7 +81,7 @@ def genStatements(results):
 	for testid,questions in results.items():
 
 		times = {}
-		averages = {}
+		sums = {}
 		try:
 			startTime += dt.timedelta(hours=3)
 		except UnboundLocalError:
@@ -98,16 +96,17 @@ def genStatements(results):
 
 				activity = '{}/q{}'.format(testid,qNum)
 				times[student] = times.get(student, startTime) + dt.timedelta(seconds=random.randint(30,90))
+				sums[student] = sums.get(student,0) + (100 if result else 0)
 
 				xapiStatements.append( genStatement(student,'answered',activity,times[student],result) )
 
-				averages[student] = (averages.get(student, 0) * qNum + (100 if result else 0))/(qNum+1)
 
 		for student,time in times.items():
 			xapiStatements.append( genStatement(student,'completed',testid,time) )
-			passed = 'passed' if averages[student] >= 60 else 'failed'
-			xapiStatements.append( genStatement(student,passed,testid,time,averages[student]) )
 
+			average = sums[student]/len(questions)
+			passed = 'passed' if average >= 60 else 'failed'
+			xapiStatements.append( genStatement(student,passed,testid,time,average) )
 
 	def sortKey(e):
 		return e['stored']
@@ -163,15 +162,13 @@ def genStatement(student, verb, activity, time, score=None):
 def main():
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [50 for i in range(100)]) )
+	battery.tests.append( Test('test1', [73 for i in range(20)]) )
 
-	myclass = Class(100, 50, 1)
+	myclass = Class(100, 80,10,40)
 
 	results = battery.run(myclass)
 	statements = genStatements(results)
 	print json.dumps(statements, indent=4)
-	#for s in myclass.students:
-	#	print s.name, s.average, s.deviation
 
 if __name__ == '__main__':
 	main()

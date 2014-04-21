@@ -291,7 +291,7 @@
 		return function(elem){
 			var curElem = elem;
 			for(var i=0; i<parts.length; i++){
-				if(curElem[parts[i]])
+				if(curElem[parts[i]] !== undefined)
 					curElem = curElem[parts[i]];
 				else
 					return null;
