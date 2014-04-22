@@ -2,7 +2,6 @@
 <head>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
 	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
-	<script src='http://code.jquery.com/jquery-2.1.0.min.js'></script>
 
 	<style>
 		#graphContainer {
@@ -21,6 +20,8 @@
 	<script src='extra/gen-lrs-data.js'></script>
 
 	<script type="text/javascript">
+		$ = function(query){ return document.querySelector(query); }
+
 		var wrapper = new XAPIWrapper({
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
@@ -31,16 +32,16 @@
 		
 			function generateGraphs()
 			{
-				$('#analytics #averageScore span').text(
+				$('#analytics #averageScore span').textContent = 
 					dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
-						dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed')).average('result.score.raw')
-				);
+						dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed')).average('result.score.raw');
 
-				$('#graphContainer #first h1').text('Test Results');
+				$('#graphContainer #first h1').textContent = 'Test 1 Results';
 				dash.genBarGraph('#graphContainer #first svg', {
 					pre: function(data){
-						return data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
-							data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed'));
+						return data.selectEqual('object.id','http://myschool.edu/xapi_vocab/test1')
+							.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
+								data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed'));
 					},
 					aggregate: function(statements){
 						return statements
@@ -50,62 +51,71 @@
 					},
 					customize: function(chart){
 						chart.staggerLabels(false);
-					}
-				});
-
-				/*dash.genBarGraph("#graphContainer #verbs svg", {
-					groupField: "verb.id", 
-					post: function(data){
-						return data
-							// sort by height, and limit to 15 bars
-							.orderBy('out', 'descending')
-							.select(set.first(10));
-					},
-					customize: function(chart){
-						chart
-							.tooltips(true)
-							.tooltipContent(function(key,x,y,e,chart){
-								return '<h3>'
-									+e.point.sample.verb.id
-									+'</h3><p>'
-									+y
-									+'</p>';
-							})
-							.showValues(false)
-							.staggerLabels(false)
-							.color(['#1f77b4'])
-							.margin({bottom: 150});
-
-						chart.xAxis
-							.rotateLabels(45);
-						chart.xAxis
-							.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
-
 						chart.yAxis.tickFormat(d3.format(',d'));
-
-						chart.discretebar.dispatch.on('elementClick', function(e){
-							if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
-								window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
-							}
-						});
-
 					}
 				});
-				
-				dash.genLineGraph('#graphContainer #registrations svg', {
-					xField: 'timestamp',
-					//the range object specifies the start, end, and increment to be used by range aggregators
-					range: {
-						start: dash.statements.min("timestamp"),
-						end: dash.statements.max("timestamp"),
-						increment: set.day
+
+				$('#graphContainer #third h1').textContent = 'Test 2 Results';
+				dash.genBarGraph('#graphContainer #third svg', {
+					pre: function(data){
+						return data.selectEqual('object.id','http://myschool.edu/xapi_vocab/test2')
+							.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
+								data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed'));
 					},
-					aggregate: ADL.XAPIDashboard.countRange,
+					aggregate: function(statements){
+						return statements
+							.groupByRange('result.score.raw', ADL.Collection.genRange(0,101,5), function(group){
+								return group.count();
+							});
+					},
 					customize: function(chart){
-						chart.xAxis.tickFormat(function(d){ return d3.time.format('%b %d')(new Date(d)) });
-						chart.interpolate('monotone').showLegend(false);
+						chart.staggerLabels(false);
+						chart.yAxis.tickFormat(d3.format(',d'));
 					}
-				});*/
+				});
+
+				$('#graphContainer #second h1').textContent = 'Test 1 High Scorers';
+				var data = dash.statements.selectEqual('object.id','http://myschool.edu/xapi_vocab/test1')
+					.orderBy('result.score.raw','descending').select(ADL.Collection.first(10));
+				for(var i=0; i<data.contents.length; i++){
+					var block = document.createElement('li');
+					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
+					block.querySelector('.name').textContent = data.contents[i].actor.name;
+					block.querySelector('.score').textContent = data.contents[i].result.score.raw;
+					$('#graphContainer #second ol').appendChild(block);
+				}
+
+				/************************************
+				Chart customization tips and tricks:
+				*************************************
+
+				// tooltips are special divs, where h3 is the name and p is the content
+				chart.tooltips(true).tooltipContent(function(key,x,y,e,chart){
+					return '<h3>'
+						+e.point.sample.verb.id
+						+'</h3><p>'
+						+y
+						+'</p>';
+				});
+
+				// takes an array of color strings
+				chart.color(['#1f77b4'])
+
+				// rotate the x-axis labels 45 degress, useful for long strings
+				chart.xAxis.rotateLabels(45);
+
+				// apply some transformation to the x-axis labels
+				chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
+
+				chart.yAxis.tickFormat(d3.format(',d'));
+
+				chart.discretebar.dispatch.on('elementClick', function(e){
+					if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
+						window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
+				
+				chart.interpolate('monotone').showLegend(false);
+
+				**************************************/
 			}
 
 			if( window.statements ){
@@ -128,6 +138,10 @@
 			<svg></svg>
 		</div>
 		<div id='second'>
+			<h1></h1>
+			<ol></ol>
+		</div>
+		<div id='third'>
 			<h1></h1>
 			<svg></svg>
 		</div>

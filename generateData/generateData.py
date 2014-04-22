@@ -162,7 +162,8 @@ def genStatement(student, verb, activity, time, score=None):
 def main():
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [73 for i in range(20)]) )
+	battery.tests.append( Test('test1', [70 for i in range(100)]) )
+	battery.tests.append( Test('test2', [75 for i in range(100)]) )
 
 	myclass = Class(100, 80,10,40)
 
