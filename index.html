@@ -9,10 +9,16 @@
 			display: flex;
 			flex-wrap: wrap;
 		}
+
+		#graphContainer > div {
+			margin: 10px;
+		}
+
 		#graphContainer svg {
 			width: 500px; height: 300px;
 			min-width: 100px; min-height: 100px;
 		}
+
 		h1 {
 			text-align: center;
 		}
@@ -32,20 +38,18 @@
 		
 			function generateGraphs()
 			{
-				dash.statements = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
-				var test1data = dash.statements.selectEqual('object.id','http://myschool.edu/xapi_vocab/test1');
-				var test2data = dash.statements.selectEqual('object.id','http://myschool.edu/xapi_vocab/test2');
+				var testResults = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
 
-				$('#analytics #averageScore span').textContent = test1data.union(test2data).average('result.score.raw');
+				$('#analytics #averageScore span').textContent = testResults.average('result.score.raw');
 
-				$('#graphContainer #first h1').textContent = 'Test 1 Results';
+				$('#graphContainer #first h1').textContent = 'Test Results';
 				dash.genBarGraph('#graphContainer #first svg', {
 					pre: function(data){
-						return test1data;
+						return testResults;
 					},
 					aggregate: function(statements){
 						return statements
-							.groupByRange('result.score.raw', ADL.Collection.genRange(0,101,5), function(group){
+							.groupByRange('result.score.raw', ADL.Collection.genRange(50,101,5), function(group){
 								return group.count();
 							});
 					},
@@ -55,25 +59,8 @@
 					}
 				});
 
-				$('#graphContainer #third h1').textContent = 'Test 2 Results';
-				dash.genBarGraph('#graphContainer #third svg', {
-					pre: function(data){
-						return test2data;
-					},
-					aggregate: function(statements){
-						return statements
-							.groupByRange('result.score.raw', ADL.Collection.genRange(0,101,5), function(group){
-								return group.count();
-							});
-					},
-					customize: function(chart){
-						chart.staggerLabels(false);
-						chart.yAxis.tickFormat(d3.format(',d'));
-					}
-				});
-
-				$('#graphContainer #second h1').textContent = 'Test 1 High Scorers';
-				var data = test1data.orderBy('result.score.raw','descending').select(ADL.Collection.first(10));
+				$('#graphContainer #second h1').textContent = 'High Scorers';
+				var data = testResults.orderBy('result.score.raw','descending').selectFirst(10);
 				for(var i=0; i<data.contents.length; i++){
 					var block = document.createElement('li');
 					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
@@ -81,6 +68,23 @@
 					block.querySelector('.score').textContent = data.contents[i].result.score.raw;
 					$('#graphContainer #second ol').appendChild(block);
 				}
+
+				$('#graphContainer #third h1').textContent = 'Hardest Questions';
+				var data = dash.statements.selectMatch('verb.id',/answered$/);
+				data = data.groupBy('object.id', function(group){
+						return group.selectEqual('result.success',true).count() / group.count();
+					})
+					.orderBy('out').selectFirst(10);
+
+				for(var i=0; i<data.contents.length; i++){
+					var block = document.createElement('li');
+					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
+					block.querySelector('.name').textContent = data.contents[i].in.slice(31);
+					block.querySelector('.score').textContent = data.contents[i].out*100 + '% correct';
+					$('#graphContainer #third ol').appendChild(block);
+					
+				}
+
 
 				/************************************
 				Chart customization tips and tricks:
@@ -140,7 +144,7 @@
 		</div>
 		<div id='third'>
 			<h1></h1>
-			<svg></svg>
+			<ol></ol>
 		</div>
 	</div>
 </body>

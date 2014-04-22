@@ -1,7 +1,6 @@
 #!/bin/env python
-import sys, random, json, datetime as dt
+import sys, random, json, math, datetime as dt
 from uuid import uuid4
-from math import sqrt
 
 random.seed()
 nameData = []
@@ -16,7 +15,7 @@ class EST(dt.tzinfo):
 
 
 class Student(object):
-	def __init__(self, average, variance):
+	def __init__(self, average):
 
 		self.firstName = random.choice(nameData['firstNames'])
 		self.lastName = random.choice(nameData['lastNames'])
@@ -24,18 +23,20 @@ class Student(object):
 		self.email = u'{}.{}@myschool.edu'.format(self.firstName.lower(), self.lastName.lower())
 
 		self.average = average
-		self.variance = variance
 
 	def answerQuestion(self, difficulty):
-		return random.normalvariate(self.average,sqrt(self.variance)) >= difficulty
+		difference = self.average - difficulty
+		successProbability = math.atan((difference+12)/10)/math.pi + 0.5
+		return random.random() < successProbability
+		#return random.normalvariate(self.average,sqrt(self.variance)) >= difficulty
 
 
 class Class(object):
-	def __init__(self, numStudents, classAverage, classVariance, studentVariance):
+	def __init__(self, numStudents, classAverage, classVariance):
 		self.students = []
 		for i in range(numStudents):
-			studentAverage = random.normalvariate(classAverage, sqrt(classVariance))
-			self.students.append( Student( studentAverage, studentVariance ) )
+			studentAverage = random.normalvariate(classAverage, math.sqrt(classVariance))
+			self.students.append( Student(studentAverage) )
 
 	def takeTest(self, test):
 		results = TestResults(len(test))
@@ -162,10 +163,10 @@ def genStatement(student, verb, activity, time, score=None):
 def main():
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [70 for i in range(100)]) )
-	battery.tests.append( Test('test2', [75 for i in range(100)]) )
+	battery.tests.append( Test('test1', [random.randint(70,85) for i in range(100)]) )
+	#battery.tests.append( Test('test2', [50 for i in range(100)]) )
 
-	myclass = Class(100, 80,10,40)
+	myclass = Class(100, 85,50)
 
 	results = battery.run(myclass)
 	statements = genStatements(results)
