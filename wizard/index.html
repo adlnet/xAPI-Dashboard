@@ -21,7 +21,6 @@
 	<div id="container" >
 		<div class="sidebar">
 			<div class="side-element">
-				<button class="btn" data-bind="click:setModalType('Add LRS')" data-toggle="modal" data-target="#myModal">Add LRS</button>
 				<ul data-bind="foreach:lrsList">
 					<li data-bind="text: endpoint"></li>
 						<ul>
@@ -29,14 +28,15 @@
 							<li>Pass: xxxxx</li>
 						</ul>					
 				</ul>
+				<button class="btn" data-bind="click:setModalType('Add LRS')" data-toggle="modal" data-target="#myModal">Add LRS</button>
 			</div>
 			<div class="side-element">
-				<button class="btn" data-bind="click:setModalType('Add Chart'), visible: lrsList().length>0" data-toggle="modal" data-target="#myModal">New Chart</button>
 				<ul data-bind="foreach:chartList">
 					<li>
 						<a href="#" data-bind="text: title"></a>
 					</li>
 				</ul>
+				<button class="btn" data-bind="click:setModalType('Add Chart'), visible: lrsList().length>0" data-toggle="modal" data-target="#myModal">New Chart</button>
 			</div>
 		</div>
 		<div class="main">
@@ -48,7 +48,26 @@
 				</div>
 			</div>
 			<div class="chart-footer">
-				Testing
+				<div data-bind="if:mainObject()">
+					<div class="col-md-4">
+						
+						Testing width
+						
+					</div>
+					<div class="col-md-4">
+						
+						Testing width
+						
+					</div>
+					<div class="col-md-4">
+						
+						Testing width
+						
+					</div>
+				</div>
+				<div data-bind="if:!mainObject()">
+					<h3 class="default-header">Choose an LRS and chart to begin</h3>
+				</div>
 			</div>	
 		</div>	
 	
@@ -70,17 +89,13 @@
 				<!-- /ko -->
 				<!--ko if: currentModalType() == "Add Chart" -->
 					<input type="text" placeholder="Title" data-bind="value:chartAddOpts.title" /><br/>
-					<select type="text" placeholder="Chart type" data-bind="value:chartAddOpts.type">
+					<select type="text" data-bind="value:chartAddOpts.type">
 						<option selected disabled class="placeholder">Chart type</option>
 						<option value="bar">Bar chart</option>
 						<option value="line">Line chart</option>
 					</select>
 					<br/>
-					<select type="text" placeholder="Chart type" data-bind="value:chartAddOpts.lrs">
-						<option selected disabled class="">Choose an LRS</option>
-						<!-- ko foreach: lrsList -->
-							<option data-bind="text:endpoint"></option>
-						<!-- /ko -->
+					<select type="text" data-bind="value:chartAddOpts.lrs, options: getEndpointNames(), optionsCaption: 'Choose an LRS' ">
 					</select><br/>
 				<!-- /ko -->
 		  </div>

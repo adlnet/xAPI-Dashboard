@@ -73,6 +73,14 @@ $(document).ready(function(){
 		self.chartList = ko.observableArray();
 		self.lrsList = ko.observableArray();
 		
+		self.getEndpointNames = function(){
+			var arr = [];
+			for(var i = 0; i < self.lrsList().length; i++){
+				arr.push(self.lrsList()[i]().endpoint);
+			}
+			return arr;
+		};
+		
 		self.currentModalType = ko.observable('');
 		self.mainObject = ko.observable();
 		
