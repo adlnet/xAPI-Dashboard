@@ -2,6 +2,7 @@
 <head>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
 	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
+	<script src='extra/gen-lrs-data.js'></script>
 
 	<style>
 		#graphContainer {
@@ -17,7 +18,6 @@
 		}
 	</style>
 
-	<script src='extra/gen-lrs-data.js'></script>
 
 	<script type="text/javascript">
 		$ = function(query){ return document.querySelector(query); }
@@ -32,16 +32,16 @@
 		
 			function generateGraphs()
 			{
-				$('#analytics #averageScore span').textContent = 
-					dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
-						dash.statements.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed')).average('result.score.raw');
+				dash.statements = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
+				var test1data = dash.statements.selectEqual('object.id','http://myschool.edu/xapi_vocab/test1');
+				var test2data = dash.statements.selectEqual('object.id','http://myschool.edu/xapi_vocab/test2');
+
+				$('#analytics #averageScore span').textContent = test1data.union(test2data).average('result.score.raw');
 
 				$('#graphContainer #first h1').textContent = 'Test 1 Results';
 				dash.genBarGraph('#graphContainer #first svg', {
 					pre: function(data){
-						return data.selectEqual('object.id','http://myschool.edu/xapi_vocab/test1')
-							.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
-								data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed'));
+						return test1data;
 					},
 					aggregate: function(statements){
 						return statements
@@ -58,9 +58,7 @@
 				$('#graphContainer #third h1').textContent = 'Test 2 Results';
 				dash.genBarGraph('#graphContainer #third svg', {
 					pre: function(data){
-						return data.selectEqual('object.id','http://myschool.edu/xapi_vocab/test2')
-							.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/passed').union(
-								data.selectEqual('verb.id','http://adlnet.gov/expapi/verbs/failed'));
+						return test2data;
 					},
 					aggregate: function(statements){
 						return statements
@@ -75,8 +73,7 @@
 				});
 
 				$('#graphContainer #second h1').textContent = 'Test 1 High Scorers';
-				var data = dash.statements.selectEqual('object.id','http://myschool.edu/xapi_vocab/test1')
-					.orderBy('result.score.raw','descending').select(ADL.Collection.first(10));
+				var data = test1data.orderBy('result.score.raw','descending').select(ADL.Collection.first(10));
 				for(var i=0; i<data.contents.length; i++){
 					var block = document.createElement('li');
 					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
