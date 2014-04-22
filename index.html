@@ -1,21 +1,23 @@
 <html>
 <head>
+	<title>xAPI Dashboard</title>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
 	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
 	<script src='extra/gen-lrs-data.js'></script>
 
 	<style>
-		#graphContainer {
+		div.container {
 			display: flex;
 			flex-wrap: wrap;
+			justify-content: center;
 		}
 
-		#graphContainer > div {
+		div.container > div {
 			margin: 10px;
 		}
 
-		#graphContainer svg {
-			width: 500px; height: 300px;
+		svg {
+			width: 800px; height: 500px;
 			min-width: 100px; min-height: 100px;
 		}
 
@@ -40,10 +42,10 @@
 			{
 				var testResults = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
 
-				$('#analytics #averageScore span').textContent = testResults.average('result.score.raw');
+				$('#statistics #avg span').textContent = testResults.average('result.score.raw');
 
-				$('#graphContainer #first h1').textContent = 'Test Results';
-				dash.genBarGraph('#graphContainer #first svg', {
+				$('#graph h1').textContent = 'Test Results';
+				dash.genBarGraph('#graph svg', {
 					pre: function(data){
 						return testResults;
 					},
@@ -59,17 +61,17 @@
 					}
 				});
 
-				$('#graphContainer #second h1').textContent = 'High Scorers';
+				$('#scores h1').textContent = 'High Scorers';
 				var data = testResults.orderBy('result.score.raw','descending').selectFirst(10);
 				for(var i=0; i<data.contents.length; i++){
 					var block = document.createElement('li');
 					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
 					block.querySelector('.name').textContent = data.contents[i].actor.name;
 					block.querySelector('.score').textContent = data.contents[i].result.score.raw;
-					$('#graphContainer #second ol').appendChild(block);
+					$('#scores ol').appendChild(block);
 				}
 
-				$('#graphContainer #third h1').textContent = 'Hardest Questions';
+				$('#hard_questions h1').textContent = 'Hardest Questions';
 				var data = dash.statements.selectMatch('verb.id',/answered$/);
 				data = data.groupBy('object.id', function(group){
 						return group.selectEqual('result.success',true).count() / group.count();
@@ -81,7 +83,7 @@
 					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
 					block.querySelector('.name').textContent = data.contents[i].in.slice(31);
 					block.querySelector('.score').textContent = data.contents[i].out*100 + '% correct';
-					$('#graphContainer #third ol').appendChild(block);
+					$('#hard_questions ol').appendChild(block);
 					
 				}
 
@@ -130,21 +132,24 @@
 	</script>
 </head>
 <body>
-	<div id='analytics'>
-		<p id='averageScore'>Average student score: <span></span>%</p>
-	</div>
-	<div id='graphContainer'>
-		<div id='first'>
+	<div class='container'>
+		<div id='graph'>
 			<h1></h1>
 			<svg></svg>
 		</div>
-		<div id='second'>
+	</div>
+	<div class='container'>
+		<div id='scores'>
 			<h1></h1>
 			<ol></ol>
 		</div>
-		<div id='third'>
+		<div id='hard_questions'>
 			<h1></h1>
 			<ol></ol>
+		</div>
+		<div id='statistics'>
+			<h1>Statistics</h1>
+			<p id='avg'>Average score: <span></span>%</p>
 		</div>
 	</div>
 </body>
