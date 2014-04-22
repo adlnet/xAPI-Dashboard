@@ -202,6 +202,15 @@
 		return this.select(Collection.match(xpath, re));
 	};
 
+	Collection.prototype.selectFirst = function(n){
+		return this.select(Collection.first(n));
+	};
+
+	Collection.prototype.selectLast = function(n){
+		return this.select(Collection.last(n));
+	};
+
+
 
 	/*
 	 * Class methods to generate filters
@@ -238,7 +247,7 @@
 	Collection.match = function(xpath, re)
 	{
 		return function(elem){
-			return re.test( Collection.getValue(xpath,elem) );
+			return re.test( Collection.getValue(xpath)(elem) );
 		}
 	};
 

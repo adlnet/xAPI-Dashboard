@@ -23005,6 +23005,15 @@ nv.models.stackedAreaChart = function() {
 		return this.select(Collection.match(xpath, re));
 	};
 
+	Collection.prototype.selectFirst = function(n){
+		return this.select(Collection.first(n));
+	};
+
+	Collection.prototype.selectLast = function(n){
+		return this.select(Collection.last(n));
+	};
+
+
 
 	/*
 	 * Class methods to generate filters
@@ -23041,7 +23050,7 @@ nv.models.stackedAreaChart = function() {
 	Collection.match = function(xpath, re)
 	{
 		return function(elem){
-			return re.test( Collection.getValue(xpath,elem) );
+			return re.test( Collection.getValue(xpath)(elem) );
 		}
 	};
 
@@ -23094,7 +23103,7 @@ nv.models.stackedAreaChart = function() {
 		return function(elem){
 			var curElem = elem;
 			for(var i=0; i<parts.length; i++){
-				if(curElem[parts[i]])
+				if(curElem[parts[i]] !== undefined)
 					curElem = curElem[parts[i]];
 				else
 					return null;
