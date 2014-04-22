@@ -1,21 +1,51 @@
+html, body{
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#container{
+	height: 100%;
+}
+
+#graphContainer{
+	height: 80%;
+}
+
 .sidebar{
 
 	float:left;
 	width:12%;
-	background-color: #eee;
+	background-color: #79A3C7;
 	height: 100%;
 	margin: 0;
 	padding : 20px;
-	border-right: 1px solid #ccc;
+	border-right: 1px solid #4D94D1;
 	display:block;
+}
+
+.side-element{
+	border-bottom: 1px solid #9CB6CC;
+	text-align:center;
+	padding: 15px 0;
 }
 
 .main{
 
 	float:right;
 	width:88%;
-	padding:10px;
 	margin:0;
+	height: 100%;
+}
+
+.chart-footer{
+
+	width: 100%;
+	background-color: #eee;
+	border-top: 1px solid #DFDFDF;
+	float: left;
+	height: 20%;
 }
 
 .modal-body{
@@ -28,4 +58,8 @@
 	clear:both;
 	min-width: 40%;
 	height: 30px;
+}
+
+.placeholder{
+	display:none;
 }

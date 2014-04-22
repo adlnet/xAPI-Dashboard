@@ -9,39 +9,49 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="../dist/xapidashboard.min.js"></script>
+	
 	<script type="text/javascript" src="model.js"></script>
 	
 	<link rel='stylesheet' href='../lib/nv.d3.css'></link>
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">	
 	<link rel="stylesheet" href="style.css">	
-	<style>
-		#graphContainer > div{
-			width: 800px; height: 500px;
-			min-width: 100px; min-height: 100px;
-			margin: 20px;
-		}
-		#registrations .nvd3 .nv-series-0 circle {
-			fill-opacity: 1;
-		}
-	</style>
-	<script src='../extra/lrs-data.js'></script>
 </head>
 <body>
 	<div id="container" >
 		<div class="sidebar">
-		
-			<button data-bind="click:setModalType('Add LRS')" data-toggle="modal" data-target="#myModal">New LRS</button>
+			<div class="side-element">
+				<button class="btn" data-bind="click:setModalType('Add LRS')" data-toggle="modal" data-target="#myModal">Add LRS</button>
+				<ul data-bind="foreach:lrsList">
+					<li data-bind="text: endpoint"></li>
+						<ul>
+							<li data-bind="text: 'User: ' + username"></li>
+							<li>Pass: xxxxx</li>
+						</ul>					
+				</ul>
+			</div>
+			<div class="side-element">
+				<button class="btn" data-bind="click:setModalType('Add Chart'), visible: lrsList().length>0" data-toggle="modal" data-target="#myModal">New Chart</button>
+				<ul data-bind="foreach:chartList">
+					<li>
+						<a href="#" data-bind="text: title"></a>
+					</li>
+				</ul>
+			</div>
 		</div>
 		<div class="main">
 		
-			<div id='graphContainer'>
+			<div id='graphContainer' data-bind="with:mainObject">
 				<div id='verbs'>
-					<h1>Most Popular Verbs of the Last 30 Days</h1>
+					<h1 data-bind="text:title"></h1>
 					<svg></svg>
 				</div>
 			</div>
-		</div>		
+			<div class="chart-footer">
+				Testing
+			</div>	
+		</div>	
+	
 	</div>
 	
 	<!-- Modal -->
@@ -54,26 +64,32 @@
 		  </div>
 		  <div class="modal-body">
 				<!--ko if: currentModalType() == "Add LRS" -->
-				
-					<input type="text" placeholder="End point" /><br/>
-					<input type="text" placeholder="Username" /><br/>
-					<input type="text" placeholder="Password" /><br/>
+					<input type="text" placeholder="End point" data-bind="value:lrsAddOpts.endpoint" /><br/>
+					<input type="text" placeholder="Username" data-bind="value:lrsAddOpts.username" /><br/>
+					<input type="password" placeholder="Password" data-bind="value:lrsAddOpts.password" /><br/>
+				<!-- /ko -->
+				<!--ko if: currentModalType() == "Add Chart" -->
+					<input type="text" placeholder="Title" data-bind="value:chartAddOpts.title" /><br/>
+					<select type="text" placeholder="Chart type" data-bind="value:chartAddOpts.type">
+						<option selected disabled class="placeholder">Chart type</option>
+						<option value="bar">Bar chart</option>
+						<option value="line">Line chart</option>
+					</select>
+					<br/>
+					<select type="text" placeholder="Chart type" data-bind="value:chartAddOpts.lrs">
+						<option selected disabled class="">Choose an LRS</option>
+						<!-- ko foreach: lrsList -->
+							<option data-bind="text:endpoint"></option>
+						<!-- /ko -->
+					</select><br/>
 				<!-- /ko -->
 		  </div>
 		  <div class="modal-footer">
 			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-			<button type="button" class="btn btn-primary">Save changes</button>
+			<button type="button" class="btn btn-primary" data-bind="click:modalSaveClick">Save changes</button>
 		  </div>
 		</div>
 	  </div>
 	</div>
-
-	<script type="text/javascript">
-		var wrapper = new XAPIWrapper({
-			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
-		});
-		var dash = new ADL.XAPIDashboard(),
-			set = ADL.Collection;
-	</script>
 </body>
 </html>
