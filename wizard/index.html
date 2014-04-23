@@ -15,7 +15,8 @@
 	<link rel='stylesheet' href='../lib/nv.d3.css'></link>
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">	
-	<link rel="stylesheet" href="style.css">	
+	<link rel="stylesheet" href="style.css">
+	<link href="themes/prism.css" rel="stylesheet" />	
 </head>
 <body>
 	<div id="container" >
@@ -24,7 +25,7 @@
 				<ul data-bind="foreach:lrsList">
 					<li data-bind="text: endpoint"></li>
 						<ul>
-							<li data-bind="text: 'User: ' + username"></li>
+							<li data-bind="text: 'User: ' + user"></li>
 							<li>Pass: xxxxx</li>
 						</ul>					
 				</ul>
@@ -49,17 +50,32 @@
 			</div>
 			<div class="chart-footer">
 				<div data-bind="if:mainObject()">
-					<div class="col-md-4">
+					<div class="col-md-3">
+						
+						<div class="single-option">
+							<span>Group field:</span><input type="text" data-bind="value:groupBy" /><br/>
+							<a href="#" data-bind="click:setModalType('Sample Statement')" data-toggle="modal" data-target="#myModal">Choose from sample statement</a>
+						</div>
+						<div class="single-option">
+							<span>Aggregation type:</span>
+							<select data-bind="value:aggregationType">
+								<option value="count">Count</option>
+								<option value="accumulate">Accumulate</option>
+								<option value="average">Average</option>
+							</select>
+						</div>
+					</div>
+					<div class="col-md-3">
 						
 						Testing width
 						
 					</div>
-					<div class="col-md-4">
+					<div class="col-md-3">
 						
 						Testing width
 						
 					</div>
-					<div class="col-md-4">
+					<div class="col-md-3">
 						
 						Testing width
 						
@@ -84,7 +100,7 @@
 		  <div class="modal-body">
 				<!--ko if: currentModalType() == "Add LRS" -->
 					<input type="text" placeholder="End point" data-bind="value:lrsAddOpts.endpoint" /><br/>
-					<input type="text" placeholder="Username" data-bind="value:lrsAddOpts.username" /><br/>
+					<input type="text" placeholder="Username" data-bind="value:lrsAddOpts.user" /><br/>
 					<input type="password" placeholder="Password" data-bind="value:lrsAddOpts.password" /><br/>
 				<!-- /ko -->
 				<!--ko if: currentModalType() == "Add Chart" -->
@@ -98,6 +114,9 @@
 					<select type="text" data-bind="value:chartAddOpts.lrs, options: getEndpointNames(), optionsCaption: 'Choose an LRS' ">
 					</select><br/>
 				<!-- /ko -->
+				<!--ko if: currentModalType() == "Sample Statement" -->
+					<pre><code class="language-javascript" id="statement-code" data-bind="text:sampleStatement"></code></pre>
+				<!-- /ko -->
 		  </div>
 		  <div class="modal-footer">
 			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -106,5 +125,6 @@
 		</div>
 	  </div>
 	</div>
+	<script src="prism.js" data-manual></script>
 </body>
 </html>

@@ -5,6 +5,29 @@ html, body{
 	padding: 0;
 }
 
+h1{
+	text-align:center;
+	margin-top:0;
+}
+
+ul{
+	padding: 0;
+	text-align: left;
+}
+
+ul li a{
+	color: black;
+}
+
+pre{
+	width: 100%;
+	height: 270px !important;
+}
+
+#verbs{
+	height: 95%;
+}
+
 #container{
 	height: 100%;
 }
@@ -67,4 +90,18 @@ html, body{
 
 .placeholder{
 	display:none;
+}
+
+.key{
+	color: #428BCA;
+	text-decoration: underline;
+}
+.key:hover{
+	cursor: pointer;
+}
+
+.single-option{
+	border-bottom: 1px solid #D8D8D8;
+	text-align: center;
+	padding: 13px;
 }
