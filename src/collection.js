@@ -17,7 +17,7 @@
 	// simple filter
 	Collection.prototype.select = function(filter)
 	{
-		return new Collection(
+		/*return new Collection(
 			this.contents.reduce(
 				function(sum,val,index,array){
 					if( filter(val,index,array) )
@@ -25,7 +25,15 @@
 					return sum;
 				}
 			, [])
-		);
+		);*/
+		var sum = [];
+		for(var i=0; i<this.contents.length; i++){
+			var e = this.contents[i];
+			if( filter(e,i,this.contents) ){
+				sum.push(e);
+			}
+		}
+		return new Collection(sum);
 	};
 
 	// returns intersection of this and argument
