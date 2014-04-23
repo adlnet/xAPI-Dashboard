@@ -1,6 +1,8 @@
 #!/bin/env python
-import sys, random, json, math, datetime as dt
+import subprocess, sys, os, random, json, math, datetime as dt
 from uuid import uuid4
+from StringIO import StringIO
+
 
 random.seed()
 nameData = []
@@ -170,7 +172,24 @@ def main():
 
 	results = battery.run(myclass)
 	statements = genStatements(results)
-	print json.dumps(statements, indent=4)
+	stmtString = json.dumps(statements, indent=4)
+
+	if '-p' in sys.argv:
+		path = os.path.dirname(os.path.realpath(__file__))
+		p = subprocess.Popen(['node', path+'/compress.js'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		stmtString, err = p.communicate(stmtString)
+		if err != '':
+			print 'Error', err
+
+	if '-o' in sys.argv:
+		i = sys.argv.index('-o')
+		try:
+			with open(sys.argv[i+1],'w') as outfile:
+				outfile.write(stmtString)
+		except IndexError:
+			print stmtString
+	else:
+		print stmtString
 
 if __name__ == '__main__':
 	main()
