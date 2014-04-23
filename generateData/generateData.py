@@ -5,9 +5,7 @@ from StringIO import StringIO
 
 
 random.seed()
-nameData = []
-with open('names.json','r') as names:
-	nameData = json.load(names)
+nameData = {}
 
 class EST(dt.tzinfo):
 	def utcoffset(self, d):
@@ -164,6 +162,19 @@ def genStatement(student, verb, activity, time, score=None):
 
 def main():
 
+	if not set(sys.argv).isdisjoint(set(['-?','-h','--help'])):
+		print 'Generate SCORM-style xAPI statements'
+		print 'options:'
+		print '  -o <filename> - output to a file instead of the console'
+		print '  -p            - pack the JSON payload in a compressed javascript file'
+		return
+		
+	path = os.path.dirname(os.path.realpath(__file__))
+	with open(path+'/names.json','r') as names:
+		global nameData
+		nameData = json.load(names)
+
+
 	battery = Battery()
 	battery.tests.append( Test('test1', [random.randint(70,85) for i in range(100)]) )
 	#battery.tests.append( Test('test2', [50 for i in range(100)]) )
@@ -175,8 +186,7 @@ def main():
 	stmtString = json.dumps(statements, indent=4)
 
 	if '-p' in sys.argv:
-		path = os.path.dirname(os.path.realpath(__file__))
-		p = subprocess.Popen(['node', path+'/compress.js'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		p = subprocess.Popen(['node', path+'/compress.js'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path)
 		stmtString, err = p.communicate(stmtString)
 		if err != '':
 			print 'Error', err
