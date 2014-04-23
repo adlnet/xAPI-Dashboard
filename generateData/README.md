@@ -4,7 +4,6 @@ Many times it is easier to experiment with the Dashboard with local data rather 
 
 This subproject of the xAPI Dashboard efforts will generate SCORM-like statements based on how it is configured. It will generate a set of *n* unique fictitious students with names, email addresses, and proficiencies. It will then simulate those students taking tests with a given number of variable-difficulty questions, and record the results in xAPI format.
 
-This process is done in two steps. First you must generate the xAPI statements by configuring and running the Python script *generateData.py*, then you can either use that JSON data directly or pack it into a compressed header using the *compress.js* Node.js script.
 
 ## Producing the Raw JSON Data
 
@@ -25,7 +24,6 @@ def main():
 	# run tests
     results = battery.run(myclass)
     statements = genStatements(results)
-    print json.dumps(statements, indent=4)
 ```
 
 This can be broken into a couple of logical sections: creating tests, creating students, and giving the students the tests.
@@ -46,19 +44,16 @@ Each student will answer questions based on the difference between the question 
 
 ### Running the tests
 
-This part of the process will probably not need to be changed. It runs the battery of tests, generates xAPI statements based on the results, and then prints the statements to the console. If you want to output the statements to a file instead, replace the last `json.dumps` line with:
+This part of the process will probably not need to be changed. It runs the battery of tests, generates xAPI statements based on the results, and then outputs the statements to a specified file if the `-o` argument is given, or the console if not.
 
-```python
-with open('myfile.json','w') as outfile:
-	json.dump(outfile, indent=4)
-```
-
-### xAPI output
+## xAPI output
 
 Generally speaking, the script will output sane and internally consistent xAPI-format test data. Using the ADL verbs, each student will `attempt` a test, `answer` each question with a boolean `result.success` value, `complete` the test, and then `pass` or `fail` the test based on the `result.score.raw` percentage.
 
 These statements will have in-order timestamps per student, reversed as if they came from an LRS, with each question taking between 30 and 90 seconds to answer and each test starting 3 hours from the start of the previous one. Note that though each student's statements will be in-order, interleaving effects may make a given student's statements non-sequential.
 
-All of these statements will be serialized and output as a JSON array of statement objects.
+All of these statements will be serialized and output as a JSON array of statement objects. If the `-o` argument is specified, then the JSON will be output to that file, otherwise it will be printed to the console.
 
 ## Building the Self-Extracting Payload
+
+You also have the option of outputting the statements in the form of a Javascript source file. If the `-p` flag is specified, the script will generate a self-extracting compressed digest of the xAPI data. Just include the result in your HTML document via the `<script>` tag like any other Javascript, and the statements will be written to `window.statements` for the dashboard to read.
