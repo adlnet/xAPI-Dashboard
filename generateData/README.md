@@ -50,7 +50,7 @@ This part of the process will probably not need to be changed. It runs the batte
 
 Generally speaking, the script will output sane and internally consistent xAPI-format test data. Using the ADL verbs, each student will `attempt` a test, `answer` each question with a boolean `result.success` value, `complete` the test, and then `pass` or `fail` the test based on the `result.score.raw` percentage.
 
-These statements will have in-order timestamps per student, reversed as if they came from an LRS, with each question taking between 30 and 90 seconds to answer and each test starting 3 hours from the start of the previous one. Note that though each student's statements will be in-order, interleaving effects may make a given student's statements non-sequential.
+These statements will have in-order timestamps per student, reversed as if they came from an LRS, with each question taking between 30 and 90 seconds to answer and each test starting 3 hours from the start of the previous one. Note that since the statements are sorted by timestamp, a given student's statements may not be sequential.
 
 All of these statements will be serialized and output as a JSON array of statement objects. If the `-o` argument is specified, then the JSON will be output to that file, otherwise it will be printed to the console.
 
