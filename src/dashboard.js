@@ -23,7 +23,7 @@
 			}
 			
 			else if(cb){
-				cb();
+				cb(self.statements);
 			}
 		});
 	};
