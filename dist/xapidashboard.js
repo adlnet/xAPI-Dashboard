@@ -23220,7 +23220,7 @@ nv.models.stackedAreaChart = function() {
 			}
 			
 			else if(cb){
-				cb();
+				cb(self.statements);
 			}
 		});
 	};
