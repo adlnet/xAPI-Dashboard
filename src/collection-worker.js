@@ -1,5 +1,11 @@
 
+function deserialize(buffer){
+	
+}
+
+
 onmessage = function(event)
 {
-	postMessage('Did you say '+event.data+'?');
+	
+	console.log(event.data);
 };

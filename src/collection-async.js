@@ -3,13 +3,27 @@
  ***************************************************************/
 
 (function(ADL){
-	function Collection(array){
-		this.contents = array.slice();
-		this.worker = new Worker('src/collection-worker.js');
+
+	function serialize(obj){
+		var json = JSON.stringify(obj);
+		var jsonChars = json.split('');
+		var buf = new ArrayBuffer(2*json.length);
+		var view = new Uint16Array(buf);
+		for(var i=0, offset=0; i<jsonChars.length; i++, offset++){
+			view[offset] = jsonChars[i].charCodeAt(0);
+			if( jsonChars[i].charCodeAt(1) !== NaN )
+				view[++offset] = jsonChars[i].charCodeAt(1);
+		}
+		return buf;
 	}
 
-	Collection.prototype.signal = function(message){
-		this.worker.postMessage(message);
+	function Collection(array){
+		this.worker = new Worker('src/collection-worker.js');
+		this.worker.postMessage(null,[serialize(array)]);
+	}
+
+	Collection.prototype.select = function(filter){
+		this.worker.postMessage(['select','distinct']);
 		return this;
 	};
 

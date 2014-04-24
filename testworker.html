@@ -3,12 +3,13 @@
 	<head>
 		<title>WebWorker test</title>
 		<script src='src/collection-async.js'></script>
+		<script src='extra/gen-lrs-data.js'></script>
 		<script>
 			function ready(){
-				var c = new ADL.Collection([1,2,3]);
-				c.signal('hello world').signal('asdf').eval(function(msg){
+				var c = new ADL.Collection(window.statements);
+				/*c.select().eval(function(msg){
 					document.body.innerHTML += msg;
-				});
+				});*/
 			};
 		</script>
 	</head>
