@@ -3,6 +3,9 @@
 	<title>xAPI Dashboard</title>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
 	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
+	<script type="text/javascript" src="src/chart.js"></script>
+	<script type="text/javascript" src="src/dashboard.js"></script>
+	<script type="text/javascript" src="src/collection.js"></script>
 	<script src='extra/gen-lrs-data.js'></script>
 
 	<style>
@@ -33,7 +36,7 @@
 		var wrapper = new XAPIWrapper({
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
-		var dash = new ADL.XAPIDashboard(),
+		var dash = new ADL.XAPIDashboard('#graph svg'),
 			set = ADL.Collection;
 
 		window.onload = function(){
@@ -43,9 +46,9 @@
 				var testResults = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
 
 				$('#statistics #avg span').textContent = testResults.average('result.score.raw');
-
 				$('#graph h1').textContent = 'Test Results';
-				dash.genBarGraph('#graph svg', {
+				
+				var chart = dash.createBarChart({
 					pre: function(data){
 						return testResults;
 					},
@@ -60,6 +63,8 @@
 						chart.yAxis.tickFormat(d3.format(',d'));
 					}
 				});
+				
+				chart.draw();
 
 				$('#scores h1').textContent = 'High Scorers';
 				var data = testResults.orderBy('result.score.raw','descending').selectFirst(10);

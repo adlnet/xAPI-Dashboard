@@ -2,8 +2,9 @@
 
 (function(ADL){
 
-	var XAPIDashboard = function(){
+	var XAPIDashboard = function(container){
 		this.statements = new ADL.Collection();
+		this.container = container;
 	}
 
 	XAPIDashboard.prototype.fetchAllStatements = function(query, wrapper, cb){
@@ -52,72 +53,22 @@
 		this.statements = this.statements.union( newStatements );
 	};
 	
-	// default aggregator requires opts.groupField
-	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
-	XAPIDashboard.prototype.genLineGraph = function(container, opts){
-	
-		var data = this.statements;
-		if(opts.pre)
-			data = opts.pre(data);
-
-		data = (opts.aggregate ? opts.aggregate : XAPIDashboard.accumulate)(data, opts);
-
-		if(opts.post)
-			data = opts.post(data);
-
-		nv.addGraph(function(){
-			var chart = nv.models.lineChart()
-				.options({
-					'x': function(d,i){ return d.in; },
-					'y': function(d,i){ return d.out; },
-					'showXAxis': true,
-					'showYAxis': true,
-					'transitionDuration': 250
-				});
-
-			if(opts.customize)
-				opts.customize(chart);
-
-			d3.select(container)
-				.datum([{'values': data.contents}])
-				.call(chart);
-
-  			nv.utils.windowResize(chart.update);
-			return chart;
-		});
-	};
-	
 	// default aggregator requires opts.xField
 	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
-	XAPIDashboard.prototype.genBarGraph = function(container, opts){
-		var data = this.statements;
-		if(opts.pre)
-			data = opts.pre(data);
-
-		data = (opts.aggregate ? opts.aggregate : XAPIDashboard.count)(data, opts);
-
-		if(opts.post)
-			data = opts.post(data);
-
-		nv.addGraph(function(){
-			var chart = nv.models.discreteBarChart()
-				.x(function(d){ return d.in; })
-				.y(function(d){ return d.out; })
-				.staggerLabels(true)
-				.transitionDuration(250);
-
-			if( opts.customize )
-				opts.customize(chart);
-
-			d3.select(container)
-				.datum([{
-					'values': data.contents}])
-				.call(chart);
-			
-			nv.utils.windowResize(chart.update);
-			return chart;
-		});
-	};
+	XAPIDashboard.prototype.createChart = function(type, opts){
+	
+		switch(type){
+			case "barChart": return new ADL.BarChart(this.statements, this.container, opts); break;
+			case "lineChart": return new ADL.LineChart(this.statements, this.container, opts); break;
+			default: return new ADL.Chart(this.statements, this.container, opts);
+		}
+	}; 
+	XAPIDashboard.prototype.createBarChart = function(opts){
+		return new ADL.BarChart(this.statements, this.container, opts);
+	}; 
+	XAPIDashboard.prototype.createLineChart = function(opts){
+		return new ADL.LineChart(this.statements, this.container, opts);
+	}; 
 	
 	/*
 	 * Class methods to perform graph "formatting" operations
