@@ -57,3 +57,5 @@ All of these statements will be serialized and output as a JSON array of stateme
 ## Building the Self-Extracting Payload
 
 You also have the option of outputting the statements in the form of a Javascript source file. If the `-p` flag is specified, the script will generate a self-extracting compressed digest of the xAPI data. Just include the result in your HTML document via the `<script>` tag like any other Javascript, and the statements will be written to `window.statements` for the dashboard to read.
+
+Note that this flag requires the installation of Node.js and a couple dependencies, though a *package.json* is provided for convenience. Run `$ npm install` in the `generateData` directory and it will install all the dependencies. You are then ready to use the `-p` flag.
