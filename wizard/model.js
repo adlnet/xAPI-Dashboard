@@ -23,20 +23,12 @@ $(document).ready(function(){
 				}
 			}
 			
-			wrapper.getStatements({limit: 1}, null, function(statements){
-				var statement;
-				try{
-					statement = JSON.parse(statements.response);
-				}
-				catch(e){
-					console.error("Error parsing xAPI statement", e);
-				}
-				
-				self.internalStatement(statement);
-			});
-			
 			//Will need to add a callback here to ensure a graph isn't generated before fetching is complete
-			dash.fetchAllStatements();
+			dash.fetchAllStatements({}, function(){
+				console.log("Done");
+				self.hasData = true;
+				self.internalStatement(dash.statements.contents[0]);
+			});
 		};
 		
 		//functions to handle clicking within modal
@@ -128,7 +120,7 @@ $(document).ready(function(){
 				
 		self.generateChart = function(){
 		
-			if(self.groupBy() && self.aggregationType() && self.lrsList().length > 0 && self.chartList().length > 0){
+			if(self.hasData && self.groupBy() && self.aggregationType() && self.lrsList().length > 0 && self.chartList().length > 0){
 				
 				dash.genBarGraph('#graphContainer svg', {
 					groupField: self.groupBy(),
@@ -141,12 +133,13 @@ $(document).ready(function(){
 			}		
 		};
 		
-		self.groupBy = ko.observable();
+		self.groupBy = ko.observable('verb.display.en-US');
 		self.aggregationType = ko.observable();
 		self.groupBy.subscribe(self.generateChart);
 		self.aggregationType.subscribe(self.generateChart);
+		self.hasData = false;
 		
-		//Configuration options displayed modal for adding an lrs or chart
+		//Configuration options displayed in modal for adding an lrs or chart
 		
 		self.lrsAddOpts = {
 			endpoint: ko.observable(),
@@ -167,6 +160,7 @@ $(document).ready(function(){
 		self.chartList.subscribe(self.generateChart);
 		self.lrsList.subscribe(self.generateChart);
 		
+		//iterates over lrsList, pushes the name of each endpoint to a new array and returns it
 		self.getEndpointNames = function(){
 			var arr = [];
 			for(var i = 0; i < self.lrsList().length; i++){
@@ -178,17 +172,12 @@ $(document).ready(function(){
 		self.currentModalType = ko.observable('');
 		self.mainObject = ko.observable();
 		
-		self.internalStatement = ko.observable(JSON.parse('{"statements": [{"verb": {"id": "http://vwf.adlnet.gov/xapi/verbs/logged_in", "display": {"en-US": "logged into"}}, "timestamp": "2014-04-23T10:12:13.636101+00:00",'+
-		'"object": {"definition": {"moreInfo": "http://vwf.adlnet.gov/adl/sandbox/world/HqLQRXFNNZwC48nl", "type": "http://vwf.adlnet.gov/xapi/world", "name": {"en-US": "Town Square"}, "description": {"en-US": "This world'+
-		'shows many features, included animated meshes, particle systems, and path follow behaviors. There is also some scripting when you click on various objects. Plus, it loads some fairly complex 3D models."}}, "id":'+
-		'"http://vwf.adlnet.gov/xapi/HqLQRXFNNZwC48nl", "objectType": "Activity"}, "actor": {"account": {"homePage": "http://vwf.adlnet.gov", "name": "GreenGoosie"}, "name": "GreenGoosie", "objectType": "Agent"}, "stored":'+
-		'"2014-04-23T10:12:13.636101+00:00", "version": "1.0.0", "authority": {"mbox": "mailto:steve.vergenz.ctr@adlnet.gov", "name": "lrsuser", "objectType": "Agent"}, "context": {"platform": "virtual world",'+
-		'"contextActivities": {"parent": [{"id": "http://vwf.adlnet.gov/xapi/virtual_world_sandbox", "objectType": "Activity"}]}}, "id": "bd6d89d0-cacf-11e3-844c-005056be3417"}], "more":'+
-		'"/xapi/statements/more/cde24f7656d1047ab5b5f1b570582ae0"}'));
+		self.internalStatement = ko.observable();
+		self.internalStatement.subscribe(self.generateChart);
 		
 		self.sampleStatement = ko.computed(function(){
-			if(self.internalStatement() && self.internalStatement().statements && self.internalStatement().statements[0]){
-				return JSON.stringify(self.internalStatement().statements[0], null, "    ").replace(/\"([a-zA-z\-]+)\":/gi, "$1:");
+			if(self.internalStatement()){
+				return JSON.stringify(self.internalStatement(), null, "    ").replace(/\"([a-zA-z\-]+)\":/gi, "$1:");
 			}
 			
 			else return 'Sample xAPI statement not found';
