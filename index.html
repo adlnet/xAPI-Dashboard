@@ -123,6 +123,7 @@
 
 			if( window.statements ){
 				dash.addStatements(window.statements);
+				window.statements = null;
 				generateGraphs();
 			}
 			else {
