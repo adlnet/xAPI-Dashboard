@@ -1,8 +1,9 @@
 "use strict";
-/*
- * The Collection class exposes various set operations in a friendly syntax
- */
 (function(ADL){
+
+	/*************************************************
+	 * The Collection class exposes various set operations in a friendly syntax
+	 *************************************************/
 
 	function Collection(arr)
 	{
@@ -390,5 +391,58 @@
 	Collection.week = Collection.day * 7;
 
 	ADL.Collection = Collection;
+
+
+	/***************************************************
+	 * The CollectionAsync class offloads all operations to a webworker
+	 * so the interface doesn't lock up
+	 ***************************************************/
+
+	function serialize(obj){
+		var json = JSON.stringify(obj);
+		console.log('Serializing', json.length*2, 'bytes');
+	
+		var buf = new ArrayBuffer(2*json.length);
+		var view = new Uint16Array(buf);
+		for(var offset=0; offset<json.length; offset++){
+			view[offset] = json.charCodeAt(offset);
+		}
+		return buf;
+	}
+
+	function deserialize(buffer){
+		var json = '';
+		var intBuffer = new Uint16Array(buffer);
+
+		for(var i=0; i<intBuffer.length; i++)
+			json += String.fromCharCode(intBuffer[i]);
+	
+		return JSON.parse(json);
+	}
+
+
+	function CollectionAsync(array){
+		this.worker = new Worker('src/collection-worker.js');
+		console.log('Sent', Date.now());
+
+		var payload = serialize(['datapush', array]);
+		this.worker.postMessage(payload,[payload]);
+		if( payload.byteLength > 0 ){
+			console.log('Warning: Your browser does not support webworker transfers. Performance of this site may suffer as a result.');
+		}
+	}
+
+	CollectionAsync.prototype.select = function(filter){
+		this.worker.postMessage(serialize(['select','distinct']));
+		return this;
+	};
+
+	CollectionAsync.prototype.eval = function(cb){
+		this.worker.onmessage = function(event){
+			cb(event.data);
+		};
+	};
+
+	ADL.CollectionAsync = CollectionAsync;
 
 })(window.ADL = window.ADL || {});

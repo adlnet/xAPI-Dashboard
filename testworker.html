@@ -2,11 +2,11 @@
 <html>
 	<head>
 		<title>WebWorker test</title>
-		<script src='src/collection-async.js'></script>
+		<script src='src/collection.js'></script>
 		<script src='extra/gen-lrs-data.js'></script>
 		<script>
 			function ready(){
-				var c = new ADL.Collection(window.statements);
+				var c = new ADL.CollectionAsync(window.statements);
 				/*c.select().eval(function(msg){
 					document.body.innerHTML += msg;
 				});*/
