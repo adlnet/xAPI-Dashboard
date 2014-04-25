@@ -141,14 +141,41 @@ function where(query)
 		}
 	}
 
+	function matchedParens(str){
+		var level = 0;
+		for(var i=0; i<str.length; i++){
+			if(str[i] === '('){
+				level++;
+			}
+			else if(str[i] === ')'){
+				level--;
+			}
+		}
+		return level === 0;
+	}
+
 	function orGrp(str)
 	{
 		console.log('testing for or: '+str);
-		var match = /^\s*(\([^\)]+\)|.+)\s+or\s+(\(.*\)|.*)\s*$/i.exec(str);
-		if(match)
+		var parts = str.split(/\bor\b/);
+		var expr1 = '', expr2 = '';
+		for(var i=1; i<parts.length; i++)
 		{
-			var part1 = expr(match[1]);
-			var part2 = expr(match[2]);
+			var tempexpr1 = parts.slice(0,i).join('or');
+			var tempexpr2 = parts.slice(i).join('or');
+			if( tempexpr1 != '' && matchedParens(tempexpr1)
+				&& tempexpr2 != '' && matchedParens(tempexpr2)
+			){
+				expr1 = tempexpr1;
+				expr2 = tempexpr2;
+				break;
+			}
+		}
+
+		if( expr1 && expr2 )
+		{
+			var part1 = expr(expr1);
+			var part2 = expr(expr2);
 
 			if( part1 && part2 )
 				return [part1, part2];
@@ -165,14 +192,28 @@ function where(query)
 	function andGrp(str)
 	{
 		console.log('testing for and: '+str);
-		var match = /^\s*(.*)\s+and\s+(.*)\s*$/.exec(str);
-		if(match)
+		var parts = str.split(/\band\b/);
+		var expr1 = '', expr2 = '';
+		for(var i=1; i<parts.length; i++)
 		{
-			var part1 = expr(match[1]);
-			var part2 = expr(match[2]);
+			var tempexpr1 = parts.slice(0,i).join('and');
+			var tempexpr2 = parts.slice(i).join('and');
+			if( tempexpr1 != '' && matchedParens(tempexpr1)
+				&& tempexpr2 != '' && matchedParens(tempexpr2)
+			){
+				expr1 = tempexpr1;
+				expr2 = tempexpr2;
+				break;
+			}
+		}
+
+		if( expr1 && expr2 )
+		{
+			var part1 = expr(expr1);
+			var part2 = expr(expr2);
 
 			if( part1 && part2 )
-				return [part1,part2];
+				return [part1, part2];
 			else
 				return null;
 		}
