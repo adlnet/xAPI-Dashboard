@@ -422,13 +422,18 @@
 
 
 	function CollectionAsync(array){
+
+		if( !window.Worker ){
+			throw new Error('Your browser does not support WebWorkers, and cannot use the CollectionAsync class');
+		}
+
 		this.worker = new Worker('src/collection-worker.js');
 		console.log('Sent', Date.now());
 
 		var payload = serialize(['datapush', array]);
 		this.worker.postMessage(payload,[payload]);
 		if( payload.byteLength > 0 ){
-			console.log('Warning: Your browser does not support webworker transfers. Performance of this site may suffer as a result.');
+			console.log('Warning: Your browser does not support WebWorker transfers. Performance of this site may suffer as a result.');
 		}
 	}
 
