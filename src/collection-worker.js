@@ -70,7 +70,10 @@ onmessage = function(event)
 		postMessage(result, [result]);
 		break;
 
-
+	case 'save':
+		processCommandQueue();
+		dataStack.push( dataStack[dataStack.length-1] );
+		break;
 
 	case 'where':
 		commandQueue.push( data );
@@ -99,23 +102,24 @@ function processCommandQueue()
 
 	/*
 	 * Parse tree format
-	[
-		['eq','verb.id','passed'],
-		[
-			['eq','verb.id','failed'],
-			['geq','result.score.raw',50]
-		]
-	]
-
-	 * Invocation format
-	stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
-
+	 * Odd depth is an OR, even depth is an AND
+	 * [
+	 *  	['eq','verb.id','passed'],
+	 *  	[
+	 *  		['eq','verb.id','failed'],
+	 *  		['geq','result.score.raw',50]
+	 *  	]
+	 * ]
+	 * 
+	 * Query format example
+	 *   stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
+	 * 
 	 * Query grammar:
 	 *   value := \b( [0-9]+(.[0-9]+)? | ("|').*\1 | null )\b
 	 *   xpath := [A-Za-z0-9]+(.[A-za-z0-9]+)*
 	 *   cond := <xpath> (=|!=|>|<|>=|<=) <value> | 'isdistinct(' <xpath> ')'
-	 *   andGrp := <cond> 'and' <expr> | <cond>
-	 *   orGrp := <andGrp> 'or' <expr> | <andGrp>
+	 *   andGrp := <expr> 'and' <expr> | <cond>
+	 *   orGrp := <expr> 'or' <expr> | <andGrp>
 	 *   expr := '(' <expr> ')' | <orGrp>
 	 */
 
@@ -124,7 +128,10 @@ function where(query)
 	// no-op if no query
 	if( !query ) return;
 
-	function expr(str){
+	function expr(str)
+	{
+		console.log('testing for expr: '+str);
+		// check for parens
 		var match = /^\s*\((.*)\)\s*$/.exec(str);
 		if(match){
 			return expr(match[1]);
@@ -134,15 +141,70 @@ function where(query)
 		}
 	}
 
-	function orGrp(str){
-		
+	function orGrp(str)
+	{
+		console.log('testing for or: '+str);
+		var match = /^\s*(\([^\)]+\)|.+)\s+or\s+(\(.*\)|.*)\s*$/i.exec(str);
+		if(match)
+		{
+			var part1 = expr(match[1]);
+			var part2 = expr(match[2]);
+
+			if( part1 && part2 )
+				return [part1, part2];
+			else
+				return null;
+		}
+		else {
+			var ret = andGrp(str);
+			if(ret) return [ret];
+			else return null;
+		}
 	}
 
-	function andGrp(str){
-		
+	function andGrp(str)
+	{
+		console.log('testing for and: '+str);
+		var match = /^\s*(.*)\s+and\s+(.*)\s*$/.exec(str);
+		if(match)
+		{
+			var part1 = expr(match[1]);
+			var part2 = expr(match[2]);
+
+			if( part1 && part2 )
+				return [part1,part2];
+			else
+				return null;
+		}
+		else {
+			var ret = cond(str);
+			if(ret) return [ret];
+			else return null;
+		}
 	}
 
 	function cond(str){
-		
+		console.log('testing for cond: '+str);
+		var match = /^\s*(.*)\s*(=|!=|>|>=|<|<=)\s*(.*)\s*$/.exec(str);
+		if(match)
+		{
+			var ret = [];
+			if(     match[2] === '=')  ret.push('eq');
+			else if(match[2] === '!=') ret.push('neq');
+			else if(match[2] === '>')  ret.push('gt');
+			else if(match[2] === '>=') ret.push('geq');
+			else if(match[2] === '<')  ret.push('lt');
+			else if(match[2] === '<=') ret.push('leq');
+			ret.push(match[1]);
+			ret.push(match[3]);
+			return str;
+			return ret;
+		}
+		else {
+			return null;
+		}
 	}
+
+	var parse = expr(query);
+	dataStack.push(parse);
 }
