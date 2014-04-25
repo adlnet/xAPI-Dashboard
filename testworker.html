@@ -6,10 +6,10 @@
 		<script src='extra/gen-lrs-data.js'></script>
 		<script>
 			function ready(){
-				var c = new ADL.CollectionAsync(window.statements);
-				/*c.select().eval(function(msg){
-					document.body.innerHTML += msg;
-				});*/
+				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
+				c.selectEqual('id', "83ae3eb5-55a9-4265-a1da-1b943b41fb33").exec(function(msg){
+					document.body.innerHTML = '<pre>'+JSON.stringify(msg, null, '\t')+'</pre>';
+				});
 			};
 		</script>
 	</head>

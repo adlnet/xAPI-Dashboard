@@ -421,13 +421,15 @@
 	}
 
 
-	function CollectionAsync(array){
-
+	function CollectionAsync(array, workerLocation)
+	{
 		if( !window.Worker ){
 			throw new Error('Your browser does not support WebWorkers, and cannot use the CollectionAsync class');
 		}
 
-		this.worker = new Worker('src/collection-worker.js');
+		if(!workerLocation)
+			workerLocation = 'collection-worker.js';
+		this.worker = new Worker(workerLocation);
 		console.log('Sent', Date.now());
 
 		var payload = serialize(['datapush', array]);
@@ -437,16 +439,51 @@
 		}
 	}
 
-	CollectionAsync.prototype.select = function(filter){
-		this.worker.postMessage(serialize(['select','distinct']));
-		return this;
-	};
-
-	CollectionAsync.prototype.eval = function(cb){
+	CollectionAsync.prototype.exec = function(cb){
+		this.worker.postMessage(serialize(['exec']));
 		this.worker.onmessage = function(event){
-			cb(event.data);
+			var result = deserialize(event.data);
+			cb(result[1]);
 		};
 	};
+
+	CollectionAsync.prototype.where = function(query){
+		this.worker.postMessage(serialize(['where', query]));
+	};
+
+	/*
+	['where',
+		{or: [
+			['eq','verb.id','passed'],
+			{and: [
+				['eq','verb.id','passed'],
+				['geq','result.score.raw',50]
+			]}
+		]}
+	]
+
+	stmts.where(
+		['eq','verb.id','passed'])
+		.or(
+			['eq','verb.id','failed'])
+			.and(['geq','result.score.raw',50])
+	.endwhere();
+	
+	stmts
+		.where(ADL.conds.eq('verb.id','passed'))
+			.or(ADL.conds.eq('verb.id','failed'))
+			.and(ADL.conds.geq('result.score.raw',50))
+		.endwhere();
+	
+	stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
+
+	value := \b( [0-9]+(.[0-9]+)? | ("|').*\1 | null )\b
+	xpath := [A-Za-z0-9]+(.[A-za-z0-9]+)*
+	cond := <xpath> = | != | > | < | >= | <= <value>
+	andGrp := <cond> 'and' <expr> | <cond>
+	orGrp := <andGrp> 'or' <expr> | <andGrp>
+	expr := '(' <expr> ')' | <orGrp>
+	*/
 
 	ADL.CollectionAsync = CollectionAsync;
 
