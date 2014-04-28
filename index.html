@@ -43,49 +43,53 @@
 		
 			function generateGraphs()
 			{
-				var testResults = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
+				var testResults = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) ).orderBy("object.definition.name");
 				var test1Results = testResults.selectMatch('object.id',/test1$/);
 				
 				$('#statistics #avg span').textContent = testResults.average('result.score.raw');
 				$('#graph h1').textContent = 'Test Results';
 				
 				var childChart = dash.createBarChart({
-					
-					groupField: '',
 					pre: function(data, event){
-						
-						return data.selectRange('result.score.raw', event.point.in, event.point.in + 5);
+						console.log(event);
+						return testResults.selectEqual('object.definition.name', event.point.in);
 					},
-					aggregate: function(statements){
-						return statements.groupBy('object.id', function(group){
-							for(var i = 0, sum = 0; i < group.contents.length; i++){
-								sum += group.contents[i].result.score.raw;
-							}
-							
-							return sum / group.contents.length;
-						});
-					}
-				});
-				
-				var chart = dash.createBarChart({
-					pre: function(data){
-						return test1Results;
-					},
-					aggregate: function(statements){
+					aggregate: function(statements, opts, event){
 						return statements
 							.groupByRange('result.score.raw', ADL.Collection.genRange(50,101,5), function(group){
 								return group.count();
 							});
 					},
-					customize: function(nvd3Chart){
+					customize: function(nvd3Chart, event){
 						nvd3Chart.staggerLabels(false);
 						nvd3Chart.yAxis.tickFormat(d3.format(',d'));
 						
 						for(var key in nvd3Chart){
 						//	console.log(key);
 						}
+					}
+				});
+				
+				var chart = dash.createBarChart({
+					pre: function(data, event){
+						
+						return testResults;//data.selectRange('result.score.raw', event.point.in, event.point.in + 5);
 					},
-					
+					aggregate: function(statements){
+						return statements.groupBy('object.definition.name', function(group){
+							console.log(group);
+							for(var i = 0, sum = 0; i < group.contents.length; i++){
+								sum += group.contents[i].result.score.raw;
+							}
+							
+							return sum / group.contents.length;
+						});
+					},
+					customize: function(nvd3Chart){
+						nvd3Chart.staggerLabels(false);
+						nvd3Chart.xAxis.rotateLabels(45);
+						nvd3Chart.forceY([50, 100]);
+					}, 
 					child: childChart
 				});
 				
