@@ -123,11 +123,8 @@ function processCommandQueue()
 	 *   expr := '(' <expr> ')' | <orGrp>
 	 */
 
-function where(query)
+function parseWhere(str)
 {
-	// no-op if no query
-	if( !query ) return;
-
 	function expr(str)
 	{
 		console.log('testing for expr: '+str);
@@ -178,13 +175,13 @@ function where(query)
 			var part2 = expr(expr2);
 
 			if( part1 && part2 )
-				return [part1, part2];
+				return {or: [part1, part2]};
 			else
 				return null;
 		}
 		else {
 			var ret = andGrp(str);
-			if(ret) return [ret];
+			if(ret) return ret;
 			else return null;
 		}
 	}
@@ -213,39 +210,74 @@ function where(query)
 			var part2 = expr(expr2);
 
 			if( part1 && part2 )
-				return [part1, part2];
+				return {and: [part1, part2]};
 			else
 				return null;
 		}
 		else {
 			var ret = cond(str);
-			if(ret) return [ret];
+			if(ret) return ret;
 			else return null;
 		}
 	}
 
 	function cond(str){
 		console.log('testing for cond: '+str);
-		var match = /^\s*(.*)\s*(=|!=|>|>=|<|<=)\s*(.*)\s*$/.exec(str);
+		var match = /^\s*(.*?)\s*(!=|>=|<=|=|>|<)\s*(.*)\s*$/.exec(str);
 		if(match)
 		{
-			var ret = [];
-			if(     match[2] === '=')  ret.push('eq');
-			else if(match[2] === '!=') ret.push('neq');
-			else if(match[2] === '>')  ret.push('gt');
-			else if(match[2] === '>=') ret.push('geq');
-			else if(match[2] === '<')  ret.push('lt');
-			else if(match[2] === '<=') ret.push('leq');
-			ret.push(match[1]);
-			ret.push(match[3]);
-			return str;
-			return ret;
+			var part1 = xpath(match[1]);
+			var part2 = value(match[3]);
+			if( part1 && part2 !== null ){
+				var ret = [];
+				if(     match[2] === '=')  ret.push('eq');
+				else if(match[2] === '!=') ret.push('neq');
+				else if(match[2] === '>')  ret.push('gt');
+				else if(match[2] === '>=') ret.push('geq');
+				else if(match[2] === '<')  ret.push('lt');
+				else if(match[2] === '<=') ret.push('leq');
+				ret.push(part1);
+				ret.push(part2);
+				return ret;
+			}
+			else return null;
+		}
+		else return null;
+	}
+
+	function xpath(str){
+		console.log('testing for xpath: '+str);
+		var match = /^\s*(\w+(?:\.\w+)*)\s*$/.exec(str);
+		if(match)
+			return match[1];
+		else return null;
+	}
+
+	function value(str){
+		console.log('testing for value: '+str);
+		var val = null;
+		if(val = parseInt(str,10)){
+			return val;
+		}
+		else if(val = parseFloat(str)){
+			return val;
+		}
+		else if(val = /^\s*"(.*)"\s*$/.exec(str)){
+			return val[1];
 		}
 		else {
 			return null;
 		}
 	}
 
-	var parse = expr(query);
+	return expr(str);
+}
+
+function where(query)
+{
+	// no-op if no query
+	if( !query ) return;
+
+	var parse = parseWhere(query);
 	dataStack.push(parse);
 }
