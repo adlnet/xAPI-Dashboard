@@ -33,8 +33,6 @@ if(!Array.isArray){
 
 function serialize(obj){
 	var json = JSON.stringify(obj);
-	console.log('Serializing '+json.length*2+' bytes');
-
 	var buf = new ArrayBuffer(2*json.length);
 	var view = new Uint16Array(buf);
 	for(var offset=0; offset<json.length; offset++){
@@ -115,5 +113,6 @@ function where(query)
 	if( !query ) return;
 
 	var parse = parseWhere(query);
+	console.log(JSON.stringify(parse));
 	dataStack.push(parse);
 }

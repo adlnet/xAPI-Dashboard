@@ -1,32 +1,76 @@
+/********************************************************
+ * 'where' helper functions
+ * Rather lengthy, so moved to own file for readability
+ ********************************************************/
 
-	/*
-	 * Parse tree format
-	 * Odd depth is an OR, even depth is an AND
-	 * [
-	 *  	['eq','verb.id','passed'],
-	 *  	[
-	 *  		['eq','verb.id','failed'],
-	 *  		['geq','result.score.raw',50]
-	 *  	]
-	 * ]
-	 * 
-	 * Query format example
-	 *   stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
-	 * 
-	 * Query grammar:
-	 *   value := \b( [0-9]+(.[0-9]+)? | ("|').*\1 | null )\b
-	 *   xpath := [A-Za-z0-9]+(.[A-za-z0-9]+)*
-	 *   cond := <xpath> (=|!=|>|<|>=|<=) <value> | 'isdistinct(' <xpath> ')'
-	 *   andGrp := <expr> 'and' <expr> | <cond>
-	 *   orGrp := <expr> 'or' <expr> | <andGrp>
-	 *   expr := '(' <expr> ')' | <orGrp>
-	 */
+function xpath(xpath, obj){
+	var parts = [];
+	if(xpath){	
+		parts = xpath.split('.');
+		var i=0; while(i<parts.length){
+			if(/\\$/.test(parts[i]) && parts[i+1])
+				parts.splice(i, 2, /(.*)\\$/.exec(parts[i])[1]+'.'+parts[i+1]);
+			else
+				i++;
+		}
+	}
+
+	function evaluate(obj){
+		var curElem = elem;
+		for(var i=0; i<parts.length; i++){
+			if(curElem[parts[i]] !== undefined)
+				curElem = curElem[parts[i]];
+			else
+				return null;
+		}
+		return curElem;
+	}
+
+	if(obj)
+		return evaluate(obj);
+	else
+		return evaluate;
+}
+
+function Condition(op,xpath,value)
+{
+	this.op = op;
+	this.xpath = xpath;
+	this.value = value;
+}
+
+Condition.prototype.evaluate = function(elem,index,array)
+{
+	switch(this.op){
+		case  'eq': return xpath(this.xpath,elem) === this.value;
+		case 'neq': return xpath(this.xpath,elem) !== this.value;
+		case  'gt': return xpath(this.xpath,elem) > this.value;
+		case 'geq': return xpath(this.xpath,elem) >= this.value;
+		case  'lt': return xpath(this.xpath,elem) < this.value;
+		case 'leq': return xpath(this.xpath,elem) <= this.value;
+		default: return null;
+	}
+
+};
+
+
+/*
+ * Query format example
+ *   stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
+ * 
+ * Query grammar:
+ *   value := parseInt | parseFloat | "(.*)"
+ *   xpath := [A-Za-z0-9_]+(\.[A-za-z0-9_]+)*
+ *   cond := <xpath> (=|!=|>|<|>=|<=) <value> | 'isdistinct(' <xpath> ')'
+ *   andGrp := <expr> 'and' <expr> | <cond>
+ *   orGrp := <expr> 'or' <expr> | <andGrp>
+ *   expr := '(' <expr> ')' | <orGrp>
+ */
 
 function parseWhere(str)
 {
 	function expr(str)
 	{
-		console.log('testing for expr: '+str);
 		// check for parens
 		var match = /^\s*\((.*)\)\s*$/.exec(str);
 		if(match){
@@ -52,7 +96,6 @@ function parseWhere(str)
 
 	function orGrp(str)
 	{
-		console.log('testing for or: '+str);
 		var parts = str.split(/\bor\b/);
 		var expr1 = '', expr2 = '';
 		for(var i=1; i<parts.length; i++)
@@ -87,7 +130,6 @@ function parseWhere(str)
 
 	function andGrp(str)
 	{
-		console.log('testing for and: '+str);
 		var parts = str.split(/\band\b/);
 		var expr1 = '', expr2 = '';
 		for(var i=1; i<parts.length; i++)
@@ -121,23 +163,21 @@ function parseWhere(str)
 	}
 
 	function cond(str){
-		console.log('testing for cond: '+str);
 		var match = /^\s*(.*?)\s*(!=|>=|<=|=|>|<)\s*(.*)\s*$/.exec(str);
 		if(match)
 		{
 			var part1 = xpath(match[1]);
 			var part2 = value(match[3]);
 			if( part1 && part2 !== null ){
-				var ret = [];
-				if(     match[2] === '=')  ret.push('eq');
-				else if(match[2] === '!=') ret.push('neq');
-				else if(match[2] === '>')  ret.push('gt');
-				else if(match[2] === '>=') ret.push('geq');
-				else if(match[2] === '<')  ret.push('lt');
-				else if(match[2] === '<=') ret.push('leq');
-				ret.push(part1);
-				ret.push(part2);
-				return ret;
+				switch(match[2]){
+					case  '=':  return new Condition('eq',part1,part2);
+					case '!=':  return new Condition('neq',part1,part2);
+					case  '<':  return new Condition('lt',part1,part2);
+					case '<=':  return new Condition('leq',part1,part2);
+					case  '>':  return new Condition('gt',part1,part2);
+					case '>=':  return new Condition('geq',part1,part2);
+					default: return null;
+				}
 			}
 			else return null;
 		}
@@ -145,7 +185,6 @@ function parseWhere(str)
 	}
 
 	function xpath(str){
-		console.log('testing for xpath: '+str);
 		var match = /^\s*(\w+(?:\.\w+)*)\s*$/.exec(str);
 		if(match)
 			return match[1];
@@ -153,7 +192,6 @@ function parseWhere(str)
 	}
 
 	function value(str){
-		console.log('testing for value: '+str);
 		var val = null;
 		if(val = parseInt(str,10)){
 			return val;
