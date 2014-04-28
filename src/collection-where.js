@@ -189,3 +189,9 @@ function parseWhere(str)
 	return expr(str);
 }
 
+
+function evalConditions(parse, stmt)
+{
+	return true;
+}
+

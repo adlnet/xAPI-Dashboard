@@ -67,7 +67,7 @@ onmessage = function(event)
 		if( data[1] )
 			dataStack.push(data[1]);
 		else
-			dataStack.push( dataStack[dataStack.length-1] );
+			dataStack.push( dataStack[dataStack.length-1].slice() );
 		break;
 
 	// request to send result data back
@@ -79,7 +79,7 @@ onmessage = function(event)
 
 	case 'save':
 		processCommandQueue();
-		dataStack.push( dataStack[dataStack.length-1] );
+		dataStack.push( dataStack[dataStack.length-1].slice() );
 		break;
 
 	case 'where':
@@ -114,5 +114,18 @@ function where(query)
 
 	var parse = parseWhere(query);
 	console.log(JSON.stringify(parse));
-	dataStack.push(parse);
+	if( !parse ){
+		console.error('Invalid where expression');
+		return;
+	}
+
+	var data = dataStack.pop();
+	for(var i=0; i<data.length; i++)
+	{
+		if( !evalConditions(parse, data[i]) ){
+			data.splice(i--,1);
+		}
+	}
+
+	dataStack.push(data);
 }
