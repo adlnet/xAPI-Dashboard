@@ -42,11 +42,11 @@
 			data = opts.post(data, event);
 
 		nv.addGraph(function(){
-			var chart = nv.models[opts.chartType]()
-				.options(opts.nvd3Opts);
+			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
+			chart.staggerLabels(false);
 
 			if( opts.customize )
-				opts.customize(chart);
+				opts.customize(chart, event);
 
 			d3.select(container)
 				.datum([{'values': data.contents}])
@@ -56,7 +56,11 @@
 			
 			var next = self.child || self.parent;
 			if(next && opts.eventChartType){
+				//Find a way to prevent adding click handlers every time this chart is drawn
+				console.log("ATTACH!!");
 				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					console.log("Click!!");
+					
 					if(next){
 						next.event = e;
 						next.draw();

@@ -95,10 +95,16 @@
 		});
 	};	 	
 	
-	XAPIDashboard.average = function(statements, opts){
+	XAPIDashboard.averageCount = function(statements, opts){
 		var rangeArr = ADL.Collection.genRange(opts.range.start, opts.range.end, opts.range.increment);
 		return statements.groupByRange(opts.groupField || opts.xField, rangeArr, function(groupSet, start, end){ 
 			return groupSet.count() / opts.range.unit;
+		});
+	};	
+	
+	XAPIDashboard.average = function(statements, opts){
+		return statements.groupBy(opts.groupField || opts.xField, function(group){
+			return group.average(opts.yField);
 		});
 	};	 
 	

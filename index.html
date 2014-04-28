@@ -38,7 +38,9 @@
 		});
 		var dash = new ADL.XAPIDashboard('#graph svg'),
 			set = ADL.Collection;
-
+		
+		var childChart, chart;
+		
 		window.onload = function(){
 		
 			function generateGraphs()
@@ -47,48 +49,33 @@
 				var test1Results = testResults.selectMatch('object.id',/test1$/);
 				
 				$('#statistics #avg span').textContent = testResults.average('result.score.raw');
-				$('#graph h1').textContent = 'Test Results';
 				
-				var childChart = dash.createBarChart({
+				childChart = dash.createBarChart({
 					pre: function(data, event){
-						console.log(event);
 						return testResults.selectEqual('object.definition.name', event.point.in);
 					},
-					aggregate: function(statements, opts, event){
-						return statements
-							.groupByRange('result.score.raw', ADL.Collection.genRange(50,101,5), function(group){
-								return group.count();
-							});
-					},
+					aggregate: ADL.XAPIDashboard.countRange,
+					groupField: 'result.score.raw',
+					range: { start: 50, end: 101, increment: 5 },
 					customize: function(nvd3Chart, event){
-						nvd3Chart.staggerLabels(false);
 						nvd3Chart.yAxis.tickFormat(d3.format(',d'));
 						
-						for(var key in nvd3Chart){
-						//	console.log(key);
-						}
+						$('#graph h1').textContent = event.point.in + ' Results';
 					}
 				});
 				
-				var chart = dash.createBarChart({
+				chart = dash.createBarChart({
 					pre: function(data, event){
-						
 						return testResults;//data.selectRange('result.score.raw', event.point.in, event.point.in + 5);
 					},
-					aggregate: function(statements){
-						return statements.groupBy('object.definition.name', function(group){
-							console.log(group);
-							for(var i = 0, sum = 0; i < group.contents.length; i++){
-								sum += group.contents[i].result.score.raw;
-							}
-							
-							return sum / group.contents.length;
-						});
-					},
+					aggregate: ADL.XAPIDashboard.average,
+					groupField:  'object.definition.name',
+					yField: 'result.score.raw',
 					customize: function(nvd3Chart){
-						nvd3Chart.staggerLabels(false);
 						nvd3Chart.xAxis.rotateLabels(45);
 						nvd3Chart.forceY([50, 100]);
+						
+						$('#graph h1').textContent = 'Test Results';
 					}, 
 					child: childChart
 				});
