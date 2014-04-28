@@ -44,9 +44,8 @@ function serialize(obj){
 function deserialize(buffer){
 	var json = '';
 	var intBuffer = new Uint16Array(buffer);
-	for(var i=0; i<intBuffer.length; i++)
-		json += String.fromCharCode(intBuffer[i]);
-	
+	for(var i=0; i<intBuffer.length; i+=1000)
+		json += String.fromCharCode.apply(null, intBuffer.subarray(i,i+1000));
 	return JSON.parse(json);
 }
 
@@ -58,12 +57,13 @@ function deserialize(buffer){
 onmessage = function(event)
 {
 	var data = deserialize(event.data);
-	console.log('Received '+Date.now());
+	//var data = event.data;
 
 	switch(data[0]){
 
 	// receive data from the API
 	case 'datapush':
+		console.log('Rcvd '+Date.now());
 		if( data[1] )
 			dataStack.push(data[1]);
 		else

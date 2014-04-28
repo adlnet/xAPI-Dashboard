@@ -32,27 +32,6 @@ function xpath(xpath, obj){
 		return evaluate;
 }
 
-function Condition(op,xpath,value)
-{
-	this.op = op;
-	this.xpath = xpath;
-	this.value = value;
-}
-
-Condition.prototype.evaluate = function(elem,index,array)
-{
-	switch(this.op){
-		case  'eq': return xpath(this.xpath,elem) === this.value;
-		case 'neq': return xpath(this.xpath,elem) !== this.value;
-		case  'gt': return xpath(this.xpath,elem) > this.value;
-		case 'geq': return xpath(this.xpath,elem) >= this.value;
-		case  'lt': return xpath(this.xpath,elem) < this.value;
-		case 'leq': return xpath(this.xpath,elem) <= this.value;
-		default: return null;
-	}
-
-};
-
 
 /*
  * Query format example
@@ -170,12 +149,12 @@ function parseWhere(str)
 			var part2 = value(match[3]);
 			if( part1 && part2 !== null ){
 				switch(match[2]){
-					case  '=':  return new Condition('eq',part1,part2);
-					case '!=':  return new Condition('neq',part1,part2);
-					case  '<':  return new Condition('lt',part1,part2);
-					case '<=':  return new Condition('leq',part1,part2);
-					case  '>':  return new Condition('gt',part1,part2);
-					case '>=':  return new Condition('geq',part1,part2);
+					case  '=':  return {op: 'eq',xpath:part1,value:part2};
+					case '!=':  return {op:'neq',xpath:part1,value:part2};
+					case  '<':  return {op: 'lt',xpath:part1,value:part2};
+					case '<=':  return {op:'leq',xpath:part1,value:part2};
+					case  '>':  return {op: 'gt',xpath:part1,value:part2};
+					case '>=':  return {op:'geq',xpath:part1,value:part2};
 					default: return null;
 				}
 			}

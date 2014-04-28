@@ -411,10 +411,8 @@
 	function deserialize(buffer){
 		var json = '';
 		var intBuffer = new Uint16Array(buffer);
-
-		for(var i=0; i<intBuffer.length; i++)
-			json += String.fromCharCode(intBuffer[i]);
-	
+		for(var i=0; i<intBuffer.length; i+=1000)
+			json += String.fromCharCode.apply(null, intBuffer.subarray(i,i+1000));
 		return JSON.parse(json);
 	}
 
@@ -428,13 +426,14 @@
 		if(!workerLocation)
 			workerLocation = 'collection-worker.js';
 		this.worker = new Worker(workerLocation);
-		console.log('Sent', Date.now());
 
+		console.log('Sent', Date.now());
 		var payload = serialize(['datapush', array]);
 		this.worker.postMessage(payload,[payload]);
 		if( payload.byteLength > 0 ){
 			console.log('Warning: Your browser does not support WebWorker transfers. Performance of this site may suffer as a result.');
 		}
+		//this.worker.postMessage(['datapush', array]);
 	}
 
 	CollectionAsync.prototype.exec = function(cb){
