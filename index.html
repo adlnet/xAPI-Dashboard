@@ -48,6 +48,24 @@
 				$('#statistics #avg span').textContent = testResults.average('result.score.raw');
 				$('#graph h1').textContent = 'Test Results';
 				
+				var childChart = dash.createBarChart({
+					
+					groupField: '',
+					pre: function(data, event){
+						
+						return data.selectRange('result.score.raw', event.point.in, event.point.in + 5);
+					},
+					aggregate: function(statements){
+						return statements.groupBy('object.id', function(group){
+							for(var i = 0, sum = 0; i < group.contents.length; i++){
+								sum += group.contents[i].result.score.raw;
+							}
+							
+							return sum / group.contents.length;
+						});
+					}
+				});
+				
 				var chart = dash.createBarChart({
 					pre: function(data){
 						return testResults;
@@ -58,12 +76,19 @@
 								return group.count();
 							});
 					},
-					customize: function(chart){
-						chart.staggerLabels(false);
-						chart.yAxis.tickFormat(d3.format(',d'));
-					}
+					customize: function(nvd3Chart){
+						nvd3Chart.staggerLabels(false);
+						nvd3Chart.yAxis.tickFormat(d3.format(',d'));
+						
+						for(var key in nvd3Chart){
+						//	console.log(key);
+						}
+					},
+					
+					child: childChart
 				});
 				
+				console.log(chart);
 				chart.draw();
 
 				$('#scores h1').textContent = 'High Scorers';

@@ -9,7 +9,13 @@
 			this.opts = opts || {};
 		}
 		else{
+			//else, container is actually the options object
 			this.opts = container || {};
+		}
+		
+		if(this.opts.child){
+			this.child = opts.child;
+			this.opts.child.parent = this;
 		}
 		
 		this.statements = set;
@@ -18,7 +24,9 @@
 	Chart.prototype.draw = function(container){
 		var data = this.statements,
 			opts = this.opts,
-			container = container ? container : this.container;
+			container = container ? container : this.container,
+			event = this.event,
+			self = this;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
@@ -26,12 +34,12 @@
 		}
 		
 		if(opts.pre)
-			data = opts.pre(data);
+			data = opts.pre(data, event);
 
-		data = opts.aggregate(data, opts);
+		data = opts.aggregate(data, opts, event);
 
 		if(opts.post)
-			data = opts.post(data);
+			data = opts.post(data, event);
 
 		nv.addGraph(function(){
 			var chart = nv.models[opts.chartType]()
@@ -45,16 +53,33 @@
 				.call(chart);
 			
 			nv.utils.windowResize(chart.update);
+			
+			var next = self.child || self.parent;
+			if(next && opts.eventChartType){
+				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					if(next){
+						next.event = e;
+						next.draw();
+					}
+				});
+			}
+			
 			return chart;
 		});
 	};
 	
 	Chart.prototype.addOptions = function(obj){
 		for(var key in obj){
-			if(obj.hasOwnProperty(key)){
-				this.opts[key] = obj[key];
-			}
+			this.opts[key] = obj[key];
 		}
+	};	
+	Chart.prototype.addParent = function(obj){
+		this.parent = obj;
+		obj.child = this;
+	};	
+	Chart.prototype.addChild = function(obj){
+		this.child = obj;
+		obj.parent = this;
 	};
 	
 	//BarChart class extends Chart
@@ -63,6 +88,8 @@
 		Chart.call(this, set, container, opts);
 		
 		this.opts.chartType = 'discreteBarChart';
+		this.opts.eventChartType = 'discretebar';
+		
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
