@@ -10,7 +10,8 @@
 				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
 				//c.where('verb.id = "http://adlnet.gov/expapi/verbs/passed" and object.id="http://myschool.edu/xapi_vocab/test1" and result.score.raw >= 91' ).exec(function(msg){
 				//c.select('result.score.raw as score, verb.id').exec(function(msg){
-				c.orderBy('result.score.raw').slice(-10).exec(function(msg){
+				//c.orderBy('result.score.raw').slice(-10).exec(function(msg){
+				c.slice(0,10).groupBy('actor.name',['a','z',4]).exec(function(msg){
 					document.body.innerHTML += '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
 					console.log('Result length', msg.length);
 					clearInterval(handle);

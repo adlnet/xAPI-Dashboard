@@ -93,6 +93,7 @@ onmessage = function(event)
 	case 'select':
 	case 'slice':
 	case 'orderBy':
+	case 'groupBy':
 		commandQueue.push( data );
 		break;
 	
@@ -120,6 +121,8 @@ function processCommandQueue()
 			slice(command[1],command[2]);
 		else if( command[0] === 'orderBy' )
 			orderBy(command[1],command[2]);
+		else if( command[0] === 'groupBy' )
+			groupBy(command[1],command[2]);
 	}
 }
 
@@ -208,5 +211,94 @@ function orderBy(path, direction)
 	});
 
 	dataStack.push(data);
+}
+
+
+function genRange(start, end, i)
+{
+	var increment = function(x,i){ 
+		i = i > 0 ? i : 1;
+		return x+i; 
+	},
+	test = function(cur, end){ return cur < end; };
+
+	if( start instanceof Date ){
+		i = i > 0 ? i : Collection.day;
+		increment = function(x,i){ return new Date( x.getTime()+i ); };
+	}
+	else if( typeof(start) === 'string' ){
+		start = start.charAt(0).toLowerCase();
+
+		if( !end || end.charAt(0).toLowerCase() === 'z' )
+			end = '{';
+		else
+			end = end.charAt(0).toLowerCase();
+
+		i = i > 0 ? i : 1;
+		increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
+	}
+
+	var groupArr = [];
+	while( test(start, end) ){
+		groupArr.push(start);
+		start = increment(start,i);
+	}
+	groupArr.push(end);
+	return groupArr;
+};
+
+
+function groupBy(path, range)
+{
+	if( !range )
+		range = undefined;
+	else
+		range = genRange.apply(null,range);
+
+	var data = dataStack.pop();
+	var ret = [];
+	if(!range)
+	{
+		var groups = {};
+		for(var i=0; i<data.length; i++)
+		{
+			var groupVal = xpath(path,data[i]);
+			if( !groups[groupVal] )
+				groups[groupVal] = [data[i]];
+			else
+				groups[groupVal].push(data[i]);
+		}
+
+		for(var i in groups){
+			ret.push({
+				'group': i,
+				'data': groups[i]
+			});
+		}
+	}
+	else
+	{
+		for(var i=0; i<range.length-1; i++){
+			ret.push({
+				'groupStart': range[i],
+				'groupEnd': range[i+1],
+				'data': []
+			});
+		}
+
+		for(var i=0; i<data.length; i++)
+		{
+			var groupVal = xpath(path,data[i]);
+			if( groupVal.toLowerCase )
+				groupVal = groupVal.toLowerCase();
+
+			for(var j=0; j<ret.length; j++){
+				if( ret[j].groupStart <= groupVal && groupVal < ret[j].groupEnd )
+					ret[j].data.push(data[i]);
+			}
+		}
+	}
+
+	dataStack.push(ret);
 }
 

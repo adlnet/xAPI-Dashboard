@@ -462,6 +462,14 @@
 		this.worker.postMessage(serialize(['orderBy',xpath,direction]));
 		return this;
 	}
+
+	CollectionAsync.prototype.groupBy = function(xpath, ranges){
+		if( !(Array.isArray(ranges) && ranges.length === 3 && ranges[2]%1 === 0) )
+			ranges = null;
+		this.worker.postMessage(serialize(['groupBy',xpath,ranges]));
+		return this;
+	}
+
 	ADL.CollectionAsync = CollectionAsync;
 
 })(window.ADL = window.ADL || {});
