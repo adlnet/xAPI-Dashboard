@@ -47,6 +47,8 @@ function xpath(xpath, obj){
  *   expr := '(' <expr> ')' | <orGrp>
  */
 
+var PARSE_ERROR = NaN;
+
 function parseWhere(str)
 {
 	function expr(str)
@@ -99,12 +101,12 @@ function parseWhere(str)
 			if( part1 && part2 )
 				return {or: [part1, part2]};
 			else
-				return null;
+				return PARSE_ERROR;
 		}
 		else {
 			var ret = andGrp(str);
 			if(ret) return ret;
-			else return null;
+			else return PARSE_ERROR;
 		}
 	}
 
@@ -133,12 +135,12 @@ function parseWhere(str)
 			if( part1 && part2 )
 				return {and: [part1, part2]};
 			else
-				return null;
+				return PARSE_ERROR;
 		}
 		else {
 			var ret = cond(str);
 			if(ret) return ret;
-			else return null;
+			else return PARSE_ERROR;
 		}
 	}
 
@@ -148,7 +150,7 @@ function parseWhere(str)
 		{
 			var part1 = xpath(match[1]);
 			var part2 = value(match[3]);
-			if( part1 && part2 !== null ){
+			if( part1 ){
 				switch(match[2]){
 					case  '=':  return {op: 'eq',xpath:part1,value:part2};
 					case '!=':  return {op:'neq',xpath:part1,value:part2};
@@ -156,19 +158,19 @@ function parseWhere(str)
 					case '<=':  return {op:'leq',xpath:part1,value:part2};
 					case  '>':  return {op: 'gt',xpath:part1,value:part2};
 					case '>=':  return {op:'geq',xpath:part1,value:part2};
-					default: return null;
+					default: return PARSE_ERROR;
 				}
 			}
-			else return null;
+			else return PARSE_ERROR;
 		}
-		else return null;
+		else return PARSE_ERROR;
 	}
 
 	function xpath(str){
 		var match = /^\s*(\w+(?:\.\w+)*)\s*$/.exec(str);
 		if(match)
 			return match[1];
-		else return null;
+		else return PARSE_ERROR;
 	}
 
 	function value(str){
@@ -182,12 +184,14 @@ function parseWhere(str)
 		else if(val = /^\s*"(.*)"\s*$/.exec(str)){
 			return val[1];
 		}
-		else {
+		else if(str.trim() === 'null'){
 			return null;
 		}
+		else return PARSE_ERROR;
 	}
 
-	return expr(str);
+	var ret = expr(str);
+	return ret != NaN ? ret : null;
 }
 
 

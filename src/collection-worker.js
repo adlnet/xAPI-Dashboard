@@ -64,7 +64,6 @@ onmessage = function(event)
 
 	// receive data from the API
 	case 'datapush':
-		console.log('Rcvd '+Date.now());
 		if( data[1] )
 			dataStack.push(data[1]);
 		else
@@ -117,7 +116,7 @@ function where(query)
 	var parse = parseWhere(query);
 	console.log(JSON.stringify(parse));
 	if( !parse ){
-		console.error('Invalid where expression');
+		console.error('Invalid where expression: '+query);
 		return;
 	}
 

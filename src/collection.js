@@ -427,7 +427,6 @@
 			workerLocation = 'collection-worker.js';
 		this.worker = new Worker(workerLocation);
 
-		console.log('Sent', Date.now());
 		var payload = serialize(['datapush', array]);
 		this.worker.postMessage(payload,[payload]);
 		if( payload.byteLength > 0 ){
