@@ -2,6 +2,7 @@
  * 'where' helper functions
  * Rather lengthy, so moved to own file for readability
  ********************************************************/
+"use strict";
 
 function xpath(xpath, obj){
 	var parts = [];
@@ -16,7 +17,7 @@ function xpath(xpath, obj){
 	}
 
 	function evaluate(obj){
-		var curElem = elem;
+		var curElem = obj;
 		for(var i=0; i<parts.length; i++){
 			if(curElem[parts[i]] !== undefined)
 				curElem = curElem[parts[i]];
@@ -190,8 +191,46 @@ function parseWhere(str)
 }
 
 
-function evalConditions(parse, stmt)
+function evalConditions(parse, stmt, debug)
 {
-	return true;
+	if(debug) console.log(JSON.stringify(parse));
+	if(Array.isArray(parse.and) && parse.and.length === 0){
+		if(debug) console.log('0-length and');
+		return true;
+	}
+	else if(Array.isArray(parse.or) && parse.or.length === 0){
+		if(debug) console.log('0-length or');
+		return false;
+	}
+	else if(parse.op){
+		if(debug) console.log('Eval cond with val '+xpath(parse.xpath,stmt));
+		switch(parse.op){
+			case 'eq': return xpath(parse.xpath,stmt) === parse.value;
+			case 'neq': return xpath(parse.xpath,stmt) !== parse.value;
+			case 'geq': return xpath(parse.xpath,stmt) >= parse.value;
+			case 'leq': return xpath(parse.xpath,stmt) <= parse.value;
+			case 'lt': return xpath(parse.xpath,stmt) < parse.value;
+			case 'gt': return xpath(parse.xpath,stmt) > parse.value;
+			default: return false;
+		}
+	}
+	else if(parse.and){
+		if(debug) console.log('Eval and');
+		if( !evalConditions(parse.and[0], stmt, debug) )
+			return false;
+		else
+			return evalConditions({and: parse.and.slice(1)}, stmt, debug);
+	}
+	else if(parse.or){
+		if(debug) console.log('Eval or');
+		if( evalConditions(parse.or[0], stmt, debug) )
+			return true;
+		else
+			return evalConditions({or: parse.or.slice(1)}, stmt, debug);
+	}
+	else {
+		if(debug) console.log('Type not recognized');
+		return false;
+	}
 }
 

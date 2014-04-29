@@ -7,8 +7,9 @@
 		<script>
 			function ready(){
 				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
-				c.where('(id = "83ae3eb5-55a9-4265-a1da-1b943b41fb33" or verb.id = "passed") and result.score.raw >= 75').exec(function(msg){
+				c.where('verb.id = "http://adlnet.gov/expapi/verbs/passed" and object.id="http://myschool.edu/xapi_vocab/test1" and result.score.raw >= 91' ).exec(function(msg){
 					document.body.innerHTML = '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
+					console.log('Result length', msg.length);
 				});
 			};
 		</script>

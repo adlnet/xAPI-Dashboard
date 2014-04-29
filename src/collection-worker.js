@@ -2,6 +2,7 @@
  * The hard worker of the Collection class
  * Processes the statements given to it by the synchronous wrapper
  ******************************************************/
+"use strict";
 
 // stores the data frames
 var dataStack = [];
@@ -112,6 +113,7 @@ function where(query)
 	// no-op if no query
 	if( !query ) return;
 
+	var t = Date.now();
 	var parse = parseWhere(query);
 	console.log(JSON.stringify(parse));
 	if( !parse ){
@@ -128,4 +130,5 @@ function where(query)
 	}
 
 	dataStack.push(data);
+	console.log('Where evaluated in '+(Date.now()-t)+'ms');
 }
