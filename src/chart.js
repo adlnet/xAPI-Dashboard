@@ -1,5 +1,6 @@
 "use strict";
 (function(ADL){
+	var currentChart;
 	
 	//Base chart class
 	function Chart(set, container, opts)
@@ -27,6 +28,8 @@
 			container = container ? container : this.container,
 			event = this.event,
 			self = this;
+		
+		currentChart = this;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
@@ -47,26 +50,27 @@
 
 			if( opts.customize )
 				opts.customize(chart, event);
-
+			
+			var next = currentChart.child || currentChart.parent;
+			
+			if(next && opts.eventChartType){
+				
+				//Find a way to prevent the addition of click handlers every time this chart is drawn
+				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					next = currentChart.child || currentChart.parent;
+					if(next){
+						currentChart = next;
+						currentChart.event = e;
+						currentChart.draw();
+					}
+				});
+			}
+			
 			d3.select(container)
 				.datum([{'values': data.contents}])
 				.call(chart);
 			
 			nv.utils.windowResize(chart.update);
-			
-			var next = self.child || self.parent;
-			if(next && opts.eventChartType){
-				//Find a way to prevent adding click handlers every time this chart is drawn
-				console.log("ATTACH!!");
-				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-					console.log("Click!!");
-					
-					if(next){
-						next.event = e;
-						next.draw();
-					}
-				});
-			}
 			
 			return chart;
 		});

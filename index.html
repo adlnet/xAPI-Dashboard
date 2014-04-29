@@ -2,10 +2,15 @@
 <head>
 	<title>xAPI Dashboard</title>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
-	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
+	<!--<script type="text/javascript" src="dist/xapidashboard.min.js"></script>-->
+	
+	<script type="text/javascript" src="lib/d3.v3.js" charset="utf-8"></script>
+	<script type="text/javascript" src="lib/nv.d3.js"></script>
+	<script type="text/javascript" src="lib/xapiwrapper.min.js"></script>
 	<script type="text/javascript" src="src/chart.js"></script>
 	<script type="text/javascript" src="src/dashboard.js"></script>
 	<script type="text/javascript" src="src/collection.js"></script>
+	
 	<script src='extra/gen-lrs-data.js'></script>
 
 	<style>
@@ -63,6 +68,7 @@
 						$('#graph h1').textContent = event.point.in + ' Results';
 					}
 				});
+				childChart.name = "child";
 				
 				chart = dash.createBarChart({
 					pre: function(data, event){
@@ -79,6 +85,7 @@
 					}, 
 					child: childChart
 				});
+				chart.name = "parent";
 				
 				console.log(chart);
 				chart.draw();

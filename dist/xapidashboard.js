@@ -23292,10 +23292,16 @@ nv.models.stackedAreaChart = function() {
 		});
 	};	 	
 	
-	XAPIDashboard.average = function(statements, opts){
+	XAPIDashboard.averageCount = function(statements, opts){
 		var rangeArr = ADL.Collection.genRange(opts.range.start, opts.range.end, opts.range.increment);
 		return statements.groupByRange(opts.groupField || opts.xField, rangeArr, function(groupSet, start, end){ 
 			return groupSet.count() / opts.range.unit;
+		});
+	};	
+	
+	XAPIDashboard.average = function(statements, opts){
+		return statements.groupBy(opts.groupField || opts.xField, function(group){
+			return group.average(opts.yField);
 		});
 	};	 
 	
@@ -23306,6 +23312,7 @@ nv.models.stackedAreaChart = function() {
 })(window.ADL = window.ADL || {});
 ;"use strict";
 (function(ADL){
+	var currentChart;
 	
 	//Base chart class
 	function Chart(set, container, opts)
@@ -23315,7 +23322,13 @@ nv.models.stackedAreaChart = function() {
 			this.opts = opts || {};
 		}
 		else{
+			//else, container is actually the options object
 			this.opts = container || {};
+		}
+		
+		if(this.opts.child){
+			this.child = opts.child;
+			this.opts.child.parent = this;
 		}
 		
 		this.statements = set;
@@ -23324,7 +23337,11 @@ nv.models.stackedAreaChart = function() {
 	Chart.prototype.draw = function(container){
 		var data = this.statements,
 			opts = this.opts,
-			container = container ? container : this.container;
+			container = container ? container : this.container,
+			event = this.event,
+			self = this;
+		
+		currentChart = this;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
@@ -23332,35 +23349,57 @@ nv.models.stackedAreaChart = function() {
 		}
 		
 		if(opts.pre)
-			data = opts.pre(data);
+			data = opts.pre(data, event);
 
-		data = opts.aggregate(data, opts);
+		data = opts.aggregate(data, opts, event);
 
 		if(opts.post)
-			data = opts.post(data);
+			data = opts.post(data, event);
 
 		nv.addGraph(function(){
-			var chart = nv.models[opts.chartType]()
-				.options(opts.nvd3Opts);
+			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
+			chart.staggerLabels(false);
 
 			if( opts.customize )
-				opts.customize(chart);
-
+				opts.customize(chart, event);
+			
+			var next = currentChart.child || currentChart.parent;
+			
+			if(next && opts.eventChartType){
+				
+				//Find a way to prevent the addition of click handlers every time this chart is drawn
+				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					next = currentChart.child || currentChart.parent;
+					if(next){
+						currentChart = next;
+						currentChart.event = e;
+						currentChart.draw();
+					}
+				});
+			}
+			
 			d3.select(container)
 				.datum([{'values': data.contents}])
 				.call(chart);
 			
 			nv.utils.windowResize(chart.update);
+			
 			return chart;
 		});
 	};
 	
 	Chart.prototype.addOptions = function(obj){
 		for(var key in obj){
-			if(obj.hasOwnProperty(key)){
-				this.opts[key] = obj[key];
-			}
+			this.opts[key] = obj[key];
 		}
+	};	
+	Chart.prototype.addParent = function(obj){
+		this.parent = obj;
+		obj.child = this;
+	};	
+	Chart.prototype.addChild = function(obj){
+		this.child = obj;
+		obj.parent = this;
 	};
 	
 	//BarChart class extends Chart
@@ -23369,6 +23408,8 @@ nv.models.stackedAreaChart = function() {
 		Chart.call(this, set, container, opts);
 		
 		this.opts.chartType = 'discreteBarChart';
+		this.opts.eventChartType = 'discretebar';
+		
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
