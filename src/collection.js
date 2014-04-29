@@ -458,6 +458,10 @@
 		return this;
 	}
 
+	CollectionAsync.prototype.orderBy = function(xpath, direction){
+		this.worker.postMessage(serialize(['orderBy',xpath,direction]));
+		return this;
+	}
 	ADL.CollectionAsync = CollectionAsync;
 
 })(window.ADL = window.ADL || {});

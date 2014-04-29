@@ -72,17 +72,16 @@ onmessage = function(event)
 
 	// request to send result data back
 	case 'exec':
-		var result;
-		try {
+		//try {
 			processCommandQueue();
-			result = serialize(['exec', dataStack.pop()]);
-		}
+			var result = serialize(['exec', dataStack.pop()]);
+			postMessage(result, [result]);
+		/*}
 		catch(e){
-			console.error(JSON.stringify(Object.keys(e)));
-			result = serialize(['exec', 'error']);
-		}
+			postMessage(serialize(['exec', 'error']));
+			throw e;
+		}*/
 
-		postMessage(result, [result]);
 		break;
 
 	case 'save':
@@ -93,6 +92,7 @@ onmessage = function(event)
 	case 'where':
 	case 'select':
 	case 'slice':
+	case 'orderBy':
 		commandQueue.push( data );
 		break;
 	
@@ -118,6 +118,8 @@ function processCommandQueue()
 			select(command[1]);
 		else if( command[0] === 'slice' )
 			slice(command[1],command[2]);
+		else if( command[0] === 'orderBy' )
+			orderBy(command[1],command[2]);
 	}
 }
 
@@ -179,5 +181,32 @@ function select(selector)
 
 function slice(start,end)
 {
+	if(end === null)
+		end = undefined;
 	dataStack.push( dataStack.pop().slice(start,end) );
 }
+
+function orderBy(path, direction)
+{
+	var data = dataStack.pop();
+
+	if(direction === 'descending')
+		direction = -1;
+	else
+		direction = 1;
+
+	data.sort(function(a,b){
+		var aVal = xpath(path,a), bVal = xpath(path,b);
+		if(aVal && !bVal)
+			return 1 * direction;
+		else if(!aVal && bVal)
+			return -1 * direction;
+		else if(aVal == bVal)
+			return 0;
+		else
+			return (aVal<bVal ? -1 : 1) * direction;
+	});
+
+	dataStack.push(data);
+}
+
