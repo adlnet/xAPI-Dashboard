@@ -92,6 +92,7 @@ onmessage = function(event)
 
 	case 'where':
 	case 'select':
+	case 'slice':
 		commandQueue.push( data );
 		break;
 	
@@ -115,6 +116,8 @@ function processCommandQueue()
 			where(command[1]);
 		else if( command[0] === 'select' )
 			select(command[1]);
+		else if( command[0] === 'slice' )
+			slice(command[1],command[2]);
 	}
 }
 
@@ -171,4 +174,10 @@ function select(selector)
 	}
 
 	dataStack.push(ret);
+}
+
+
+function slice(start,end)
+{
+	dataStack.push( dataStack.pop().slice(start,end) );
 }

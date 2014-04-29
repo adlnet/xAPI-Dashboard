@@ -453,6 +453,11 @@
 		return this;
 	}
 
+	CollectionAsync.prototype.slice = function(start,end){
+		this.worker.postMessage(serialize(['slice',start,end]));
+		return this;
+	}
+
 	ADL.CollectionAsync = CollectionAsync;
 
 })(window.ADL = window.ADL || {});
