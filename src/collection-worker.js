@@ -72,8 +72,16 @@ onmessage = function(event)
 
 	// request to send result data back
 	case 'exec':
-		processCommandQueue();
-		var result = serialize(['exec', dataStack.pop()]);
+		var result;
+		try {
+			processCommandQueue();
+			result = serialize(['exec', dataStack.pop()]);
+		}
+		catch(e){
+			console.error(JSON.stringify(Object.keys(e)));
+			result = serialize(['exec', 'error']);
+		}
+
 		postMessage(result, [result]);
 		break;
 
@@ -83,6 +91,7 @@ onmessage = function(event)
 		break;
 
 	case 'where':
+	case 'select':
 		commandQueue.push( data );
 		break;
 	
@@ -104,6 +113,8 @@ function processCommandQueue()
 
 		if( command[0] === 'where' )
 			where(command[1]);
+		else if( command[0] === 'select' )
+			select(command[1]);
 	}
 }
 
@@ -130,4 +141,34 @@ function where(query)
 
 	dataStack.push(data);
 	console.log('Where evaluated in '+(Date.now()-t)+'ms');
+}
+
+function select(selector)
+{
+	var cols = [];
+	var xpaths = selector.split(',');
+	for( var i=0; i<xpaths.length; i++ )
+	{
+		var parts = xpaths[i].split(' as ');
+		cols.push({
+			'xpath': parts[0].trim(),
+			'alias': parts[1] ? parts[1].trim() : null
+		});
+	}
+
+	var data = dataStack.pop();
+	var ret = [];
+	for(var i=0; i<data.length; i++)
+	{
+		var row = {};
+		for(var j=0; j<cols.length; j++){
+			if(cols[j].alias)
+				row[cols[j].alias] = xpath(cols[j].xpath, data[i]);
+			else
+				row[cols[j].xpath] = xpath(cols[j].xpath, data[i]);
+		}
+		ret.push(row);
+	}
+
+	dataStack.push(ret);
 }

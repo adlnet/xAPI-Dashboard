@@ -8,7 +8,8 @@
 			function ready(){
 				var handle = setInterval(function(){document.body.innerHTML += '.';}, 20);
 				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
-				c.where('result.score.raw != null' ).exec(function(msg){
+				//c.where('verb.id = "http://adlnet.gov/expapi/verbs/passed" and object.id="http://myschool.edu/xapi_vocab/test1" and result.score.raw >= 91' ).exec(function(msg){
+				c.select('result.score.raw as score, verb.id').exec(function(msg){
 					document.body.innerHTML += '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
 					console.log('Result length', msg.length);
 					clearInterval(handle);
