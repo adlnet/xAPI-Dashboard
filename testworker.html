@@ -11,10 +11,10 @@
 				//c.where('verb.id = "http://adlnet.gov/expapi/verbs/passed" and object.id="http://myschool.edu/xapi_vocab/test1" and result.score.raw >= 91' ).exec(function(msg){
 				//c.select('result.score.raw as score, verb.id').exec(function(msg){
 				//c.orderBy('result.score.raw').slice(-10).exec(function(msg){
-				c.where('result.score.raw != null').groupBy('result.score.raw',[50,100,5]).count().exec(function(msg){
+				c.where('result.score.raw != null').groupBy('actor.name',['a','z',5]).average('result.score.raw').exec(function(msg){
+					clearInterval(handle);
 					document.body.innerHTML += '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
 					console.log('Result length', msg.length);
-					clearInterval(handle);
 				});
 			};
 		</script>

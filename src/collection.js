@@ -481,6 +481,16 @@
 		return this;
 	};
 
+	CollectionAsync.prototype.sum = function(xpath){
+		this.worker.postMessage(serialize(['sum',xpath]));
+		return this;
+	};
+
+	CollectionAsync.prototype.average = function(xpath){
+		this.worker.postMessage(serialize(['average',xpath]));
+		return this;
+	};
+
 	ADL.CollectionAsync = CollectionAsync;
 
 })(window.ADL = window.ADL || {});

@@ -95,6 +95,8 @@ onmessage = function(event)
 	case 'orderBy':
 	case 'groupBy':
 	case 'count':
+	case 'sum':
+	case 'average':
 		commandQueue.push( data );
 		break;
 	
@@ -127,6 +129,10 @@ function processCommandQueue()
 
 		else if( command[0] === 'count' )
 			count();
+		else if( command[0] === 'sum' )
+			sum(command[1]);
+		else if( command[0] === 'average' )
+			average(command[1]);
 	}
 }
 
@@ -224,7 +230,7 @@ function genRange(start, end, i)
 		i = i > 0 ? i : 1;
 		return x+i; 
 	},
-	test = function(cur, end){ return cur < end; };
+	test = function(cur, end){ return cur <= end; };
 
 	if( start instanceof Date ){
 		i = i > 0 ? i : Collection.day;
@@ -335,3 +341,69 @@ function count()
 
 	dataStack.push(ret);
 }
+
+function sum(path)
+{
+	var data = dataStack.pop();
+	if( !data ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if( !grouped )
+		data = [{
+			'group': 'all',
+			'data': data
+		}];
+
+	for(var i=0; i<data.length; i++)
+	{
+		var sum = 0;
+		for(var j=0; j<data[i].data.length; j++){
+			sum += xpath(path, data[i].data[j]);
+		}
+
+		ret.push({
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			sum: sum,
+			sample: data[i].data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}
+
+function average(path)
+{
+	var data = dataStack.pop();
+	if( !data || !path ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if( !grouped )
+		data = [{
+			'group': 'all',
+			'data': data
+		}];
+
+	for(var i=0; i<data.length; i++)
+	{
+		var sum = 0;
+		for(var j=0; j<data[i].data.length; j++){
+			sum += xpath(path, data[i].data[j]);
+		}
+
+		ret.push({
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			average: sum/data[i].data.length,
+			sample: data[i].data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}
+
+
