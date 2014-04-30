@@ -484,6 +484,25 @@
 		return this;
 	};
 
+	CollectionAsync.prototype.join = function(){
+		var args = Array.prototype.slice.call(arguments);
+		var path = args[0];
+		var branches = args.slice(1);
+
+		for(var i=0; i<branches.length; i++)
+		{
+			this.worker.postMessage(serialize(['newbranch']));
+			branches[i].call(this,this);
+		}
+		this.worker.postMessage(serialize(['join',path]));
+
+		return this;
+	};
+
+
+
+
+
 	CollectionAsync.prototype.count = function(){
 		this.worker.postMessage(serialize(['count']));
 		return this;

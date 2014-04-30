@@ -91,10 +91,8 @@ onmessage = function(event)
 		break;
 
 	case 'save':
-		processCommandQueue();
-		dataStack.push( dataStack[dataStack.length-1].slice() );
-		break;
-
+	case 'newbranch':
+	case 'join':
 	case 'where':
 	case 'select':
 	case 'slice':
@@ -117,6 +115,7 @@ onmessage = function(event)
 /*
  * The core operator pops from the command queue until there aren't any more
  */
+var branchRoot = null;
 
 function processCommandQueue()
 {
@@ -125,6 +124,32 @@ function processCommandQueue()
 		var command = commandQueue.pop();
 
 		switch(command[0]){
+			case 'newbranch':
+				if( branchRoot === null ){
+					branchRoot = dataStack.length-1;
+				}
+				dataStack.push( dataStack[branchRoot].slice() );
+				break;
+
+			case 'join':
+
+				if(branchRoot === null) continue;
+				var index = {};
+				while(dataStack.length > branchRoot+1){
+					merge(index, dataStack.pop(), command[1]);
+				}
+				var ret = [];
+				for(var i in index){
+					ret.push( index[i] );
+				}
+				dataStack[branchRoot] = ret;
+				branchRoot = null;
+				break;
+
+			case 'save':
+				dataStack.push( dataStack[dataStack.length-1].slice() );
+				break;
+
 			case 'where':
 				where(command[1]); break;
 			case 'select':
@@ -146,6 +171,26 @@ function processCommandQueue()
 				min(command[1]); break;
 			case 'max':
 				max(command[1]); break;
+		}
+	}
+}
+
+function merge(index, set, on)
+{
+	for(var i=0; i<set.length; i++){
+		var key = xpath(on, set[i]);
+		if(!key){
+			continue;
+		}
+		else if( !index[key] ){
+			index[key] = set[i];
+		}
+		else {
+			for(var j in set[i]){
+				if( !index[key][j] ){
+					index[key][j] = set[i][j];
+				}
+			}
 		}
 	}
 }
