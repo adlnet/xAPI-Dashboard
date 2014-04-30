@@ -83,9 +83,8 @@
 	 * Class methods to perform graph "formatting" operations
 	 */
 	 
-	XAPIDashboard.count = function(){
+	ADL.count = function(){
 		return function(data, opts){
-			console.log(opts);
 			if(opts.range){
 				return opts.collection.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
 			}
@@ -93,7 +92,7 @@
 		}
 	};	 
 
-	XAPIDashboard.accumulate = function(statements, opts){
+	ADL.accumulate = function(statements, opts){
 		return statements.transform(function(elem,index,array){
 			return {
 				'in': ADL.Collection.getValue(opts.xField)(elem),
@@ -101,21 +100,42 @@
 				'sample': elem
 			};
 		});
-	};
+	};	
 	
-	XAPIDashboard.countRange = function(statements, opts){
-		var rangeArr = ADL.Collection.genRange(opts.range.start || statements.min(opts.groupField || opts.xField), opts.range.end || statements.max(opts.groupField || opts.xField), opts.range.increment || 1);
-		return statements.groupByRange(opts.groupField || opts.xField, rangeArr, function(groupSet, start, end){ 
-			return groupSet.count()
-		});
-	};	 	
-	
-	XAPIDashboard.average = function(xpath){
+	ADL.average = function(xpath){
 		return function(data, opts){
 			if(opts.range){
 				return opts.collection.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
 			}
 			else return opts.collection.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
+		}
+	};	
+	
+	ADL.multiAverage = function(xpath){
+		return function(data, opts){
+			var tempCb = function(data){
+				var outArr = [];
+				
+				//for(
+				
+				opts.cb(data);
+				console.log(data);
+			};
+			if(opts.range){
+				return opts.collection.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(tempCb);
+			}
+			else return opts.collection
+				.groupBy(opts.group)
+				.join(
+					'group', 
+					function(data){ return data.average(xpath); }, 
+					function(data){ return data.min(xpath); },
+					function(data){ return data.max(xpath); }
+				)
+				.exec(tempCb);
+			
+			
+
 		}
 	};	 
 	

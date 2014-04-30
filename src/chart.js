@@ -34,7 +34,6 @@
 		}
 		
 		opts.cb = function(aggregateData){
-			console.log(aggregateData);
 			if(opts.post)
 				aggregateData = opts.post(aggregateData, event);
 
@@ -78,7 +77,7 @@
 				data = opts.collection.where(opts.pre);
 			}
 			else{
-				data = opts.pre(data, event);
+				data = opts.pre(opts.collection, event);
 			}
 		}
 
@@ -138,10 +137,31 @@
 	}
 	
 	LineChart.prototype = new Chart();
-	LineChart.prototype.constructor = LineChart;
+	LineChart.prototype.constructor = LineChart;	
+	
+	//MultiBarChart class extends Chart
+	function MultiBarChart(container, opts){
+
+		Chart.call(this, container, opts);
+		
+		this.opts.chartType = 'multiBarChart';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.accumulate;
+		
+		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
+			'x': function(d,i){ return d.in; },
+			'y': function(d,i){ return d.out; },
+			'showXAxis': true,
+			'showYAxis': true,
+			'transitionDuration': 250
+		};
+	}
+	
+	MultiBarChart.prototype = new Chart();
+	MultiBarChart.prototype.constructor = MultiBarChart;
 
 	ADL.Chart = Chart;
 	ADL.BarChart = BarChart;
 	ADL.LineChart = LineChart;
+	ADL.MultiBarChart = MultiBarChart;
 
 })(window.ADL = window.ADL || {});

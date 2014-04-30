@@ -66,8 +66,10 @@
 		var childChart = dash.createBarChart({
 			group: "result.score.raw",
 			range: { start: 50, end: 100, increment: 5 },
-			pre: "result.score.raw != null",
-			aggregate: ADL.XAPIDashboard.count(),
+			pre: function(collection, event){
+				return collection.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
+			},
+			aggregate: ADL.count(),
 			customize: function(nvd3Chart, event){
 				nvd3Chart.yAxis.tickFormat(d3.format(",d"));
 			}
@@ -75,7 +77,7 @@
 
 		var chart = dash.createBarChart({
 			pre: "result.score.raw != null",
-			aggregate: ADL.XAPIDashboard.average("result.score.raw"),
+			aggregate: ADL.multiAverage("result.score.raw"),
 			group:  'object.definition.name',
 			customize: function(nvd3Chart){
 				nvd3Chart.xAxis.rotateLabels(45);
