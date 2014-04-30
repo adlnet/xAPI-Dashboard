@@ -3,7 +3,7 @@
 	var currentChart;
 	
 	//Base chart class
-	function Chart(set, container, opts)
+	function Chart(container, opts)
 	{
 		if(typeof container == "string"){
 			this.container = container;
@@ -18,16 +18,13 @@
 			this.child = opts.child;
 			this.opts.child.parent = this;
 		}
-		
-		this.statements = set;
 	}
 	
 	Chart.prototype.draw = function(container){
-		var data = this.statements,
-			opts = this.opts,
+		var	opts = this.opts,
 			container = container ? container : this.container,
 			event = this.event,
-			self = this;
+			data;
 		
 		currentChart = this;
 			
@@ -36,44 +33,56 @@
 			return;
 		}
 		
-		if(opts.pre)
-			data = opts.pre(data, event);
+		opts.cb = function(aggregateData){
+			console.log(aggregateData);
+			if(opts.post)
+				aggregateData = opts.post(aggregateData, event);
 
-		data = opts.aggregate(data, opts, event);
-
-		if(opts.post)
-			data = opts.post(data, event);
-
-		nv.addGraph(function(){
-			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
-			chart.staggerLabels(false);
-
-			if( opts.customize )
-				opts.customize(chart, event);
-			
-			var next = currentChart.child || currentChart.parent;
-			
-			if(next && opts.eventChartType){
+			nv.addGraph(function(){
+				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 				
-				//Find a way to prevent the addition of click handlers every time this chart is drawn
-				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-					next = currentChart.child || currentChart.parent;
-					if(next){
-						currentChart = next;
-						currentChart.event = e;
-						currentChart.draw();
-					}
-				});
+				if(chart.staggerLabels)
+					chart.staggerLabels(false);
+
+				if( opts.customize )
+					opts.customize(chart, event);
+				
+				var next = currentChart.child || currentChart.parent;
+				
+				if(next && opts.eventChartType){
+					
+					//Find a way to prevent the addition of click handlers every time this chart is drawn
+					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+						next = currentChart.child || currentChart.parent;
+						if(next){
+							currentChart = next;
+							currentChart.event = e;
+							currentChart.draw();
+						}
+					});
+				}
+				
+				d3.select(container)
+					.datum([{'values': aggregateData}])
+					.call(chart);
+				
+				nv.utils.windowResize(chart.update);
+				chart.update();
+				return chart;
+			});
+		};
+		
+		opts.collection.save();
+		if(opts.pre){
+			if(typeof opts.pre === "string"){
+				data = opts.collection.where(opts.pre);
 			}
-			
-			d3.select(container)
-				.datum([{'values': data.contents}])
-				.call(chart);
-			
-			nv.utils.windowResize(chart.update);
-			
-			return chart;
-		});
+			else{
+				data = opts.pre(data, event);
+			}
+		}
+
+		opts.aggregate(data, opts, event);
 	};
 	
 	Chart.prototype.addOptions = function(obj){
@@ -91,9 +100,9 @@
 	};
 	
 	//BarChart class extends Chart
-	function BarChart(set, container, opts){
+	function BarChart(container, opts){
 
-		Chart.call(this, set, container, opts);
+		Chart.call(this, container, opts);
 		
 		this.opts.chartType = 'discreteBarChart';
 		this.opts.eventChartType = 'discretebar';
@@ -112,9 +121,9 @@
 	BarChart.prototype.constructor = BarChart;	
 	
 	//LineChart class extends Chart
-	function LineChart(set, container, opts){
+	function LineChart(container, opts){
 
-		Chart.call(this, set, container, opts);
+		Chart.call(this, container, opts);
 		
 		this.opts.chartType = 'lineChart';
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.accumulate;
