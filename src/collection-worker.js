@@ -70,6 +70,12 @@ onmessage = function(event)
 			dataStack.push( dataStack[dataStack.length-1].slice() );
 		break;
 
+	case 'append':
+		var topElem = dataStack.pop();
+		topElem.push.apply(topElem, data[1]);
+		dataStack.push(topElem);
+		break;
+
 	// request to send result data back
 	case 'exec':
 		//try {
@@ -304,7 +310,7 @@ function groupBy(path, range)
 		for(var i=0; i<data.length; i++)
 		{
 			var groupVal = xpath(path,data[i]);
-			if( groupVal.toLowerCase )
+			if( groupVal && groupVal.toLowerCase )
 				groupVal = groupVal.toLowerCase();
 
 			for(var j=0; j<ret.length; j++){

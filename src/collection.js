@@ -435,6 +435,13 @@
 		//this.worker.postMessage(['datapush', array]);
 	}
 
+	CollectionAsync.prototype.append = function(array)
+	{
+		var payload = serialize(['append', array]);
+		this.worker.postMessage(payload, [payload]);
+		return this;
+	};
+
 	CollectionAsync.prototype.exec = function(cb){
 		this.worker.postMessage(serialize(['exec']));
 		this.worker.onmessage = function(event){
@@ -442,12 +449,13 @@
 			cb(result[0]);
 			event.target.onmessage = undefined;
 		};
+		return this;
 	};
 
 	CollectionAsync.prototype.save = function(){
 		this.worker.postMessage(serialize(['save']));
 		return this;
-	}
+	};
 	
 	CollectionAsync.prototype.where = function(query){
 		this.worker.postMessage(serialize(['where', query]));
