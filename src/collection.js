@@ -491,6 +491,16 @@
 		return this;
 	};
 
+	CollectionAsync.prototype.min = function(xpath){
+		this.worker.postMessage(serialize(['min',xpath]));
+		return this;
+	};
+
+	CollectionAsync.prototype.max = function(xpath){
+		this.worker.postMessage(serialize(['max',xpath]));
+		return this;
+	};
+
 	ADL.CollectionAsync = CollectionAsync;
 
 })(window.ADL = window.ADL || {});
