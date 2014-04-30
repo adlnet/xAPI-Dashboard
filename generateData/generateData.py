@@ -176,10 +176,15 @@ def main():
 
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [random.randint(70,85) for i in range(100)]) )
+	battery.tests.append( Test('test1', [random.randint(70,85) for i in range(20)]) )
+	battery.tests.append( Test('test2', [random.randint(70,85) for i in range(20)]) )
+	battery.tests.append( Test('test3', [random.randint(70,85) for i in range(20)]) )
+	battery.tests.append( Test('test4', [random.randint(70,85) for i in range(20)]) )
+	battery.tests.append( Test('test5', [random.randint(70,85) for i in range(20)]) )
+	battery.tests.append( Test('final', [random.randint(75,85) for i in range(20)]) )
 	#battery.tests.append( Test('test2', [50 for i in range(100)]) )
 
-	myclass = Class(100, 85,50)
+	myclass = Class(35, 85,50)
 
 	results = battery.run(myclass)
 	statements = genStatements(results)
