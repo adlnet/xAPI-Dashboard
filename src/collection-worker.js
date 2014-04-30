@@ -74,7 +74,7 @@ onmessage = function(event)
 	case 'exec':
 		//try {
 			processCommandQueue();
-			var result = serialize(['exec', dataStack.pop()]);
+			var result = serialize([dataStack.pop()]);
 			postMessage(result, [result]);
 		/*}
 		catch(e){
@@ -94,6 +94,7 @@ onmessage = function(event)
 	case 'slice':
 	case 'orderBy':
 	case 'groupBy':
+	case 'count':
 		commandQueue.push( data );
 		break;
 	
@@ -123,6 +124,9 @@ function processCommandQueue()
 			orderBy(command[1],command[2]);
 		else if( command[0] === 'groupBy' )
 			groupBy(command[1],command[2]);
+
+		else if( command[0] === 'count' )
+			count();
 	}
 }
 
@@ -228,11 +232,7 @@ function genRange(start, end, i)
 	}
 	else if( typeof(start) === 'string' ){
 		start = start.charAt(0).toLowerCase();
-
-		if( !end || end.charAt(0).toLowerCase() === 'z' )
-			end = '{';
-		else
-			end = end.charAt(0).toLowerCase();
+		end = end.charAt(0).toLowerCase();
 
 		i = i > 0 ? i : 1;
 		increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
@@ -280,6 +280,7 @@ function groupBy(path, range)
 	{
 		for(var i=0; i<range.length-1; i++){
 			ret.push({
+				'group': range[i]+'-'+range[i+1],
 				'groupStart': range[i],
 				'groupEnd': range[i+1],
 				'data': []
@@ -293,7 +294,7 @@ function groupBy(path, range)
 				groupVal = groupVal.toLowerCase();
 
 			for(var j=0; j<ret.length; j++){
-				if( ret[j].groupStart <= groupVal && groupVal < ret[j].groupEnd )
+				if( ret[j].groupStart <= groupVal && (groupVal < ret[j].groupEnd || j==ret.length && groupVal==ret[j].groupEnd) )
 					ret[j].data.push(data[i]);
 			}
 		}
@@ -302,3 +303,35 @@ function groupBy(path, range)
 	dataStack.push(ret);
 }
 
+function count()
+{
+	var data = dataStack.pop();
+	if( !data ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if(grouped)
+	{
+		for(var i=0; i<data.length; i++)
+		{
+			var group = {
+				group: data[i].group,
+				groupStart: data[i].groupStart,
+				groupEnd: data[i].groupEnd,
+				count: data[i].data.length,
+				sample: data[i].data[0]
+			}
+			ret.push(group);
+		}
+		
+	}
+	else {
+		ret.push({
+			'group': 'all',
+			'count': data.length,
+			'sample': data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}

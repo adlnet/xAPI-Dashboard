@@ -439,10 +439,16 @@
 		this.worker.postMessage(serialize(['exec']));
 		this.worker.onmessage = function(event){
 			var result = deserialize(event.data);
-			cb(result[1]);
+			cb(result[0]);
+			event.target.onmessage = undefined;
 		};
 	};
 
+	CollectionAsync.prototype.save = function(){
+		this.worker.postMessage(serialize(['save']));
+		return this;
+	}
+	
 	CollectionAsync.prototype.where = function(query){
 		this.worker.postMessage(serialize(['where', query]));
 		return this;
@@ -451,24 +457,29 @@
 	CollectionAsync.prototype.select = function(selector){
 		this.worker.postMessage(serialize(['select', selector]));
 		return this;
-	}
+	};
 
 	CollectionAsync.prototype.slice = function(start,end){
 		this.worker.postMessage(serialize(['slice',start,end]));
 		return this;
-	}
+	};
 
 	CollectionAsync.prototype.orderBy = function(xpath, direction){
 		this.worker.postMessage(serialize(['orderBy',xpath,direction]));
 		return this;
-	}
+	};
 
 	CollectionAsync.prototype.groupBy = function(xpath, ranges){
 		if( !(Array.isArray(ranges) && ranges.length === 3 && ranges[2]%1 === 0) )
 			ranges = null;
 		this.worker.postMessage(serialize(['groupBy',xpath,ranges]));
 		return this;
-	}
+	};
+
+	CollectionAsync.prototype.count = function(){
+		this.worker.postMessage(serialize(['count']));
+		return this;
+	};
 
 	ADL.CollectionAsync = CollectionAsync;
 
