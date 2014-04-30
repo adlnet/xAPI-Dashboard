@@ -70,6 +70,12 @@ onmessage = function(event)
 			dataStack.push( dataStack[dataStack.length-1].slice() );
 		break;
 
+	case 'append':
+		var topElem = dataStack.pop();
+		topElem.push.apply(topElem, data[1]);
+		dataStack.push(topElem);
+		break;
+
 	// request to send result data back
 	case 'exec':
 		//try {
@@ -95,6 +101,10 @@ onmessage = function(event)
 	case 'orderBy':
 	case 'groupBy':
 	case 'count':
+	case 'sum':
+	case 'average':
+	case 'min':
+	case 'max':
 		commandQueue.push( data );
 		break;
 	
@@ -114,19 +124,29 @@ function processCommandQueue()
 	{
 		var command = commandQueue.pop();
 
-		if( command[0] === 'where' )
-			where(command[1]);
-		else if( command[0] === 'select' )
-			select(command[1]);
-		else if( command[0] === 'slice' )
-			slice(command[1],command[2]);
-		else if( command[0] === 'orderBy' )
-			orderBy(command[1],command[2]);
-		else if( command[0] === 'groupBy' )
-			groupBy(command[1],command[2]);
-
-		else if( command[0] === 'count' )
-			count();
+		switch(command[0]){
+			case 'where':
+				where(command[1]); break;
+			case 'select':
+				select(command[1]); break;
+			case 'slice':
+				slice(command[1],command[2]); break;
+			case 'orderBy':
+				orderBy(command[1],command[2]); break;
+			case 'groupBy':
+				groupBy(command[1],command[2]); break;
+	
+			case 'count':
+				count(); break;
+			case 'sum':
+				sum(command[1]); break;
+			case 'average':
+				average(command[1]); break;
+			case 'min':
+				min(command[1]); break;
+			case 'max':
+				max(command[1]); break;
+		}
 	}
 }
 
@@ -224,7 +244,7 @@ function genRange(start, end, i)
 		i = i > 0 ? i : 1;
 		return x+i; 
 	},
-	test = function(cur, end){ return cur < end; };
+	test = function(cur, end){ return cur <= end; };
 
 	if( start instanceof Date ){
 		i = i > 0 ? i : Collection.day;
@@ -290,7 +310,7 @@ function groupBy(path, range)
 		for(var i=0; i<data.length; i++)
 		{
 			var groupVal = xpath(path,data[i]);
-			if( groupVal.toLowerCase )
+			if( groupVal && groupVal.toLowerCase )
 				groupVal = groupVal.toLowerCase();
 
 			for(var j=0; j<ret.length; j++){
@@ -335,3 +355,132 @@ function count()
 
 	dataStack.push(ret);
 }
+
+function sum(path)
+{
+	var data = dataStack.pop();
+	if( !data || !path ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if( !grouped )
+		data = [{
+			'group': 'all',
+			'data': data
+		}];
+
+	for(var i=0; i<data.length; i++)
+	{
+		var sum = 0;
+		for(var j=0; j<data[i].data.length; j++){
+			sum += xpath(path, data[i].data[j]);
+		}
+
+		ret.push({
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			sum: sum,
+			sample: data[i].data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}
+
+function average(path)
+{
+	var data = dataStack.pop();
+	if( !data || !path ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if( !grouped )
+		data = [{
+			'group': 'all',
+			'data': data
+		}];
+
+	for(var i=0; i<data.length; i++)
+	{
+		var sum = 0;
+		for(var j=0; j<data[i].data.length; j++){
+			sum += xpath(path, data[i].data[j]);
+		}
+
+		ret.push({
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			average: sum/data[i].data.length,
+			sample: data[i].data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}
+
+function min(path)
+{
+	var data = dataStack.pop();
+	if( !data || !path ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if( !grouped )
+		data = [{
+			'group': 'all',
+			'data': data
+		}];
+
+	for(var i=0; i<data.length; i++)
+	{
+		var min = Infinity;
+		for(var j=0; j<data[i].data.length; j++){
+			min = Math.min(min, xpath(path, data[i].data[j]));
+		}
+
+		ret.push({
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			min: min,
+			sample: data[i].data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}
+
+function max(path)
+{
+	var data = dataStack.pop();
+	if( !data || !path ) return;
+
+	var grouped = data[0].group && data[0].data;
+	var ret = [];
+	if( !grouped )
+		data = [{
+			'group': 'all',
+			'data': data
+		}];
+
+	for(var i=0; i<data.length; i++)
+	{
+		var max = -Infinity;
+		for(var j=0; j<data[i].data.length; j++){
+			max = Math.max(max, xpath(path, data[i].data[j]));
+		}
+
+		ret.push({
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			max: max,
+			sample: data[i].data[0]
+		});
+	}
+
+	dataStack.push(ret);
+}
+
