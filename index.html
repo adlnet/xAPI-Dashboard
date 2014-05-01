@@ -38,7 +38,7 @@
 	<div class='container'>
 		<div id='graph'>
 			<h1></h1>
-			<svg></svg>
+			<svg id="svg"></svg>
 		</div>
 	</div>
 	<div class='container'>
@@ -56,8 +56,6 @@
 		</div>
 	</div>
 	<script type="text/javascript">
-		$ = function(query){ return document.querySelector(query); }
-
 		var wrapper = new XAPIWrapper({
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
@@ -66,24 +64,23 @@
 		var childChart = dash.createBarChart({
 			group: "result.score.raw",
 			range: { start: 50, end: 100, increment: 5 },
-			pre: function(collection, event){
-				return collection.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
+			pre: function(data, event){
+				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.count(),
 			customize: function(nvd3Chart, event){
 				nvd3Chart.yAxis.tickFormat(d3.format(",d"));
+				console.log(event);
+				ADL.$('#graph h1').textContent = event.point.in + ' Score Ranges';
 			}
 		});
 
-		var chart = dash.createBarChart({
+		var chart = dash.createMultiBarChart({
 			pre: "result.score.raw != null",
-			aggregate: ADL.multiAverage("result.score.raw"),
+			aggregate: ADL.multiAggregate("result.score.raw", dash.data.min, dash.data.average, dash.data.max),
 			group:  'object.definition.name',
 			customize: function(nvd3Chart){
-				nvd3Chart.xAxis.rotateLabels(45);
-				nvd3Chart.forceY([50, 100]);
-				
-				$('#graph h1').textContent = 'Test Results';
+				ADL.$('#graph h1').textContent = 'Test Results';
 			}, 
 			child: childChart
 		});

@@ -20,15 +20,22 @@
 		}
 	}
 	
+	Chart.prototype.pipeDataToD3 = function(obj, chart){
+		console.log("chart base");
+		d3.select(this.container)
+			.datum([{'values': obj}])
+			.call(chart);
+	};
+	
 	Chart.prototype.draw = function(container){
 		var	opts = this.opts,
-			container = container ? container : this.container,
 			event = this.event,
-			data;
-		
-		currentChart = this;
+			self = this;
 			
-		if(!opts.aggregate || !opts.chartType || !container){
+		self.container = container ? container : self.container;
+		currentChart = self;
+			
+		if(!opts.aggregate || !opts.chartType || !self.container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
@@ -54,34 +61,41 @@
 					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
 						next = currentChart.child || currentChart.parent;
 						if(next){
+							//If the containers are the same, then remove all nodes from the container
+							if(currentChart.container == next.container){
+								var myNode = ADL.$(next.container);
+								while (myNode.firstChild) {
+									myNode.removeChild(myNode.firstChild);
+								}
+							}
+							
 							currentChart = next;
 							currentChart.event = e;
 							currentChart.draw();
 						}
 					});
 				}
-				
-				d3.select(container)
-					.datum([{'values': aggregateData}])
-					.call(chart);
-				
+
+				self.pipeDataToD3.call(self, aggregateData, chart);
 				nv.utils.windowResize(chart.update);
+				
 				chart.update();
+				
 				return chart;
 			});
 		};
 		
-		opts.collection.save();
+		opts.data.save();
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				data = opts.collection.where(opts.pre);
+				opts.data.where(opts.pre);
 			}
 			else{
-				data = opts.pre(opts.collection, event);
+				opts.pre(opts.data, event);
 			}
 		}
 
-		opts.aggregate(data, opts, event);
+		opts.aggregate(opts, event);
 	};
 	
 	Chart.prototype.addOptions = function(obj){
@@ -145,19 +159,29 @@
 		Chart.call(this, container, opts);
 		
 		this.opts.chartType = 'multiBarChart';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.accumulate;
+		this.opts.eventChartType = 'multibar';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
 			'y': function(d,i){ return d.out; },
 			'showXAxis': true,
 			'showYAxis': true,
-			'transitionDuration': 250
+			'transitionDuration': 250,
+			'groupSpacing': 0.25,
+			'stacked': true
 		};
 	}
 	
 	MultiBarChart.prototype = new Chart();
 	MultiBarChart.prototype.constructor = MultiBarChart;
+	
+	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
+		console.log("multibar");
+		d3.select(this.container)
+			.datum(obj)
+			.call(chart);
+	};
 
 	ADL.Chart = Chart;
 	ADL.BarChart = BarChart;

@@ -7,10 +7,10 @@
 		webworkerSrc = webworkerSrc ? 'src/collection-worker.js' : 'src/collection-worker.js';
 		
 		try{
-			this.collection = new ADL.CollectionAsync(window.statements, webworkerSrc);
+			this.data = new ADL.CollectionAsync(window.statements, webworkerSrc);
 		}
 		catch(e){
-			this.collection = new ADL.Collection();
+			this.data = new ADL.Collection();
 		}
 	
 		this.container = container;
@@ -59,7 +59,7 @@
 	// default aggregator requires opts.xField
 	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
 	XAPIDashboard.prototype.createChart = function(type, opts){
-		opts.collection = this.collection;
+		opts.data = this.data;
 		switch(type){
 			case "barChart": opts.chart = new ADL.BarChart(this.container, opts); break;
 			case "lineChart": opts.chart = new ADL.LineChart(this.container, opts); break;
@@ -69,13 +69,18 @@
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createBarChart = function(opts){
-		opts.collection = this.collection;
+		opts.data = this.data;
 		opts.chart = new ADL.BarChart(this.container, opts);
+		return opts.chart;
+	}; 
+	XAPIDashboard.prototype.createMultiBarChart = function(opts){
+		opts.data = this.data;
+		opts.chart = new ADL.MultiBarChart(this.container, opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createLineChart = function(opts){
 		opts.chart = new ADL.LineChart(this.container, opts);
-		opts.collection = this.collection;
+		opts.data = this.data;
 		return opts.chart;
 	}; 
 	
@@ -84,11 +89,11 @@
 	 */
 	 
 	ADL.count = function(){
-		return function(data, opts){
+		return function(opts){
 			if(opts.range){
-				return opts.collection.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
+				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
 			}
-			else return opts.collection.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
+			else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
 		}
 	};	 
 
@@ -103,42 +108,71 @@
 	};	
 	
 	ADL.average = function(xpath){
-		return function(data, opts){
+		return function(opts){
 			if(opts.range){
-				return opts.collection.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
+				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
 			}
-			else return opts.collection.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
+			else return opts.data.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
 		}
 	};	
 	
-	ADL.multiAverage = function(xpath){
-		return function(data, opts){
+	ADL.multiAggregate = function(xpath){
+		var saveArgs = arguments,
+			opsArr = ["group"],
+			saveIndex;
+		
+		for(var g = 1; g < saveArgs.length; g++){
+			opsArr.push(function(data){ 
+				saveArgs[saveIndex++].call(data, xpath);
+			});
+		}
+	
+		return function(opts){
+			saveIndex = 1;
+			
 			var tempCb = function(data){
-				var outArr = [];
 				
-				//for(
+				var colorRange = d3.scale.category20c().range(),
+					aggArr = [],
+					g = 0;
 				
-				opts.cb(data);
-				console.log(data);
+				for(var i in data[0]){
+					if(i != "group" && i != "sample"){
+						aggArr.push({key: i, values: [], color: colorRange[g++]});
+					}
+				}
+				
+				for(var i = 0; i < data.length; i++){
+					for(var g = 0; g < aggArr.length; g++){
+						aggArr[g].values.push({in: data[i].group, out: data[i][aggArr[g].key], series: g});
+					}
+				}
+				
+				//sort ensuring that min is at the beginning and max is at the end
+				aggArr.sort(function(a, b){
+					if(a.key == "min") return -1;
+					else if(b.key == "min") return 1;				
+					else if(a.key == "max") return 1;
+					else if(b.key == "max") return -1;
+					else return 0;
+				});
+
+				opts.cb(aggArr);
 			};
-			if(opts.range){
-				return opts.collection.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(tempCb);
-			}
-			else return opts.collection
-				.groupBy(opts.group)
-				.join(
-					'group', 
-					function(data){ return data.average(xpath); }, 
-					function(data){ return data.min(xpath); },
-					function(data){ return data.max(xpath); }
-				)
+			
+			if(opts.range) return opts.data
+				.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment])
+				.join.apply(opts.data, opsArr)
 				.exec(tempCb);
 			
-			
-
+			else return opts.data
+				.groupBy(opts.group)
+				.join.apply(opts.data, opsArr)
+				.exec(tempCb);
 		}
 	};	 
 	
 	ADL.XAPIDashboard = XAPIDashboard;
+	ADL.$ = function(query){ return document.querySelector(query); };
 
 })(window.ADL = window.ADL || {});
