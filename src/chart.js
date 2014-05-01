@@ -21,7 +21,6 @@
 	}
 	
 	Chart.prototype.pipeDataToD3 = function(obj, chart){
-		console.log("chart base");
 		d3.select(this.container)
 			.datum([{'values': obj}])
 			.call(chart);
@@ -169,7 +168,8 @@
 			'showYAxis': true,
 			'transitionDuration': 250,
 			'groupSpacing': 0.25,
-			'stacked': true
+			'stacked': true,
+			'showControls': false
 		};
 	}
 	
@@ -177,7 +177,6 @@
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
 	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
-		console.log("multibar");
 		d3.select(this.container)
 			.datum(obj)
 			.call(chart);

@@ -63,14 +63,12 @@
 
 		var childChart = dash.createBarChart({
 			group: "result.score.raw",
-			range: { start: 50, end: 100, increment: 5 },
+			range: { start: 50, end: 101, increment: 5 },
 			pre: function(data, event){
 				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.count(),
 			customize: function(nvd3Chart, event){
-				nvd3Chart.yAxis.tickFormat(d3.format(",d"));
-				console.log(event);
 				ADL.$('#graph h1').textContent = event.point.in + ' Score Ranges';
 			}
 		});
