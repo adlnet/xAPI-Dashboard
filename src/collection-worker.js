@@ -471,6 +471,7 @@ function groupByRange(path, range)
  */
 function groupBy(path)
 {
+	// add each data entry to its respective group
 	var data = dataStack.pop();
 	var groups = {};
 	for(var i=0; i<data.length; i++)
@@ -482,6 +483,7 @@ function groupBy(path)
 			groups[groupVal].push(data[i]);
 	}
 
+	// flatten groups
 	var ret = [];
 	for(var i in groups){
 		ret.push({
@@ -493,6 +495,9 @@ function groupBy(path)
 	dataStack.push(ret);
 }
 
+/*
+ * Take grouped data and return number of entries in each group
+ */
 function count()
 {
 	var data = dataStack.pop();
@@ -500,37 +505,43 @@ function count()
 
 	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if(grouped)
-	{
-		for(var i=0; i<data.length; i++)
-		{
-			var group = {
-				group: data[i].group,
-				groupStart: data[i].groupStart,
-				groupEnd: data[i].groupEnd,
-				count: data[i].data.length,
-				sample: data[i].data[0]
-			}
-			ret.push(group);
-		}
-		
-	}
-	else {
-		ret.push({
+
+	// if the data isn't grouped, treat as one large group
+	if(!grouped){
+		data = [{
 			'group': 'all',
-			'count': data.length,
-			'sample': data[0]
-		});
+			'data': data
+		}];
 	}
 
+	// loop over each group
+	for(var i=0; i<data.length; i++)
+	{
+		// copy group id fields to new object, add count and sample
+		var group = {
+			group: data[i].group,
+			groupStart: data[i].groupStart,
+			groupEnd: data[i].groupEnd,
+			count: data[i].data.length,
+			sample: data[i].data[0]
+		}
+		// add to return set
+		ret.push(group);
+	}
+		
 	dataStack.push(ret);
 }
 
+/*
+ * Take grouped data and return total of values of entries in each group
+ */
 function sum(path)
 {
 	var data = dataStack.pop();
 	if( !data || !path ) return;
 
+	// 
+	// if the data isn't grouped, treat as one large group
 	var grouped = data[0].group && data[0].data;
 	var ret = [];
 	if( !grouped )
@@ -539,6 +550,7 @@ function sum(path)
 			'data': data
 		}];
 
+	// loop over each group
 	for(var i=0; i<data.length; i++)
 	{
 		var sum = 0;
@@ -546,6 +558,7 @@ function sum(path)
 			sum += xpath(path, data[i].data[j]);
 		}
 
+		// copy group id fields to new object, add sum and sample
 		ret.push({
 			group: data[i].group,
 			groupStart: data[i].groupStart,
@@ -558,11 +571,15 @@ function sum(path)
 	dataStack.push(ret);
 }
 
+/*
+ * Take grouped data and return average of values of entries in each group
+ */
 function average(path)
 {
 	var data = dataStack.pop();
 	if( !data || !path ) return;
 
+	// if the data isn't grouped, treat as one large group
 	var grouped = data[0].group && data[0].data;
 	var ret = [];
 	if( !grouped )
@@ -571,6 +588,7 @@ function average(path)
 			'data': data
 		}];
 
+	// loop over each group
 	for(var i=0; i<data.length; i++)
 	{
 		var sum = 0;
@@ -578,6 +596,7 @@ function average(path)
 			sum += xpath(path, data[i].data[j]);
 		}
 
+		// copy group id fields to new object, add average and sample
 		ret.push({
 			group: data[i].group,
 			groupStart: data[i].groupStart,
@@ -590,11 +609,15 @@ function average(path)
 	dataStack.push(ret);
 }
 
+/*
+ * Take grouped data and return minimum of values of entries in each group
+ */
 function min(path)
 {
 	var data = dataStack.pop();
 	if( !data || !path ) return;
 
+	// if the data isn't grouped, treat as one large group
 	var grouped = data[0].group && data[0].data;
 	var ret = [];
 	if( !grouped )
@@ -603,6 +626,7 @@ function min(path)
 			'data': data
 		}];
 
+	// loop over each group
 	for(var i=0; i<data.length; i++)
 	{
 		var min = Infinity;
@@ -610,6 +634,7 @@ function min(path)
 			min = Math.min(min, xpath(path, data[i].data[j]));
 		}
 
+		// copy group id fields to new object, add min and sample
 		ret.push({
 			group: data[i].group,
 			groupStart: data[i].groupStart,
@@ -622,11 +647,15 @@ function min(path)
 	dataStack.push(ret);
 }
 
+/*
+ * Take grouped data and return maximum of values of entries in each group
+ */
 function max(path)
 {
 	var data = dataStack.pop();
 	if( !data || !path ) return;
 
+	// if the data isn't grouped, treat as one large group
 	var grouped = data[0].group && data[0].data;
 	var ret = [];
 	if( !grouped )
@@ -635,6 +664,7 @@ function max(path)
 			'data': data
 		}];
 
+	// loop over each group
 	for(var i=0; i<data.length; i++)
 	{
 		var max = -Infinity;
@@ -642,6 +672,7 @@ function max(path)
 			max = Math.max(max, xpath(path, data[i].data[j]));
 		}
 
+		// copy group id fields to new object, add max and sample
 		ret.push({
 			group: data[i].group,
 			groupStart: data[i].groupStart,
