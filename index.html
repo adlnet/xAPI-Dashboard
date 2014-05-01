@@ -2,7 +2,15 @@
 <head>
 	<title>xAPI Dashboard</title>
 	<link rel='stylesheet' href='lib/nv.d3.css'></link>
-	<script type="text/javascript" src="dist/xapidashboard.min.js"></script>
+	<!--<script type="text/javascript" src="dist/xapidashboard.min.js"></script>-->
+	
+	<script type="text/javascript" src="lib/d3.v3.js" charset="utf-8"></script>
+	<script type="text/javascript" src="lib/nv.d3.js"></script>
+	<script type="text/javascript" src="lib/xapiwrapper.min.js"></script>
+	<script type="text/javascript" src="src/chart.js"></script>
+	<script type="text/javascript" src="src/dashboard.js"></script>
+	<script type="text/javascript" src="src/collection.js"></script>
+	
 	<script src='extra/gen-lrs-data.js'></script>
 
 	<style>
@@ -25,119 +33,12 @@
 			text-align: center;
 		}
 	</style>
-
-
-	<script type="text/javascript">
-		$ = function(query){ return document.querySelector(query); }
-
-		var wrapper = new XAPIWrapper({
-			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
-		});
-		var dash = new ADL.XAPIDashboard(),
-			set = ADL.Collection;
-
-		window.onload = function(){
-		
-			function generateGraphs()
-			{
-				var testResults = dash.statements.without( dash.statements.selectEqual('result.score.raw',null) );
-				var test1Results = testResults.selectMatch('object.id',/test1$/);
-
-				$('#statistics #avg span').textContent = test1Results.average('result.score.raw');
-
-				$('#graph h1').textContent = 'Test 1 Results';
-				dash.genBarGraph('#graph svg', {
-					pre: function(data){
-						return test1Results;
-					},
-					aggregate: function(statements){
-						return statements
-							.groupByRange('result.score.raw', ADL.Collection.genRange(50,101,5), function(group){
-								return group.count();
-							});
-					},
-					customize: function(chart){
-						chart.staggerLabels(false);
-						chart.yAxis.tickFormat(d3.format(',d'));
-					}
-				});
-
-				$('#scores h1').textContent = 'High Scorers';
-				var data = test1Results.orderBy('result.score.raw','descending').selectFirst(10);
-				for(var i=0; i<data.contents.length; i++){
-					var block = document.createElement('li');
-					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
-					block.querySelector('.name').textContent = data.contents[i].actor.name;
-					block.querySelector('.score').textContent = data.contents[i].result.score.raw;
-					$('#scores ol').appendChild(block);
-				}
-
-				$('#hard_questions h1').textContent = 'Hardest Questions';
-				var data = dash.statements.selectMatch('object.id',/test1/).selectMatch('verb.id',/answered$/);
-				data = data.groupBy('object.id', function(group){
-						return group.selectEqual('result.success',true).count() / group.count();
-					})
-					.orderBy('out').selectFirst(10);
-
-				for(var i=0; i<data.contents.length; i++){
-					var block = document.createElement('li');
-					block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
-					block.querySelector('.name').textContent = data.contents[i].in.slice(31);
-					block.querySelector('.score').textContent = data.contents[i].out*100 + '% correct';
-					$('#hard_questions ol').appendChild(block);
-					
-				}
-
-
-				/************************************
-				Chart customization tips and tricks:
-				*************************************
-
-				// tooltips are special divs, where h3 is the name and p is the content
-				chart.tooltips(true).tooltipContent(function(key,x,y,e,chart){
-					return '<h3>'
-						+e.point.sample.verb.id
-						+'</h3><p>'
-						+y
-						+'</p>';
-				});
-
-				// takes an array of color strings
-				chart.color(['#1f77b4'])
-
-				// rotate the x-axis labels 45 degress, useful for long strings
-				chart.xAxis.rotateLabels(45);
-
-				// apply some transformation to the x-axis labels
-				chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
-
-				chart.yAxis.tickFormat(d3.format(',d'));
-
-				chart.discretebar.dispatch.on('elementClick', function(e){
-					if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
-						window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
-				
-				chart.interpolate('monotone').showLegend(false);
-
-				**************************************/
-			}
-
-			if( window.statements ){
-				dash.addStatements(window.statements);
-				window.statements = null;
-				generateGraphs();
-			}
-			else {
-				dash.fetchAllStatements({'since': new Date(Date.now() - set.day * 30).toISOString()}, wrapper, generateGraphs);
-			}
-		};
-	</script>
 </head>
 <body>
 	<div class='container'>
 		<div id='graph'>
 			<h1></h1>
-			<svg></svg>
+			<svg id="svg"></svg>
 		</div>
 	</div>
 	<div class='container'>
@@ -154,5 +55,103 @@
 			<p id='avg'>Average score: <span></span>%</p>
 		</div>
 	</div>
+	<script type="text/javascript">
+		var wrapper = new XAPIWrapper({
+			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
+		});
+		var dash = new ADL.XAPIDashboard('#graph svg');
+
+		var childChart = dash.createBarChart({
+			group: "result.score.raw",
+			range: { start: 50, end: 101, increment: 5 },
+			pre: function(data, event){
+				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
+			},
+			aggregate: ADL.count(),
+			customize: function(nvd3Chart, event){
+				ADL.$('#graph h1').textContent = event.point.in + ' Score Ranges';
+			}
+		});
+
+		var chart = dash.createMultiBarChart({
+			pre: "result.score.raw != null",
+			aggregate: ADL.multiAggregate("result.score.raw", dash.data.min, dash.data.average, dash.data.max),
+			group:  'object.definition.name',
+			customize: function(nvd3Chart){
+				ADL.$('#graph h1').textContent = 'Test Results';
+			}, 
+			child: childChart
+		});
+		
+		chart.draw();
+
+		/*$('#scores h1').textContent = 'High Scorers';
+		var data = test1Results.orderBy('result.score.raw','descending').selectFirst(10);
+		for(var i=0; i<data.contents.length; i++){
+			var block = document.createElement('li');
+			block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
+			block.querySelector('.name').textContent = data.contents[i].actor.name;
+			block.querySelector('.score').textContent = data.contents[i].result.score.raw;
+			$('#scores ol').appendChild(block);
+		}
+
+		$('#hard_questions h1').textContent = 'Hardest Questions';
+		var data = dash.statements.selectMatch('object.id',/test1/).selectMatch('verb.id',/answered$/);
+		data = data.groupBy('object.id', function(group){
+				return group.selectEqual('result.success',true).count() / group.count();
+			})
+			.orderBy('out').selectFirst(10);
+
+		for(var i=0; i<data.contents.length; i++){
+			var block = document.createElement('li');
+			block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
+			block.querySelector('.name').textContent = data.contents[i].in.slice(31);
+			block.querySelector('.score').textContent = data.contents[i].out*100 + '% correct';
+			$('#hard_questions ol').appendChild(block);
+			
+		}*/
+
+
+		/************************************
+		Chart customization tips and tricks:
+		*************************************
+
+		// tooltips are special divs, where h3 is the name and p is the content
+		chart.tooltips(true).tooltipContent(function(key,x,y,e,chart){
+			return '<h3>'
+				+e.point.sample.verb.id
+				+'</h3><p>'
+				+y
+				+'</p>';
+		});
+
+		// takes an array of color strings
+		chart.color(['#1f77b4'])
+
+		// rotate the x-axis labels 45 degress, useful for long strings
+		chart.xAxis.rotateLabels(45);
+
+		// apply some transformation to the x-axis labels
+		chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
+
+		chart.yAxis.tickFormat(d3.format(',d'));
+
+		chart.discretebar.dispatch.on('elementClick', function(e){
+			if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
+				window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
+		
+		chart.interpolate('monotone').showLegend(false);
+
+		**************************************/
+
+		/*if( window.statements ){
+			dash.addStatements(window.statements);
+			window.statements = null;
+			generateGraphs();
+		}
+		else {
+			dash.fetchAllStatements({'since': new Date(Date.now() - set.day * 30).toISOString()}, wrapper, generateGraphs);
+		}*/
+	</script>
 </body>
 </html>
