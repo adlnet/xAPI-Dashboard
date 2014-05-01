@@ -264,7 +264,6 @@ function where(query)
 
 	// parse the query, abort filter if query didn't parse
 	var parse = parseWhere(query);
-	console.log(JSON.stringify(parse));
 	if( !parse ){
 		console.error('Invalid where expression: '+query);
 		return;
