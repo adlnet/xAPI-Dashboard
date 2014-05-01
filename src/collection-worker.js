@@ -502,11 +502,9 @@ function count()
 	var data = dataStack.pop();
 	if( !data ) return;
 
-	var grouped = data[0].group && data[0].data;
-	var ret = [];
-
 	// if the data isn't grouped, treat as one large group
-	if(!grouped){
+	var ret = [];
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
@@ -539,13 +537,13 @@ function sum(path)
 
 	// 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)
@@ -577,13 +575,13 @@ function average(path)
 	if( !data || !path ) return;
 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)
@@ -615,13 +613,13 @@ function min(path)
 	if( !data || !path ) return;
 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)
@@ -653,13 +651,13 @@ function max(path)
 	if( !data || !path ) return;
 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)

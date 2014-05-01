@@ -15,13 +15,28 @@ function xpath(path,obj)
 	}
 
 	// if no descent, just return object
-	else if(!path){
+	else if(path.length === 0){
 		return obj;
 	}
 
 	else {
-		var parts = /^([^\.]+)(?:\.(.+))?$/.exec(path);
-		var scoped = parts[1], rest = parts[2];
+		//var parts = /^([^\.]+)(?:\.(.+))?$/.exec(path);
+		var parts;
+		if(Array.isArray(path)){
+			parts = path;
+		}
+		else {
+			parts = path.split('.');
+			var i=0;
+			while(i<parts.length){
+				if(parts[i].charAt(parts[i].length-1) === '\\')
+					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
+				else
+					i++;
+			}
+		}
+
+		var scoped = parts[0], rest = parts.slice(1);
 		return xpath(rest, obj[scoped]);
 	}
 }
