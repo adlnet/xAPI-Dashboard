@@ -517,15 +517,13 @@ function count()
 	for(var i=0; i<data.length; i++)
 	{
 		// copy group id fields to new object, add count and sample
-		var group = {
+		ret.push({
 			group: data[i].group,
 			groupStart: data[i].groupStart,
 			groupEnd: data[i].groupEnd,
 			count: data[i].data.length,
 			sample: data[i].data[0]
-		}
-		// add to return set
-		ret.push(group);
+		});
 	}
 		
 	dataStack.push(ret);

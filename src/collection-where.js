@@ -10,7 +10,7 @@
 function xpath(path,obj)
 {
 	// if nothing to search, return null
-	if(!obj){
+	if(obj === undefined){
 		return null;
 	}
 
