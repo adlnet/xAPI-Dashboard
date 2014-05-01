@@ -7,19 +7,19 @@
 		<script>
 			function ready(){
 				var handle = setInterval(function(){document.body.innerHTML += '.';}, 20);
+				console.time('Total operating time');
+
 				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
-				//c.where('verb.id = "http://adlnet.gov/expapi/verbs/passed" and object.id="http://myschool.edu/xapi_vocab/test1" and result.score.raw >= 91' ).exec(function(msg){
-				//c.select('result.score.raw as score, verb.id').exec(function(msg){
-				//c.orderBy('result.score.raw').slice(-10).exec(function(msg){
-				c.where('result.score.raw != null').groupBy('actor.name')
-					.join(
-						'group',
-						function(data){ data.max('result.score.raw'); },
-						function(data){ data.min('result.score.raw'); },
-						function(data){ data.average('result.score.raw'); }
+				c.where('result.score.raw != null')
+					//.groupBy('timestamp', ['2014-04-29T04:50:00-05:00', '2014-04-29T04:45:00-05:00', -30*ADL.Collection.second])
+					.join('group',
+						function(data){data.groupBy('result.score.raw', [95,100,1]);},
+						function(data){data.groupBy('result.score.raw', [95,100,1]).count();}
 					)
+					.select('group, count, data')
 					.exec(function(msg){
 						clearInterval(handle);
+						console.timeEnd('Total operating time');
 						document.body.innerHTML += '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
 						console.log('Result length', msg.length);
 					});

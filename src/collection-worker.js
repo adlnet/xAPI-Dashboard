@@ -1,6 +1,17 @@
 /******************************************************
  * The hard worker of the Collection class
- * Processes the statements given to it by the synchronous wrapper
+ * Processes the statements given to it by the
+ * synchronous wrapper
+ *
+ * The worker is essentially a state machine. It queues
+ * commands given to it until it receives the 'exec'
+ * message. Each command operates on a data stack,
+ * popping an entry off, applying its operation, and
+ * pushing a new entry back.
+ *
+ * Once the command queue is empty, 'exec' sends back
+ * the top of the stack. (probably the only data on the
+ * stack)
  ******************************************************/
 "use strict";
 
@@ -20,7 +31,7 @@ var Collection = window.ADL.Collection;*/
 
 importScripts('collection-where.js');
 
-
+// poly-fill array checking
 if(!Array.isArray){
 	Array.isArray = function(obj){
 		return obj.length >= 0 && !obj['length'];
@@ -58,7 +69,6 @@ function deserialize(buffer){
 onmessage = function(event)
 {
 	var data = deserialize(event.data);
-	//var data = event.data;
 
 	switch(data[0]){
 
@@ -70,6 +80,7 @@ onmessage = function(event)
 			dataStack.push( dataStack[dataStack.length-1].slice() );
 		break;
 
+	// receive data from API, but append to top of stack
 	case 'append':
 		var topElem = dataStack.pop();
 		topElem.push.apply(topElem, data[1]);
@@ -90,6 +101,7 @@ onmessage = function(event)
 
 		break;
 
+	// all other commands are deferred until 'exec' or 'save' runs
 	case 'save':
 	case 'newbranch':
 	case 'join':
@@ -115,6 +127,8 @@ onmessage = function(event)
 /*
  * The core operator pops from the command queue until there aren't any more
  */
+
+// used to indicate a branch
 var branchRoot = null;
 
 function processCommandQueue()
@@ -124,43 +138,73 @@ function processCommandQueue()
 		var command = commandQueue.pop();
 
 		switch(command[0]){
+
+			// save data state for joining later
 			case 'newbranch':
+
+				// save root data location on first branch
 				if( branchRoot === null ){
 					branchRoot = dataStack.length-1;
 				}
+				// duplicate root data to top of stack for branch to process
 				dataStack.push( dataStack[branchRoot].slice() );
 				break;
 
+			// performs a left join on all data entries after root data
+			// with the first branch being left-most
 			case 'join':
 
-				if(branchRoot === null) continue;
+				// ignore join command if not preceeded by a 'newbranch'
+				if(branchRoot === null || !command[1]){
+					console.warn('Cannot JOIN without an ON field, or before a BRANCH');
+					continue;
+				}
+
+				// merge top of stack with index until root data reached
 				var index = {};
 				while(dataStack.length > branchRoot+1){
 					merge(index, dataStack.pop(), command[1]);
 				}
+
+				// flatten index
 				var ret = [];
 				for(var i in index){
 					ret.push( index[i] );
 				}
+
+				// return merged branches
 				dataStack[branchRoot] = ret;
 				branchRoot = null;
 				break;
 
+			// duplicate top of data stack for later retrieval
 			case 'save':
 				dataStack.push( dataStack[dataStack.length-1].slice() );
 				break;
 
+			// filters do not change the format of the data (except for select)
 			case 'where':
 				where(command[1]); break;
-			case 'select':
-				select(command[1]); break;
 			case 'slice':
 				slice(command[1],command[2]); break;
 			case 'orderBy':
 				orderBy(command[1],command[2]); break;
+
+			// select particular fields from data entries
+			case 'select':
+				select(command[1]); break;
+
+			// group statements by value or range
 			case 'groupBy':
-				groupBy(command[1],command[2]); break;
+				if( command[2] )
+					groupByRange(command[1],command[2]);
+				else
+					groupBy(command[1]);
+				break;
 	
+
+			// consume grouped data and produce aggregations
+			// DISCARDS LOTS OF DATA!
 			case 'count':
 				count(); break;
 			case 'sum':
@@ -175,18 +219,32 @@ function processCommandQueue()
 	}
 }
 
+/*
+ * Used for 'join', adds a dataset to an index
+ */
 function merge(index, set, on)
 {
-	for(var i=0; i<set.length; i++){
+	// loop over all entries in dataset
+	for(var i=0; i<set.length; i++)
+	{
 		var key = xpath(on, set[i]);
+
+		// do not add to index if the entry doesn't have the 'on' field
 		if(!key){
 			continue;
 		}
+
+		// add a new entry if the index doesn't have that value
 		else if( !index[key] ){
 			index[key] = set[i];
 		}
-		else {
+
+		// a similar dataset is already in the index
+		else
+		{
+			// merge data; loop over properties of set data
 			for(var j in set[i]){
+				// and add properties not in the index yet
 				if( !index[key][j] ){
 					index[key][j] = set[i][j];
 				}
@@ -195,12 +253,16 @@ function merge(index, set, on)
 	}
 }
 
+/*
+ * Filter out data entries not matching the query expression
+ * uses an sql-like syntax. see collection-where.js for full grammar
+ */
 function where(query)
 {
 	// no-op if no query
 	if( !query ) return;
 
-	var t = Date.now();
+	// parse the query, abort filter if query didn't parse
 	var parse = parseWhere(query);
 	console.log(JSON.stringify(parse));
 	if( !parse ){
@@ -208,24 +270,34 @@ function where(query)
 		return;
 	}
 
+	// for each entry in the dataset
 	var data = dataStack.pop();
 	for(var i=0; i<data.length; i++)
 	{
+		// remove from dataset if it doesn't match the conditions
 		if( !evalConditions(parse, data[i]) ){
 			data.splice(i--,1);
 		}
 	}
 
+	// return the filtered data
 	dataStack.push(data);
-	console.log('Where evaluated in '+(Date.now()-t)+'ms');
 }
 
+/*
+ * Pick out certain fields from each entry in the dataset
+ * syntax of selector := xpath ['as' alias] [',' xpath ['as' alias]]*
+ */
 function select(selector)
 {
+	// parse selector
+
+	// for each field to be selected
 	var cols = [];
 	var xpaths = selector.split(',');
 	for( var i=0; i<xpaths.length; i++ )
 	{
+		// break into an xpath and an optional alias
 		var parts = xpaths[i].split(' as ');
 		cols.push({
 			'xpath': parts[0].trim(),
@@ -233,12 +305,17 @@ function select(selector)
 		});
 	}
 
+	// pick out selected fields
+
+	// loop over entries in dataset
 	var data = dataStack.pop();
 	var ret = [];
 	for(var i=0; i<data.length; i++)
 	{
 		var row = {};
+		// for each selection field
 		for(var j=0; j<cols.length; j++){
+			// save as old name, or alias if provided
 			if(cols[j].alias)
 				row[cols[j].alias] = xpath(cols[j].xpath, data[i]);
 			else
@@ -247,10 +324,14 @@ function select(selector)
 		ret.push(row);
 	}
 
+	// return the selection
 	dataStack.push(ret);
 }
 
-
+/*
+ * Exactly what it sounds like
+ * Return some continuous subset of the data
+ */
 function slice(start,end)
 {
 	if(end === null)
@@ -258,10 +339,14 @@ function slice(start,end)
 	dataStack.push( dataStack.pop().slice(start,end) );
 }
 
+/*
+ * Sort dataset by given path
+ */
 function orderBy(path, direction)
 {
 	var data = dataStack.pop();
 
+	// figure out ascending or descending
 	if(direction === 'descending')
 		direction = -1;
 	else
@@ -269,12 +354,18 @@ function orderBy(path, direction)
 
 	data.sort(function(a,b){
 		var aVal = xpath(path,a), bVal = xpath(path,b);
-		if(aVal && !bVal)
+
+		// any value is greater than null
+		if(aVal!=null && bVal==null)
 			return 1 * direction;
-		else if(!aVal && bVal)
+		else if(aVal==null && bVal!=null)
 			return -1 * direction;
+
+		// check equivalence
 		else if(aVal == bVal)
 			return 0;
+
+		// all else fails, do a simple comparison
 		else
 			return (aVal<bVal ? -1 : 1) * direction;
 	});
@@ -282,87 +373,121 @@ function orderBy(path, direction)
 	dataStack.push(data);
 }
 
-
-function genRange(start, end, i)
+/*
+ * Group with continuous values
+ */
+function groupByRange(path, range)
 {
-	var increment = function(x,i){ 
-		i = i > 0 ? i : 1;
-		return x+i; 
-	},
-	test = function(cur, end){ return cur <= end; };
+	/*
+	 * Generate range dividers
+	 */
 
-	if( start instanceof Date ){
-		i = i > 0 ? i : Collection.day;
-		increment = function(x,i){ return new Date( x.getTime()+i ); };
+	// determine type of values
+	var start = range[0], end = range[1], increment = range[2];
+	var value, next;
+	// values are date strings
+	if( typeof(start) === 'string' && typeof(end) === 'string' && Date.parse(start) && Date.parse(end) ){
+		value = function(x){
+			return Date.parse(x);
+		};
+		next = function(x,i){
+			var d = new Date(Date.parse(x)+i);
+			return d.toISOString();
+		};
 	}
-	else if( typeof(start) === 'string' ){
-		start = start.charAt(0).toLowerCase();
-		end = end.charAt(0).toLowerCase();
-
-		i = i > 0 ? i : 1;
-		increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
+	// values are generic strings
+	else if( typeof(start) === 'string' && typeof(end) === 'string' ){
+		value = function(x){
+			return x.charAt(0).toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
+		};
+		next = function(x,i){
+			return String.fromCharCode(x.charAt(0).toLowerCase().charCodeAt(0) + i);
+		};
+	}
+	// all other types
+	else {
+		value = function(x){
+			return x;
+		};
+		next = function(x,i){
+			return x+i;
+		};
 	}
 
-	var groupArr = [];
-	while( test(start, end) ){
-		groupArr.push(start);
-		start = increment(start,i);
+	// make sure bounds are reachable
+	var bounds = [];
+	if( (value(end)-value(start))*increment <= 0 ){
+		console.error('Group range is open, cannot generate groups!');
+		console.log(JSON.stringify(range));
+		bounds = [start,end];
 	}
-	groupArr.push(end);
-	return groupArr;
-};
+	// flip bounds if end < start
+	else if( value(start) > value(end) ){
+		groupByRange(path, [end,start,-increment]);
+		dataStack.push( dataStack.pop().reverse() );
+		return;
+	}
+	else {
+		// create boundary array
+		for(var i=start; value(i)<value(end); i=next(i,increment)){
+			bounds.push(i);
+		}
+		bounds.push(end);
+	}
 
+	/*
+	 * Group by range
+	 */
 
-function groupBy(path, range)
-{
-	if( !range )
-		range = undefined;
-	else
-		range = genRange.apply(null,range);
-
-	var data = dataStack.pop();
+	// create groups by boundary
 	var ret = [];
-	if(!range)
-	{
-		var groups = {};
-		for(var i=0; i<data.length; i++)
-		{
-			var groupVal = xpath(path,data[i]);
-			if( !groups[groupVal] )
-				groups[groupVal] = [data[i]];
-			else
-				groups[groupVal].push(data[i]);
-		}
+	for(var i=0; i<bounds.length-1; i++){
+		ret.push({
+			'group': bounds[i]+'-'+bounds[i+1],
+			'groupStart': bounds[i],
+			'groupEnd': bounds[i+1],
+			'data': []
+		});
+	}
 
-		for(var i in groups){
-			ret.push({
-				'group': i,
-				'data': groups[i]
-			});
+	// divide up data by group
+	var data = dataStack.pop();
+	for(var i=0; i<data.length; i++)
+	{
+		var groupVal = value(xpath(path,data[i]));
+		for(var j=0; j<ret.length; j++){
+			if( value(ret[j].groupStart) <= groupVal && (
+				groupVal < value(ret[j].groupEnd) || j==ret.length-1 && groupVal==value(ret[j].groupEnd)
+			) )
+				ret[j].data.push(data[i]);
 		}
 	}
-	else
+
+	dataStack.push(ret);
+}
+
+/*
+ * Group with discrete values
+ */
+function groupBy(path)
+{
+	var data = dataStack.pop();
+	var groups = {};
+	for(var i=0; i<data.length; i++)
 	{
-		for(var i=0; i<range.length-1; i++){
-			ret.push({
-				'group': range[i]+'-'+range[i+1],
-				'groupStart': range[i],
-				'groupEnd': range[i+1],
-				'data': []
-			});
-		}
+		var groupVal = xpath(path,data[i]);
+		if( !groups[groupVal] )
+			groups[groupVal] = [data[i]];
+		else
+			groups[groupVal].push(data[i]);
+	}
 
-		for(var i=0; i<data.length; i++)
-		{
-			var groupVal = xpath(path,data[i]);
-			if( groupVal && groupVal.toLowerCase )
-				groupVal = groupVal.toLowerCase();
-
-			for(var j=0; j<ret.length; j++){
-				if( ret[j].groupStart <= groupVal && (groupVal < ret[j].groupEnd || j==ret.length && groupVal==ret[j].groupEnd) )
-					ret[j].data.push(data[i]);
-			}
-		}
+	var ret = [];
+	for(var i in groups){
+		ret.push({
+			'group': i,
+			'data': groups[i]
+		});
 	}
 
 	dataStack.push(ret);
