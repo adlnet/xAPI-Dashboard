@@ -502,11 +502,9 @@ function count()
 	var data = dataStack.pop();
 	if( !data ) return;
 
-	var grouped = data[0].group && data[0].data;
-	var ret = [];
-
 	// if the data isn't grouped, treat as one large group
-	if(!grouped){
+	var ret = [];
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
@@ -517,15 +515,13 @@ function count()
 	for(var i=0; i<data.length; i++)
 	{
 		// copy group id fields to new object, add count and sample
-		var group = {
+		ret.push({
 			group: data[i].group,
 			groupStart: data[i].groupStart,
 			groupEnd: data[i].groupEnd,
 			count: data[i].data.length,
 			sample: data[i].data[0]
-		}
-		// add to return set
-		ret.push(group);
+		});
 	}
 		
 	dataStack.push(ret);
@@ -541,13 +537,13 @@ function sum(path)
 
 	// 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)
@@ -579,13 +575,13 @@ function average(path)
 	if( !data || !path ) return;
 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)
@@ -617,13 +613,13 @@ function min(path)
 	if( !data || !path ) return;
 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)
@@ -655,13 +651,13 @@ function max(path)
 	if( !data || !path ) return;
 
 	// if the data isn't grouped, treat as one large group
-	var grouped = data[0].group && data[0].data;
 	var ret = [];
-	if( !grouped )
+	if(!data[0] || !data[0].group || !data[0].data){
 		data = [{
 			'group': 'all',
 			'data': data
 		}];
+	}
 
 	// loop over each group
 	for(var i=0; i<data.length; i++)

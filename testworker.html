@@ -11,12 +11,9 @@
 
 				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
 				c.where('result.score.raw != null')
-					//.groupBy('timestamp', ['2014-04-29T04:50:00-05:00', '2014-04-29T04:45:00-05:00', -30*ADL.Collection.second])
-					.join('group',
-						function(data){data.groupBy('result.score.raw', [95,100,1]);},
-						function(data){data.groupBy('result.score.raw', [95,100,1]).count();}
-					)
-					.select('group, count, data')
+					.groupBy('result.score.raw', [50,100,5])
+					.count()
+					.select('group, count')
 					.exec(function(msg){
 						clearInterval(handle);
 						console.timeEnd('Total operating time');
