@@ -23396,27 +23396,43 @@ nv.models.stackedAreaChart = function() {
 	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
 	XAPIDashboard.prototype.createChart = function(type, opts){
 		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
 		switch(type){
-			case "barChart": opts.chart = new ADL.BarChart(this.container, opts); break;
-			case "lineChart": opts.chart = new ADL.LineChart(this.container, opts); break;
-			default: opts.chart = new ADL.Chart(this.container, opts);
+			case "barChart": opts.chart = new ADL.BarChart(opts); break;
+			case "lineChart": opts.chart = new ADL.LineChart(opts); break;
+			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
+			default: opts.chart = new ADL.Chart(opts);
 		}
 		
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createBarChart = function(opts){
 		opts.data = this.data;
-		opts.chart = new ADL.BarChart(this.container, opts);
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.BarChart(opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createMultiBarChart = function(opts){
 		opts.data = this.data;
-		opts.chart = new ADL.MultiBarChart(this.container, opts);
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.MultiBarChart(opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createLineChart = function(opts){
-		opts.chart = new ADL.LineChart(this.container, opts);
 		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.LineChart(opts);
+		return opts.chart;
+	};  
+	XAPIDashboard.prototype.createPieChart = function(opts){
+		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.PieChart(opts);
 		return opts.chart;
 	}; 
 	
@@ -23426,7 +23442,11 @@ nv.models.stackedAreaChart = function() {
 	 
 	ADL.count = function(){
 		return function(opts){
-			if(opts.range){
+			if(!opts.group){
+				console.error("group has not been specified, aborting aggregation", opts);
+				return;
+			}
+			else if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
 			}
 			else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
@@ -23435,6 +23455,10 @@ nv.models.stackedAreaChart = function() {
 
 	ADL.sum = function(xpath){
 		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
 			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
 			}
@@ -23444,6 +23468,10 @@ nv.models.stackedAreaChart = function() {
 	
 	ADL.average = function(xpath){
 		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
 			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
 			}
@@ -23463,17 +23491,25 @@ nv.models.stackedAreaChart = function() {
 		}
 	
 		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
+			
 			saveIndex = 1;
 			
 			var tempCb = function(data){
 				
-				var colorRange = d3.scale.category10().range(),
+				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
-					g = 0;
+					g = 1;
+					
+				console.log(colorRange);
 				
 				for(var i in data[0]){
 					if(i != "group" && i != "sample"){
-						aggArr.push({key: i, values: [], color: colorRange[g++]});
+						aggArr.push({key: i, values: [], color: colorRange[g]});
+						g += 2;
 					}
 				}
 				
@@ -23981,19 +24017,13 @@ nv.models.multiBar = function() {
   return chart;
 };"use strict";
 (function(ADL){
-	var currentChart;
+	
+	var isChartBusy = false;
 	
 	//Base chart class
-	function Chart(container, opts)
+	function Chart(opts)
 	{
-		if(typeof container == "string"){
-			this.container = container;
-			this.opts = opts || {};
-		}
-		else{
-			//else, container is actually the options object
-			this.opts = container || {};
-		}
+		this.opts = opts || {};
 		
 		if(this.opts.child){
 			this.child = opts.child;
@@ -24002,7 +24032,7 @@ nv.models.multiBar = function() {
 	}
 	
 	Chart.prototype.pipeDataToD3 = function(obj, chart){
-		d3.select(this.container)
+		d3.select(this.opts.container)
 			.datum([{'values': obj}])
 			.call(chart);
 	};
@@ -24011,11 +24041,18 @@ nv.models.multiBar = function() {
 		var	opts = this.opts,
 			event = this.event,
 			self = this;
+		
+		//Hack to stop simultaneous requests to CollectionWorker
+		//Would instantiating new worker here work?
+		if(isChartBusy){
+			window.setTimeout(function(){ self.draw(container) }, 1000);
+			return;
+		}
+		
+		isChartBusy = true;
+		container = container ? container : this.opts.container;
 			
-		self.container = container ? container : self.container;
-		currentChart = self;
-			
-		if(!opts.aggregate || !opts.chartType || !self.container){
+		if(!opts.aggregate || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
@@ -24033,34 +24070,46 @@ nv.models.multiBar = function() {
 				if( opts.customize )
 					opts.customize(chart, event);
 				
-				var next = currentChart.child || currentChart.parent;
-				
+				var next = self.child || self.parent;
 				if(next && opts.eventChartType){
 					
 					//Find a way to prevent the addition of click handlers every time this chart is drawn
 					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-						next = currentChart.child || currentChart.parent;
-						if(next){
+						if(next instanceof Array){
+							for(var i = 0; i < next.length; i++){
+								console.log(next[i].opts.container);
+								if(self.opts.container == next[i].opts.container){
+									var myNode = ADL.$(self.opts.container);
+									while (myNode.firstChild) {
+										myNode.removeChild(myNode.firstChild);
+									}
+								}
+
+								next[i].event = e;
+								next[i].draw();
+							}
+						}
+						else if(next){
 							//If the containers are the same, then remove all nodes from the container
-							if(currentChart.container == next.container){
-								var myNode = ADL.$(next.container);
+							if(self.opts.container == next.opts.container){
+								var myNode = ADL.$(next.opts.container);
 								while (myNode.firstChild) {
 									myNode.removeChild(myNode.firstChild);
 								}
 							}
-							
-							currentChart = next;
-							currentChart.event = e;
-							currentChart.draw();
+
+							next.event = e;
+							next.draw();
 						}
 					});
 				}
 
 				self.pipeDataToD3.call(self, aggregateData, chart);
-				nv.utils.windowResize(chart.update);
+				window.onResize = chart.update;
 				
-				chart.update();
+				//chart.update();
 				
+				isChartBusy = false;
 				return chart;
 			});
 		};
@@ -24093,20 +24142,21 @@ nv.models.multiBar = function() {
 	};
 	
 	//BarChart class extends Chart
-	function BarChart(container, opts){
+	function BarChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'discreteBarChart';
 		this.opts.eventChartType = 'discretebar';
 		
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d){ return d.in; },
 			'y': function(d){ return d.out; },
 			'staggerLabels': true,
-			'transitionDuration': 250
+			'transitionDuration': 250,
+			'margin': {left: 80, bottom: 100}
 		};
 	}
 	
@@ -24114,33 +24164,59 @@ nv.models.multiBar = function() {
 	BarChart.prototype.constructor = BarChart;	
 	
 	//LineChart class extends Chart
-	function LineChart(container, opts){
+	function LineChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'lineChart';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.accumulate;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.accumulate;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
 			'y': function(d,i){ return d.out; },
 			'showXAxis': true,
 			'showYAxis': true,
-			'transitionDuration': 250
+			'transitionDuration': 250,
+			'margin': {left: 80, bottom: 100}
 		};
 	}
 	
 	LineChart.prototype = new Chart();
-	LineChart.prototype.constructor = LineChart;	
+	LineChart.prototype.constructor = LineChart;		
+	
+	//PieChart class extends Chart
+	function PieChart(opts){
+
+		Chart.call(this, opts);
+		
+		this.opts.chartType = 'pieChart';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
+
+		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
+			'x': function(d,i){ return d.in },
+			'y': function(d,i){  return d.out },
+			'transitionDuration': 250,
+			'color': d3.scale.category20().range()
+		};
+	}
+	
+	PieChart.prototype = new Chart();
+	PieChart.prototype.constructor = PieChart;	
+	
+	PieChart.prototype.pipeDataToD3 = function(obj, chart){
+		d3.select(this.opts.container)
+			.datum(obj)
+			.call(chart);
+	};
 	
 	//MultiBarChart class extends Chart
-	function MultiBarChart(container, opts){
+	function MultiBarChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'multiBarChart';
 		this.opts.eventChartType = 'multibar';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
@@ -24150,7 +24226,8 @@ nv.models.multiBar = function() {
 			'transitionDuration': 250,
 			'groupSpacing': 0.25,
 			'stacked': true,
-			'showControls': false
+			'showControls': false,
+			'margin': {left: 80, bottom: 100}
 		};
 	}
 	
@@ -24158,7 +24235,7 @@ nv.models.multiBar = function() {
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
 	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
-		d3.select(this.container)
+		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
 	};
@@ -24167,5 +24244,6 @@ nv.models.multiBar = function() {
 	ADL.BarChart = BarChart;
 	ADL.LineChart = LineChart;
 	ADL.MultiBarChart = MultiBarChart;
+	ADL.PieChart = PieChart;
 
 })(window.ADL = window.ADL || {});

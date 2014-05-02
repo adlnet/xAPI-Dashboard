@@ -1,18 +1,12 @@
 "use strict";
 (function(ADL){
-	var currentChart;
+	
+	var isChartBusy = false;
 	
 	//Base chart class
-	function Chart(container, opts)
+	function Chart(opts)
 	{
-		if(typeof container == "string"){
-			this.container = container;
-			this.opts = opts || {};
-		}
-		else{
-			//else, container is actually the options object
-			this.opts = container || {};
-		}
+		this.opts = opts || {};
 		
 		if(this.opts.child){
 			this.child = opts.child;
@@ -21,7 +15,7 @@
 	}
 	
 	Chart.prototype.pipeDataToD3 = function(obj, chart){
-		d3.select(this.container)
+		d3.select(this.opts.container)
 			.datum([{'values': obj}])
 			.call(chart);
 	};
@@ -30,11 +24,18 @@
 		var	opts = this.opts,
 			event = this.event,
 			self = this;
+		
+		//Hack to stop simultaneous requests to CollectionWorker
+		//Would instantiating new worker here work?
+		if(isChartBusy){
+			window.setTimeout(function(){ self.draw(container) }, 1000);
+			return;
+		}
+		
+		isChartBusy = true;
+		container = container ? container : this.opts.container;
 			
-		self.container = container ? container : self.container;
-		currentChart = self;
-			
-		if(!opts.aggregate || !opts.chartType || !self.container){
+		if(!opts.aggregate || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
@@ -52,26 +53,36 @@
 				if( opts.customize )
 					opts.customize(chart, event);
 				
-				var next = currentChart.child || currentChart.parent;
-				
+				var next = self.child || self.parent;
 				if(next && opts.eventChartType){
 					
 					//Find a way to prevent the addition of click handlers every time this chart is drawn
 					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-						next = currentChart.child || currentChart.parent;
-						if(next){
+						if(next instanceof Array){
+							for(var i = 0; i < next.length; i++){
+								console.log(next[i].opts.container);
+								if(self.opts.container == next[i].opts.container){
+									var myNode = ADL.$(self.opts.container);
+									while (myNode.firstChild) {
+										myNode.removeChild(myNode.firstChild);
+									}
+								}
+
+								next[i].event = e;
+								next[i].draw();
+							}
+						}
+						else if(next){
 							//If the containers are the same, then remove all nodes from the container
-							if(currentChart.container == next.container){
-								var myNode = ADL.$(next.container);
+							if(self.opts.container == next.opts.container){
+								var myNode = ADL.$(next.opts.container);
 								while (myNode.firstChild) {
 									myNode.removeChild(myNode.firstChild);
 								}
 							}
-							
-							currentChart = next;
-							currentChart.event = e;
-							
-							currentChart.draw();
+
+							next.event = e;
+							next.draw();
 						}
 					});
 				}
@@ -81,6 +92,7 @@
 				
 				//chart.update();
 				
+				isChartBusy = false;
 				return chart;
 			});
 		};
@@ -113,9 +125,9 @@
 	};
 	
 	//BarChart class extends Chart
-	function BarChart(container, opts){
+	function BarChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'discreteBarChart';
 		this.opts.eventChartType = 'discretebar';
@@ -135,9 +147,9 @@
 	BarChart.prototype.constructor = BarChart;	
 	
 	//LineChart class extends Chart
-	function LineChart(container, opts){
+	function LineChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'lineChart';
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.accumulate;
@@ -156,9 +168,9 @@
 	LineChart.prototype.constructor = LineChart;		
 	
 	//PieChart class extends Chart
-	function PieChart(container, opts){
+	function PieChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'pieChart';
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
@@ -175,15 +187,15 @@
 	PieChart.prototype.constructor = PieChart;	
 	
 	PieChart.prototype.pipeDataToD3 = function(obj, chart){
-		d3.select(this.container)
+		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
 	};
 	
 	//MultiBarChart class extends Chart
-	function MultiBarChart(container, opts){
+	function MultiBarChart(opts){
 
-		Chart.call(this, container, opts);
+		Chart.call(this, opts);
 		
 		this.opts.chartType = 'multiBarChart';
 		this.opts.eventChartType = 'multibar';
@@ -206,7 +218,7 @@
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
 	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
-		d3.select(this.container)
+		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
 	};

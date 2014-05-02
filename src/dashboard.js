@@ -60,33 +60,43 @@
 	// opts.aggregate, opts.pre, opts.post, opts.customize are optional functions
 	XAPIDashboard.prototype.createChart = function(type, opts){
 		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
 		switch(type){
-			case "barChart": opts.chart = new ADL.BarChart(this.container, opts); break;
-			case "lineChart": opts.chart = new ADL.LineChart(this.container, opts); break;
-			case "pieChart": opts.chart = new ADL.PieChart(this.container, opts); break;
-			default: opts.chart = new ADL.Chart(this.container, opts);
+			case "barChart": opts.chart = new ADL.BarChart(opts); break;
+			case "lineChart": opts.chart = new ADL.LineChart(opts); break;
+			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
+			default: opts.chart = new ADL.Chart(opts);
 		}
 		
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createBarChart = function(opts){
 		opts.data = this.data;
-		opts.chart = new ADL.BarChart(this.container, opts);
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.BarChart(opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createMultiBarChart = function(opts){
 		opts.data = this.data;
-		opts.chart = new ADL.MultiBarChart(this.container, opts);
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.MultiBarChart(opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createLineChart = function(opts){
-		opts.chart = new ADL.LineChart(this.container, opts);
 		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.LineChart(opts);
 		return opts.chart;
 	};  
 	XAPIDashboard.prototype.createPieChart = function(opts){
-		opts.chart = new ADL.PieChart(this.container, opts);
 		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.PieChart(opts);
 		return opts.chart;
 	}; 
 	
