@@ -70,15 +70,16 @@
 							
 							currentChart = next;
 							currentChart.event = e;
+							
 							currentChart.draw();
 						}
 					});
 				}
 
 				self.pipeDataToD3.call(self, aggregateData, chart);
-				nv.utils.windowResize(chart.update);
+				window.onResize = chart.update;
 				
-				chart.update();
+				//chart.update();
 				
 				return chart;
 			});
@@ -119,13 +120,14 @@
 		this.opts.chartType = 'discreteBarChart';
 		this.opts.eventChartType = 'discretebar';
 		
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d){ return d.in; },
 			'y': function(d){ return d.out; },
 			'staggerLabels': true,
-			'transitionDuration': 250
+			'transitionDuration': 250,
+			'margin': {left: 80, bottom: 100}
 		};
 	}
 	
@@ -138,19 +140,45 @@
 		Chart.call(this, container, opts);
 		
 		this.opts.chartType = 'lineChart';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.accumulate;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.accumulate;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
 			'y': function(d,i){ return d.out; },
 			'showXAxis': true,
 			'showYAxis': true,
-			'transitionDuration': 250
+			'transitionDuration': 250,
+			'margin': {left: 80, bottom: 100}
 		};
 	}
 	
 	LineChart.prototype = new Chart();
-	LineChart.prototype.constructor = LineChart;	
+	LineChart.prototype.constructor = LineChart;		
+	
+	//PieChart class extends Chart
+	function PieChart(container, opts){
+
+		Chart.call(this, container, opts);
+		
+		this.opts.chartType = 'pieChart';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
+
+		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
+			'x': function(d,i){ return d.in },
+			'y': function(d,i){  return d.out },
+			'transitionDuration': 250,
+			'color': d3.scale.category20().range()
+		};
+	}
+	
+	PieChart.prototype = new Chart();
+	PieChart.prototype.constructor = PieChart;	
+	
+	PieChart.prototype.pipeDataToD3 = function(obj, chart){
+		d3.select(this.container)
+			.datum(obj)
+			.call(chart);
+	};
 	
 	//MultiBarChart class extends Chart
 	function MultiBarChart(container, opts){
@@ -159,7 +187,7 @@
 		
 		this.opts.chartType = 'multiBarChart';
 		this.opts.eventChartType = 'multibar';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.XAPIDashboard.count;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
@@ -169,7 +197,8 @@
 			'transitionDuration': 250,
 			'groupSpacing': 0.25,
 			'stacked': true,
-			'showControls': false
+			'showControls': false,
+			'margin': {left: 80, bottom: 100}
 		};
 	}
 	
@@ -186,5 +215,6 @@
 	ADL.BarChart = BarChart;
 	ADL.LineChart = LineChart;
 	ADL.MultiBarChart = MultiBarChart;
+	ADL.PieChart = PieChart;
 
 })(window.ADL = window.ADL || {});

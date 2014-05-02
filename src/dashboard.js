@@ -63,6 +63,7 @@
 		switch(type){
 			case "barChart": opts.chart = new ADL.BarChart(this.container, opts); break;
 			case "lineChart": opts.chart = new ADL.LineChart(this.container, opts); break;
+			case "pieChart": opts.chart = new ADL.PieChart(this.container, opts); break;
 			default: opts.chart = new ADL.Chart(this.container, opts);
 		}
 		
@@ -82,6 +83,11 @@
 		opts.chart = new ADL.LineChart(this.container, opts);
 		opts.data = this.data;
 		return opts.chart;
+	};  
+	XAPIDashboard.prototype.createPieChart = function(opts){
+		opts.chart = new ADL.PieChart(this.container, opts);
+		opts.data = this.data;
+		return opts.chart;
 	}; 
 	
 	/*
@@ -90,7 +96,11 @@
 	 
 	ADL.count = function(){
 		return function(opts){
-			if(opts.range){
+			if(!opts.group){
+				console.error("group has not been specified, aborting aggregation", opts);
+				return;
+			}
+			else if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
 			}
 			else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
@@ -99,6 +109,10 @@
 
 	ADL.sum = function(xpath){
 		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
 			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
 			}
@@ -108,6 +122,10 @@
 	
 	ADL.average = function(xpath){
 		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
 			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
 			}
@@ -127,17 +145,25 @@
 		}
 	
 		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
+			
 			saveIndex = 1;
 			
 			var tempCb = function(data){
 				
-				var colorRange = d3.scale.category10().range(),
+				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
-					g = 0;
+					g = 1;
+					
+				console.log(colorRange);
 				
 				for(var i in data[0]){
 					if(i != "group" && i != "sample"){
-						aggArr.push({key: i, values: [], color: colorRange[g++]});
+						aggArr.push({key: i, values: [], color: colorRange[g]});
+						g += 2;
 					}
 				}
 				

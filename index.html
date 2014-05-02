@@ -12,78 +12,114 @@
 	<script type="text/javascript" src="src/collection.js"></script>
 	
 	<script src='extra/gen-lrs-data.js'></script>
-
-	<style>
-		div.container {
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: center;
-		}
-
-		div.container > div {
-			margin: 10px;
-		}
-
-		svg {
-			width: 800px; height: 500px;
-			min-width: 100px; min-height: 100px;
-		}
-
-		h1 {
-			text-align: center;
-		}
-	</style>
 </head>
 <body>
-	<div class='container'>
-		<div id='graph'>
-			<h1></h1>
-			<svg id="svg"></svg>
-		</div>
-	</div>
-	<div class='container'>
-		<div id='scores'>
-			<h1></h1>
-			<ol></ol>
-		</div>
-		<div id='hard_questions'>
-			<h1></h1>
-			<ol></ol>
-		</div>
-		<div id='statistics'>
-			<h1>Statistics</h1>
-			<p id='avg'>Average score: <span></span>%</p>
-		</div>
-	</div>
+	<style>
+		.nv-axislabel {
+			font-size: 18px;
+		}
+	</style>
+	<h1 style="text-align:center;"></h1>
+	<svg id="svg" style="height: 90%;"></svg>
+
 	<script type="text/javascript">
 		var wrapper = new XAPIWrapper({
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
-		var dash = new ADL.XAPIDashboard('#graph svg');
+		var dash = new ADL.XAPIDashboard('svg');
 
 		var childChart = dash.createBarChart({
 			group: "result.score.raw",
-			range: { start: 50, end: 101, increment: 5 },
+			range: { start: 0, end: 100, increment: 5 },
 			pre: function(data, event){
 				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.count(),
 			customize: function(nvd3Chart, event){
-				ADL.$('#graph h1').textContent = event.point.in + ' Score Ranges';
+				var test = event.point.in;
+				ADL.$('h1').textContent = test.charAt(0).toUpperCase() + test.substr(1, test.length) + ' Score Ranges';
+				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
+				nvd3Chart.yAxis.axisLabel("Number of students").tickFormat(d3.format(',d'));
 			}
 		});
 
 		var chart = dash.createMultiBarChart({
-			pre: "result.score.raw != null",
+			pre: function(data){
+				return data.where("result.score.raw != null").orderBy("object.definition.name");
+			},
 			aggregate: ADL.multiAggregate("result.score.raw", dash.data.min, dash.data.average, dash.data.max),
 			group:  'object.definition.name',
 			customize: function(nvd3Chart){
-				ADL.$('#graph h1').textContent = 'Test Results';
+				ADL.$('h1').textContent = 'Test Results';
+				nvd3Chart.forceY([0, 120]);
+				nvd3Chart.yAxis.axisLabel("Grade");
 			}, 
 			child: childChart
 		});
 		
-		chart.draw();
+		var pieChart = dash.createPieChart({
+			group: "result.score.raw",
+			range: {start: 30, end: 100, increment: 10},
+			pre: function(data, event){
+				return data.where('result.score.raw != null');
+			},
+			aggregate: ADL.count(),
+			customize: function(chart){
+				chart.height(500).width(500);
+			}
+		});
+		
+		pieChart.draw();
+		
+	/*
+			var testdata = [
+		{
+		  key: "One",
+		  y: 5
+		},
+		{
+		  key: "Two",
+		  y: 2
+		},
+		{
+		  key: "Three",
+		  y: 9
+		},
+		{
+		  key: "Four",
+		  y: 7
+		},
+		{
+		  key: "Five",
+		  y: 4
+		},
+		{
+		  key: "Six",
+		  y: 3
+		},
+		{
+		  key: "Seven",
+		  y: .5
+		}
+	  ];
+
+
+	nv.addGraph(function() {
+
+		var chart = nv.models.pieChart()
+			.x(function(d) { console.log(d); return d.key })
+			.y(function(d) { console.log(d); return d.y });
+
+		  d3.select("svg")
+			  .datum(testdata)
+			  .call(chart);
+
+		return chart;
+	});
+
+		
+		
+		
 
 		/*$('#scores h1').textContent = 'High Scorers';
 		var data = test1Results.orderBy('result.score.raw','descending').selectFirst(10);
