@@ -42,8 +42,8 @@
 		
 		opts.cb = function(aggregateData){
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event);
-
+				aggregateData = opts.post(aggregateData, event);	
+				
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 				
@@ -96,8 +96,9 @@
 				return chart;
 			});
 		};
-		
+	
 		opts.data.save();
+
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
 				opts.data.where(opts.pre);
@@ -208,7 +209,7 @@
 			'showYAxis': true,
 			'transitionDuration': 250,
 			'groupSpacing': 0.25,
-			'stacked': true,
+			//'stacked': true,
 			'showControls': false,
 			'margin': {left: 80, bottom: 100}
 		};
@@ -218,6 +219,35 @@
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
 	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
+		console.log("MultiBar: ", obj);
+		d3.select(this.opts.container)
+			.datum(obj)
+			.call(chart);
+	};
+	
+	//LinePlusBarChart class extends Chart
+	function LinePlusBarChart(opts){
+
+		Chart.call(this, opts);
+		
+		this.opts.chartType = 'linePlusBarChart';
+		//this.opts.eventChartType = 'multibar';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
+		
+		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
+			'x': function(d,i){ return i; },
+			'y': function(d,i){ return d.out; },
+			'showXAxis': true,
+			'showYAxis': true,
+			'transitionDuration': 250
+		};
+	}
+	
+	LinePlusBarChart.prototype = new Chart();
+	LinePlusBarChart.prototype.constructor = LinePlusBarChart;
+	
+	LinePlusBarChart.prototype.pipeDataToD3 = function(obj, chart){
+		console.log("Line+Bar: ", obj);
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
@@ -228,5 +258,6 @@
 	ADL.LineChart = LineChart;
 	ADL.MultiBarChart = MultiBarChart;
 	ADL.PieChart = PieChart;
+	ADL.LinePlusBarChart = LinePlusBarChart;
 
 })(window.ADL = window.ADL || {});

@@ -52,6 +52,7 @@
 		<h2 style="text-align:center;"></h2>
 		<svg id="svg3"></svg>
 		<svg id="svg2"></svg>
+		<svg id="svg4"></svg>
 	</div>
 
 	<script type="text/javascript">
@@ -59,21 +60,38 @@
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
 		var dash = new ADL.XAPIDashboard('#svg');
+		var saveTest;
 
+		var grandchildChart = dash.createBarChart({
+			container: "#svg4",
+			group: 'actor.name',
+			pre: function(data, event){
+				var scoreArr = event.point.in.split('-');
+				console.log('result.score.raw >= '+scoreArr[0]+' and result.score.raw <= '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"');
+				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw <= '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"');
+			},
+			aggregate: ADL.count(),
+			customize: function(nvd3Chart, event){
+				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
+			}
+		});
+		
+		
 		var childChart = dash.createBarChart({
 			container: "#svg3",
 			group: "result.score.raw",
-			range: { start: 30, end: 100, increment: 5 },
+			range: {start: 30, end: 100, increment: 5},
 			pre: function(data, event){
-				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
+				saveTest = event.point.in;
+				return data.where('result.score.raw != null and object.definition.name = "' + saveTest + '"');
 			},
 			aggregate: ADL.count(),
 			customize: function(nvd3Chart, event){
 				var test = event.point.in;
 				ADL.$('h2').textContent = test.charAt(0).toUpperCase() + test.substr(1, test.length) + ' Score Ranges';
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
-				nvd3Chart.yAxis.axisLabel("Number of students").tickFormat(d3.format(',d'));
-			}
+			},
+			child: [grandchildChart]
 		});
 		
 		var childPieChart = dash.createPieChart({
@@ -96,6 +114,7 @@
 			customize: function(nvd3Chart){
 				nvd3Chart.forceY([0, 120]);
 				nvd3Chart.yAxis.axisLabel("Grade");
+				
 			}, 
 			child: [childChart, childPieChart]
 		});

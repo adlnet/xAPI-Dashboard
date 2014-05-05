@@ -11,6 +11,7 @@
 		}
 		catch(e){
 			this.data = new ADL.Collection();
+			console.log(e);
 		}
 	
 		this.container = container;
@@ -66,6 +67,7 @@
 			case "barChart": opts.chart = new ADL.BarChart(opts); break;
 			case "lineChart": opts.chart = new ADL.LineChart(opts); break;
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
+			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
 		
@@ -76,6 +78,13 @@
 		opts.container = opts.container ? opts.container : this.container;
 		
 		opts.chart = new ADL.BarChart(opts);
+		return opts.chart;
+	}; 
+	XAPIDashboard.prototype.createLinePlusBarChart = function(opts){
+		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.LinePlusBarChart(opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createMultiBarChart = function(opts){
@@ -184,13 +193,15 @@
 				}
 				
 				//sort ensuring that min is at the beginning and max is at the end
-				aggArr.sort(function(a, b){
-					if(a.key == "min") return 1;
-					else if(b.key == "min") return -1;				
-					else if(a.key == "max") return -1;
-					else if(b.key == "max") return 1;
-					else return 0;
-				});
+				if(aggArr.length <= 3){
+					aggArr.sort(function(a, b){
+						if(a.key == "min") return 1;
+						else if(b.key == "min") return -1;				
+						else if(a.key == "max") return -1;
+						else if(b.key == "max") return 1;
+						else return 0;
+					});
+				}
 
 				opts.cb(aggArr);
 			};
