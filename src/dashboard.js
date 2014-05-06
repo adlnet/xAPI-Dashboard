@@ -202,8 +202,6 @@
 				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
 					g = 1;
-					
-				console.log(colorRange);
 				
 				for(var i in data[0]){
 					if(i != "group" && i != "sample"){

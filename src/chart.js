@@ -221,6 +221,7 @@
 	
 	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
 		console.log("MultiBar: ", obj);
+		
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
@@ -236,11 +237,12 @@
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
-			'x': function(d,i){ return i; },
-			'y': function(d,i){ return d.out; },
-			'showXAxis': true,
-			'showYAxis': true,
-			'transitionDuration': 250
+			x: function(d,i){ console.log(d.in.split('-')[0]); return d.in.split('-')[0]; },
+			y: function(d,i){ console.log(d.out ? d.out : 0); return d.out ? d.out : 0; },
+			showXAxis: true,
+			showYAxis: true,
+			transitionDuration: 250,
+			margin: {top: 30, right: 60, bottom: 50, left: 70}
 		};
 	}
 	
@@ -248,9 +250,20 @@
 	LinePlusBarChart.prototype.constructor = LinePlusBarChart;
 	
 	LinePlusBarChart.prototype.pipeDataToD3 = function(obj, chart){
-		console.log("Line+Bar: ", obj);
+		var newArr = [];
+		for(var i = 0; i < obj.length; i++){
+		
+			delete obj[i].series;
+			if(obj[i].key != "groupStart" && obj[i].key != "groupEnd")
+				newArr.push(obj[i]);
+		}
+		
+		newArr[0].bar = true;
+		
+		console.log("Line+Bar: ", newArr);
+		
 		d3.select(this.opts.container)
-			.datum(obj)
+			.datum(newArr)
 			.call(chart);
 	};
 

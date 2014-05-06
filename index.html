@@ -60,19 +60,20 @@
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
 		var dash = new ADL.XAPIDashboard('#svg');
-		var saveTest;
+		var saveTest, scoreArr;
 
 		var grandchildChart = dash.createBarChart({
 			container: "#svg4",
 			group: 'actor.name',
 			pre: function(data, event){
-				var scoreArr = event.point.in.split('-');
-				console.log('result.score.raw >= '+scoreArr[0]+' and result.score.raw <= '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"');
-				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw < '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"').orderBy('result.score.raw', 'desc');
+				scoreArr = event.point.in.split('-');
+				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw < '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"')
+					.orderBy('result.score.raw', 'desc');
 			},
 			aggregate: ADL.select('result.score.raw'),
 			customize: function(nvd3Chart, event){
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
+				nvd3Chart.forceY([scoreArr[0] - 5, scoreArr[1]]);
 			}
 		});
 		
@@ -101,7 +102,7 @@
 				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.count(),
-			customize: function(chart){ chart.height(400).width(500); for(var i in chart){console.log(i)}},
+			customize: function(chart){ chart.height(400).width(500); },
 			child: [grandchildChart]
 		});
 
