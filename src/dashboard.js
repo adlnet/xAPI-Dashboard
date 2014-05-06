@@ -113,6 +113,32 @@
 	 * Class methods to perform graph "formatting" operations
 	 */
 	 
+	ADL.select = function(xpath){		
+		return function(opts){
+			if(!opts.group){
+				console.error("group has not been specified, aborting aggregation", opts);
+				return;
+			}
+			else if(opts.range){
+				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+			}
+			else return opts.data.groupBy(opts.group).exec(formatData);
+			
+			//Used as an intermediate callback for exec
+			function formatData(data){
+				
+				for(var i = 0; i < data.length; i++){
+					
+					data[i].in = data[i].group;
+					data[i].out = xpathfn(xpath, data[i].data[0]);
+					delete data[i].group;
+					delete data[i].data;
+				}
+				
+				opts.cb(data);
+			}
+		}
+	};	 
 	ADL.count = function(){
 		return function(opts){
 			if(!opts.group){
@@ -223,6 +249,47 @@
 
 })(window.ADL = window.ADL || {});
 
+/*
+ * xpath is used in select aggregation function. Temporarily copied here.
+ * Retrieves some deep value at path from an object
+ */
+function xpath(path,obj)
+{
+	// if nothing to search, return null
+	if(obj === undefined){
+		return null;
+	}
+
+	// if no descent, just return object
+	else if(path.length === 0){
+		return obj;
+	}
+
+	else {
+		//var parts = /^([^\.]+)(?:\.(.+))?$/.exec(path);
+		var parts;
+		if(Array.isArray(path)){
+			parts = path;
+		}
+		else {
+			parts = path.split('.');
+			var i=0;
+			while(i<parts.length){
+				if(parts[i].charAt(parts[i].length-1) === '\\')
+					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
+				else
+					i++;
+			}
+		}
+
+		var scoped = parts[0], rest = parts.slice(1);
+		return xpath(rest, obj[scoped]);
+	}
+}
+
+function xpathfn(x, obj){
+	return xpath(x, obj);
+}
 
 /* nvd3 model.multibar extension -- changes default stacked behavior */
 

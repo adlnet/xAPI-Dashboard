@@ -174,6 +174,7 @@
 		Chart.call(this, opts);
 		
 		this.opts.chartType = 'pieChart';
+		this.opts.eventChartType = 'pie';
 		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
 
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {

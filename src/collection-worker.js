@@ -346,7 +346,7 @@ function orderBy(path, direction)
 	var data = dataStack.pop();
 
 	// figure out ascending or descending
-	if(direction === 'descending')
+	if(direction === 'descending' || direction === 'desc')
 		direction = -1;
 	else
 		direction = 1;

@@ -68,19 +68,18 @@
 			pre: function(data, event){
 				var scoreArr = event.point.in.split('-');
 				console.log('result.score.raw >= '+scoreArr[0]+' and result.score.raw <= '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"');
-				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw <= '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"');
+				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw < '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"').orderBy('result.score.raw', 'desc');
 			},
-			aggregate: ADL.count(),
+			aggregate: ADL.select('result.score.raw'),
 			customize: function(nvd3Chart, event){
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
 			}
 		});
 		
-		
 		var childChart = dash.createBarChart({
 			container: "#svg3",
 			group: "result.score.raw",
-			range: {start: 30, end: 100, increment: 5},
+			range: {start: 30, end: 100, increment: 10},
 			pre: function(data, event){
 				saveTest = event.point.in;
 				return data.where('result.score.raw != null and object.definition.name = "' + saveTest + '"');
@@ -97,12 +96,13 @@
 		var childPieChart = dash.createPieChart({
 			container: "#svg2",
 			group: "result.score.raw",
-			range: {start: 30, end: 100, increment: 5},
+			range: {start: 30, end: 100, increment: 10},
 			pre: function(data, event){
 				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.count(),
-			customize: function(chart){ chart.height(400).width(500); }
+			customize: function(chart){ chart.height(400).width(500); for(var i in chart){console.log(i)}},
+			child: [grandchildChart]
 		});
 
 		var chart = dash.createMultiBarChart({
