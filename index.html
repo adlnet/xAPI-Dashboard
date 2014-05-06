@@ -67,7 +67,6 @@
 			container: '#table',
 			group: 'object.definition.name',
 			pre: function(data, event){
-				
 				data.where('actor.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.select('result.success')
@@ -122,7 +121,7 @@
 			pre: function(data){
 				return data.where("result.score.raw != null").orderBy("object.definition.name");
 			},
-			aggregate: ADL.multiAggregate("result.score.raw", dash.data.min, dash.data.average, dash.data.max),
+			aggregate: ADL.multiAggregate("result.score.raw", ADL.min, ADL.average, ADL.max),
 			group:  'object.definition.name',
 			customize: function(nvd3Chart){
 				nvd3Chart.forceY([0, 120]);

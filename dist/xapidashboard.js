@@ -23337,7 +23337,7 @@ nv.models.stackedAreaChart = function() {
 ;"use strict";
 
 (function(ADL){
-
+	
 	var XAPIDashboard = function(container, webworkerSrc){
 		
 		webworkerSrc = webworkerSrc ? 'src/collection-worker.js' : 'src/collection-worker.js';
@@ -23347,6 +23347,7 @@ nv.models.stackedAreaChart = function() {
 		}
 		catch(e){
 			this.data = new ADL.Collection();
+			console.log(e);
 		}
 	
 		this.container = container;
@@ -23402,6 +23403,7 @@ nv.models.stackedAreaChart = function() {
 			case "barChart": opts.chart = new ADL.BarChart(opts); break;
 			case "lineChart": opts.chart = new ADL.LineChart(opts); break;
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
+			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
 		
@@ -23412,6 +23414,13 @@ nv.models.stackedAreaChart = function() {
 		opts.container = opts.container ? opts.container : this.container;
 		
 		opts.chart = new ADL.BarChart(opts);
+		return opts.chart;
+	}; 
+	XAPIDashboard.prototype.createLinePlusBarChart = function(opts){
+		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.LinePlusBarChart(opts);
 		return opts.chart;
 	}; 
 	XAPIDashboard.prototype.createMultiBarChart = function(opts){
@@ -23434,48 +23443,148 @@ nv.models.stackedAreaChart = function() {
 		
 		opts.chart = new ADL.PieChart(opts);
 		return opts.chart;
+	};   
+	XAPIDashboard.prototype.createTable = function(opts){
+		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.Table(opts);
+		return opts.chart;
 	}; 
 	
 	/*
 	 * Class methods to perform graph "formatting" operations
 	 */
 	 
-	ADL.count = function(){
+	ADL.select = function(xpath){		
+		
 		return function(opts){
 			if(!opts.group){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
-			else if(opts.range){
-				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
+			
+			opts.xpath = xpath;
+			if(opts.range){
+				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 			}
-			else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
+			else return opts.data.groupBy(opts.group).exec(formatData);
+			
+			//Used as an intermediate callback for exec
+			function formatData(data){
+				
+				for(var i = 0; i < data.length; i++){
+					
+					data[i].in = data[i].group;
+					data[i].out = xpathfn(xpath, data[i].data[0]);
+					delete data[i].group;
+					delete data[i].data;
+				}
+				
+				opts.cb(data);
+			}
+		}
+	};
+	ADL.count = function(ignoreXpath, join){
+		if(!join){
+			return function(opts){
+				if(!opts.group){
+					console.error("group has not been specified, aborting aggregation", opts);
+					return;
+				}
+				
+				opts.xpath = xpath;
+				if(opts.range){
+					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
+				}
+				else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
+			}
+		}
+		else{
+			return ADL.CollectionAsync.prototype.count.call(this);
 		}
 	};	 
 
-	ADL.sum = function(xpath){
-		return function(opts){
-			if(!opts.group || !xpath){
-				console.error("group or xpath has not been specified, aborting aggregation", opts);
-				return;
+	ADL.sum = function(xpath, join){
+		if(!join){
+			return function(opts){
+				if(!opts.group || !xpath){
+					console.error("group or xpath has not been specified, aborting aggregation", opts);
+					return;
+				}
+				
+				opts.xpath = xpath;
+				if(opts.range){
+					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
+				}
+				else return opts.data.groupBy(opts.group).sum(xpath).select("group as in, sum as out").exec(opts.cb);
 			}
-			if(opts.range){
-				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
-			}
-			else return opts.data.groupBy(opts.group).sum(xpath).select("group as in, sum as out").exec(opts.cb);
+		}
+		
+		else{
+			return ADL.CollectionAsync.prototype.sum.call(this, xpath);
 		}
 	};	
 	
-	ADL.average = function(xpath){
-		return function(opts){
-			if(!opts.group || !xpath){
-				console.error("group or xpath has not been specified, aborting aggregation", opts);
-				return;
+	ADL.min = function(xpath, join){
+		if(!join){
+			return function(opts){
+				if(!opts.group || !xpath){
+					console.error("group or xpath has not been specified, aborting aggregation", opts);
+					return;
+				}
+				
+				opts.xpath = xpath;
+				if(opts.range){
+					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).min(xpath).select("group as in, min as out").exec(opts.cb);
+				}
+				else return opts.data.groupBy(opts.group).min(xpath).select("group as in, min as out").exec(opts.cb);
 			}
-			if(opts.range){
-				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
+		}
+		
+		else{
+			return ADL.CollectionAsync.prototype.min.call(this, xpath);
+		}
+	};	
+	
+	ADL.max = function(xpath, join){
+		if(!join){
+			return function(opts){
+				if(!opts.group || !xpath){
+					console.error("group or xpath has not been specified, aborting aggregation", opts);
+					return;
+				}
+				
+				opts.xpath = xpath;
+				if(opts.range){
+					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).max(xpath).select("group as in, max as out").exec(opts.cb);
+				}
+				else return opts.data.groupBy(opts.group).max(xpath).select("group as in, max as out").exec(opts.cb);
 			}
-			else return opts.data.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
+		}
+		
+		else{
+			return ADL.CollectionAsync.prototype.max.call(this, xpath);
+		}
+	};	
+	
+	ADL.average = function(xpath, join){
+		if(!join){
+			return function(opts){
+				if(!opts.group || !xpath){
+					console.error("group or xpath has not been specified, aborting aggregation", opts);
+					return;
+				}
+				
+				opts.xpath = xpath;
+				if(opts.range){
+					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
+				}
+				else return opts.data.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
+			}
+		}
+		else{
+			return ADL.CollectionAsync.prototype.average.call(this, xpath);
 		}
 	};	
 	
@@ -23486,7 +23595,7 @@ nv.models.stackedAreaChart = function() {
 		
 		for(var g = 1; g < saveArgs.length; g++){
 			opsArr.push(function(data){ 
-				saveArgs[saveIndex++].call(data, xpath);
+				saveArgs[saveIndex++].call(data, xpath, true);
 			});
 		}
 	
@@ -23496,6 +23605,7 @@ nv.models.stackedAreaChart = function() {
 				return;
 			}
 			
+			opts.xpath = xpath;
 			saveIndex = 1;
 			
 			var tempCb = function(data){
@@ -23503,8 +23613,6 @@ nv.models.stackedAreaChart = function() {
 				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
 					g = 1;
-					
-				console.log(colorRange);
 				
 				for(var i in data[0]){
 					if(i != "group" && i != "sample"){
@@ -23520,13 +23628,15 @@ nv.models.stackedAreaChart = function() {
 				}
 				
 				//sort ensuring that min is at the beginning and max is at the end
-				aggArr.sort(function(a, b){
-					if(a.key == "min") return 1;
-					else if(b.key == "min") return -1;				
-					else if(a.key == "max") return -1;
-					else if(b.key == "max") return 1;
-					else return 0;
-				});
+				if(aggArr.length <= 3){
+					aggArr.sort(function(a, b){
+						if(a.key == "min") return 1;
+						else if(b.key == "min") return -1;				
+						else if(a.key == "max") return -1;
+						else if(b.key == "max") return 1;
+						else return 0;
+					});
+				}
 
 				opts.cb(aggArr);
 			};
@@ -23548,6 +23658,47 @@ nv.models.stackedAreaChart = function() {
 
 })(window.ADL = window.ADL || {});
 
+/*
+ * xpath is used in select aggregation function. Temporarily copied here.
+ * Retrieves some deep value at path from an object
+ */
+function xpath(path,obj)
+{
+	// if nothing to search, return null
+	if(obj === undefined){
+		return null;
+	}
+
+	// if no descent, just return object
+	else if(path.length === 0){
+		return obj;
+	}
+
+	else {
+		//var parts = /^([^\.]+)(?:\.(.+))?$/.exec(path);
+		var parts;
+		if(Array.isArray(path)){
+			parts = path;
+		}
+		else {
+			parts = path.split('.');
+			var i=0;
+			while(i<parts.length){
+				if(parts[i].charAt(parts[i].length-1) === '\\')
+					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
+				else
+					i++;
+			}
+		}
+
+		var scoped = parts[0], rest = parts.slice(1);
+		return xpath(rest, obj[scoped]);
+	}
+}
+
+function xpathfn(x, obj){
+	return xpath(x, obj);
+}
 
 /* nvd3 model.multibar extension -- changes default stacked behavior */
 
@@ -24031,7 +24182,7 @@ nv.models.multiBar = function() {
 		}
 	}
 	
-	Chart.prototype.pipeDataToD3 = function(obj, chart){
+	Chart.prototype.pipeData = function(obj, chart){
 		d3.select(this.opts.container)
 			.datum([{'values': obj}])
 			.call(chart);
@@ -24059,8 +24210,8 @@ nv.models.multiBar = function() {
 		
 		opts.cb = function(aggregateData){
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event);
-
+				aggregateData = opts.post(aggregateData, event);	
+				
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 				
@@ -24104,7 +24255,7 @@ nv.models.multiBar = function() {
 					});
 				}
 
-				self.pipeDataToD3.call(self, aggregateData, chart);
+				self.pipeData.call(self, aggregateData, chart);
 				window.onResize = chart.update;
 				
 				//chart.update();
@@ -24113,8 +24264,9 @@ nv.models.multiBar = function() {
 				return chart;
 			});
 		};
-		
+	
 		opts.data.save();
+
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
 				opts.data.where(opts.pre);
@@ -24149,7 +24301,7 @@ nv.models.multiBar = function() {
 		this.opts.chartType = 'discreteBarChart';
 		this.opts.eventChartType = 'discretebar';
 		
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count();
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d){ return d.in; },
@@ -24169,7 +24321,7 @@ nv.models.multiBar = function() {
 		Chart.call(this, opts);
 		
 		this.opts.chartType = 'lineChart';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.accumulate;
+		//this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.accumulate;
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
@@ -24190,7 +24342,8 @@ nv.models.multiBar = function() {
 		Chart.call(this, opts);
 		
 		this.opts.chartType = 'pieChart';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
+		this.opts.eventChartType = 'pie';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count();
 
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in },
@@ -24203,7 +24356,7 @@ nv.models.multiBar = function() {
 	PieChart.prototype = new Chart();
 	PieChart.prototype.constructor = PieChart;	
 	
-	PieChart.prototype.pipeDataToD3 = function(obj, chart){
+	PieChart.prototype.pipeData = function(obj, chart){
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
@@ -24216,7 +24369,7 @@ nv.models.multiBar = function() {
 		
 		this.opts.chartType = 'multiBarChart';
 		this.opts.eventChartType = 'multibar';
-		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count;
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count();
 		
 		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
 			'x': function(d,i){ return d.in; },
@@ -24225,7 +24378,7 @@ nv.models.multiBar = function() {
 			'showYAxis': true,
 			'transitionDuration': 250,
 			'groupSpacing': 0.25,
-			'stacked': true,
+			//'stacked': true,
 			'showControls': false,
 			'margin': {left: 80, bottom: 100}
 		};
@@ -24234,10 +24387,134 @@ nv.models.multiBar = function() {
 	MultiBarChart.prototype = new Chart();
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
-	MultiBarChart.prototype.pipeDataToD3 = function(obj, chart){
+	MultiBarChart.prototype.pipeData = function(obj, chart){
+		console.log("MultiBar: ", obj);
+		
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
+	};
+	
+	//LinePlusBarChart class extends Chart
+	function LinePlusBarChart(opts){
+
+		Chart.call(this, opts);
+		
+		this.opts.chartType = 'linePlusBarChart';
+		//this.opts.eventChartType = 'multibar';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count();
+		
+		this.opts.nvd3Opts = this.opts.nvd3Opts ? this.opts.nvd3Opts : {
+			x: function(d,i){ console.log(d.in.split('-')[0]); return d.in.split('-')[0]; },
+			y: function(d,i){ console.log(d.out ? d.out : 0); return d.out ? d.out : 0; },
+			showXAxis: true,
+			showYAxis: true,
+			transitionDuration: 250,
+			margin: {top: 30, right: 60, bottom: 50, left: 70}
+		};
+	}
+	
+	LinePlusBarChart.prototype = new Chart();
+	LinePlusBarChart.prototype.constructor = LinePlusBarChart;
+	
+	LinePlusBarChart.prototype.pipeData = function(obj, chart){
+		var newArr = [];
+		for(var i = 0; i < obj.length; i++){
+		
+			delete obj[i].series;
+			if(obj[i].key != "groupStart" && obj[i].key != "groupEnd")
+				newArr.push(obj[i]);
+		}
+		
+		newArr[0].bar = true;
+		
+		console.log("Line+Bar: ", newArr);
+		
+		d3.select(this.opts.container)
+			.datum(newArr)
+			.call(chart);
+	};
+	
+	//LinePlusBarChart class extends Chart
+	function Table(opts){
+
+		Chart.call(this, opts);
+		
+		this.opts.chartType = 'table';
+		this.opts.aggregate = this.opts.aggregate ? this.opts.aggregate : ADL.count();
+	}
+	
+	Table.prototype = new Chart();
+	Table.prototype.constructor = Table;
+	
+	Table.prototype.draw = function(container){
+		var	opts = this.opts,
+			event = this.event,
+			self = this;
+		
+		//Hack to stop simultaneous requests to CollectionWorker
+		//Would instantiating new worker here work?
+		if(isChartBusy){
+			window.setTimeout(function(){ self.draw(container) }, 1000);
+			return;
+		}
+		
+		isChartBusy = true;
+		container = container ? container : this.opts.container;
+			
+		if(!opts.aggregate || !opts.chartType || !container){
+			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
+			return;
+		}
+		
+		opts.cb = function(aggregateData){
+			
+			if(opts.post)
+				aggregateData = opts.post(aggregateData, event);	
+			
+			var markup = '<table>';
+			
+			if(aggregateData[0] && aggregateData[0].values){
+				for(var i = -1; i < aggregateData[0].values.length; i++){
+					
+					var g = 0;
+					markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.group +'</th>';
+					
+					for(; g < aggregateData.length; g++){
+						if(i >= 0) markup += '<td>'+aggregateData[g].values[i].out+'</td>';
+						else markup += '<th>'+aggregateData[g].key+'</th>';
+					}
+					
+					markup += '</tr>';
+				}
+			}
+			
+			else{
+				markup += '<tr><th>'+opts.group+'</th><th>'+opts.xpath+'</th></tr>';
+				for(var i = 0; i < aggregateData.length; i++){
+					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
+				}
+			}
+			
+			markup += '</table>';
+			ADL.$(container).innerHTML = markup;
+
+			console.log(aggregateData);
+			isChartBusy = false;
+		};
+	
+		opts.data.save();
+
+		if(opts.pre){
+			if(typeof opts.pre === "string"){
+				opts.data.where(opts.pre);
+			}
+			else{
+				opts.pre(opts.data, event);
+			}
+		}
+
+		opts.aggregate(opts, event);	
 	};
 
 	ADL.Chart = Chart;
@@ -24245,5 +24522,7 @@ nv.models.multiBar = function() {
 	ADL.LineChart = LineChart;
 	ADL.MultiBarChart = MultiBarChart;
 	ADL.PieChart = PieChart;
+	ADL.LinePlusBarChart = LinePlusBarChart;
+	ADL.Table = Table;
 
 })(window.ADL = window.ADL || {});
