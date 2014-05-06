@@ -107,6 +107,13 @@
 		
 		opts.chart = new ADL.PieChart(opts);
 		return opts.chart;
+	};   
+	XAPIDashboard.prototype.createTable = function(opts){
+		opts.data = this.data;
+		opts.container = opts.container ? opts.container : this.container;
+		
+		opts.chart = new ADL.Table(opts);
+		return opts.chart;
 	}; 
 	
 	/*
@@ -119,7 +126,9 @@
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
-			else if(opts.range){
+			
+			opts.xpath = xpath;
+			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 			}
 			else return opts.data.groupBy(opts.group).exec(formatData);
@@ -145,7 +154,9 @@
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
-			else if(opts.range){
+			
+			opts.xpath = xpath;
+			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
 			}
 			else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
@@ -158,6 +169,8 @@
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
+			
+			opts.xpath = xpath;
 			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
 			}
@@ -171,6 +184,8 @@
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
+			
+			opts.xpath = xpath;
 			if(opts.range){
 				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
 			}
@@ -195,6 +210,7 @@
 				return;
 			}
 			
+			opts.xpath = xpath;
 			saveIndex = 1;
 			
 			var tempCb = function(data){

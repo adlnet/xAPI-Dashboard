@@ -176,11 +176,11 @@ def main():
 
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [random.randint(60,70) for i in range(100)]) )
-	battery.tests.append( Test('test2', [random.randint(70,75) for i in range(100)]) )
-	battery.tests.append( Test('test3', [random.randint(75,80) for i in range(100)]) )
-	battery.tests.append( Test('test4', [random.randint(80,88) for i in range(100)]) )
-	battery.tests.append( Test('final', [random.randint(88,90) for i in range(100)]) )
+	battery.tests.append( Test('test1', [random.randint(60,70) for i in range(50)]) )
+	battery.tests.append( Test('test2', [random.randint(70,75) for i in range(50)]) )
+	battery.tests.append( Test('test3', [random.randint(75,80) for i in range(50)]) )
+	battery.tests.append( Test('test4', [random.randint(80,88) for i in range(50)]) )
+	battery.tests.append( Test('final', [random.randint(88,90) for i in range(50)]) )
 	#battery.tests.append( Test('test2', [50 for i in range(100)]) )
 
 	myclass = Class(30, 75,10)

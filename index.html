@@ -53,6 +53,7 @@
 		<svg id="svg3"></svg>
 		<svg id="svg2"></svg>
 		<svg id="svg4"></svg>
+		<div id="table"></div>
 	</div>
 
 	<script type="text/javascript">
@@ -61,6 +62,16 @@
 		});
 		var dash = new ADL.XAPIDashboard('#svg');
 		var saveTest, scoreArr;
+		
+		var table = dash.createTable({
+			container: '#table',
+			group: 'object.definition.name',
+			pre: function(data, event){
+				
+				data.where('actor.name = "' + event.point.in + '"');
+			},
+			aggregate: ADL.select('result.success')
+		});
 
 		var grandchildChart = dash.createBarChart({
 			container: "#svg4",
@@ -74,7 +85,8 @@
 			customize: function(nvd3Chart, event){
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
 				nvd3Chart.forceY([scoreArr[0] - 5, scoreArr[1]]);
-			}
+			},
+			child: table
 		});
 		
 		var childChart = dash.createBarChart({

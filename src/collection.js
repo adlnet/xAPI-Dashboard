@@ -484,7 +484,7 @@
 		return this;
 	};
 
-	CollectionAsync.prototype.join = function(){
+	CollectionAsync.prototype.join = function join(){
 		var args = Array.prototype.slice.call(arguments);
 		var path = args[0];
 		var branches = args.slice(1);
@@ -503,27 +503,27 @@
 
 
 
-	CollectionAsync.prototype.count = function(){
+	CollectionAsync.prototype.count = function count(){
 		this.worker.postMessage(serialize(['count']));
 		return this;
 	};
 
-	CollectionAsync.prototype.sum = function(xpath){
+	CollectionAsync.prototype.sum = function sum(xpath){
 		this.worker.postMessage(serialize(['sum',xpath]));
 		return this;
 	};
 
-	CollectionAsync.prototype.average = function(xpath){
+	CollectionAsync.prototype.average = function average(xpath){
 		this.worker.postMessage(serialize(['average',xpath]));
 		return this;
 	};
 
-	CollectionAsync.prototype.min = function(xpath){
+	CollectionAsync.prototype.min = function min(xpath){
 		this.worker.postMessage(serialize(['min',xpath]));
 		return this;
 	};
 
-	CollectionAsync.prototype.max = function(xpath){
+	CollectionAsync.prototype.max = function max(xpath){
 		this.worker.postMessage(serialize(['max',xpath]));
 		return this;
 	};
