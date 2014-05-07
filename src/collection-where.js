@@ -204,6 +204,7 @@ function parseWhere(str)
 	// value := parseInt | parseFloat | "(.*)"
 	function value(str){
 		var val = null;
+		var cacheTrim = str.trim();
 		if(val = parseInt(str,10)){
 			return val;
 		}
@@ -213,8 +214,11 @@ function parseWhere(str)
 		else if(val = /^\s*"(.*)"\s*$/.exec(str)){
 			return val[1];
 		}
-		else if(str.trim() === 'null'){
+		else if(cacheTrim === 'null'){
 			return null;
+		}
+		else if(cacheTrim === 'true' || cacheTrim === 'false'){
+			return cacheTrim === 'true';
 		}
 		else return PARSE_ERROR;
 	}

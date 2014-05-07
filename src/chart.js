@@ -42,7 +42,7 @@
 		
 		opts.cb = function(aggregateData){
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event);	
+				aggregateData = opts.post(aggregateData, event) || aggregateData;	
 				
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
@@ -302,7 +302,7 @@
 		opts.cb = function(aggregateData){
 			
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event);	
+				aggregateData = opts.post(aggregateData, event) || aggregateData;	
 			
 			var markup = '<table>';
 			

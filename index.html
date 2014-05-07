@@ -52,6 +52,10 @@
 		<h2 style="text-align:center;"></h2>
 		<svg id="svg3"></svg>
 		<svg id="svg2"></svg>
+		
+		<svg id="svg5"></svg>
+		<svg id="svg6"></svg>
+		
 		<svg id="svg4"></svg>
 		<div id="table"></div>
 	</div>
@@ -61,7 +65,7 @@
 			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
 		});
 		var dash = new ADL.XAPIDashboard('#svg');
-		var saveTest, scoreArr;
+		var saveTest, scoreArr, totalStudents = 30;
 		
 		var table = dash.createTable({
 			container: '#table',
@@ -69,7 +73,18 @@
 			pre: function(data, event){
 				data.where('actor.name = "' + event.point.in + '"');
 			},
-			aggregate: ADL.select('result.success')
+			aggregate: ADL.select('result.success'),
+			post: function(data){
+				//A little postprocessing to remove elements that are not from current test
+				//This will eventually be handled by using 'LIKE' (or an arbitrary regex) in where
+				var newArr = [];
+				for(var i = 0; i < data.length; i++){
+					if(data[i].in && data[i].in.indexOf(saveTest) >= 0 && data[i].out != null)
+						newArr.push(data[i]);
+				}
+				newArr.reverse();
+				return newArr;
+			}
 		});
 
 		var grandchildChart = dash.createBarChart({
@@ -86,6 +101,32 @@
 				nvd3Chart.forceY([scoreArr[0] - 5, scoreArr[1]]);
 			},
 			child: table
+		});
+		
+		var childChart3 = dash.createBarChart({
+			pre: function(data){
+				data.where('result.success = false');
+			},
+			aggregate: ADL.count(),
+			group: 'object.definition.name',
+			post: function(data){
+				var newArr = [];
+				for(var i = 0; i < data.length; i++){
+					if(data[i].in && data[i].in.indexOf(saveTest) >= 0 && data[i].out != null){
+						data[i].in = data[i].in.split(saveTest + '/')[1];
+						data[i].out = data[i].out / totalStudents * 100;
+						newArr.push(data[i]);
+					}
+				}
+				
+				return ADL.Collection.prototype.orderBy.call({contents: newArr}, "out", "descending").contents.slice(0, 15)
+			},
+			customize: function(nvd3Chart){
+				nvd3Chart.forceY([0, 100]);
+				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Question");
+				nvd3Chart.yAxis.axisLabel("% Correct");
+			},
+			container: '#svg5'
 		});
 		
 		var childChart = dash.createBarChart({
@@ -128,7 +169,7 @@
 				nvd3Chart.yAxis.axisLabel("Grade");
 				
 			}, 
-			child: [childChart, childPieChart]
+			child: [childChart, childPieChart, childChart3]
 		});
 		
 		chart.draw();		
