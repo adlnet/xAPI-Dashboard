@@ -118,8 +118,7 @@
 	
 	/*
 	 * Class methods to perform graph "formatting" operations
-	 */
-	 
+	 */	 
 	ADL.select = function(xpath){		
 		
 		return function(opts){

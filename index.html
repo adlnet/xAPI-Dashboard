@@ -23,8 +23,9 @@
 		}
 		svg{
 			width: 50%;
-			height: 40%;
+			height: 50%;
 			float:left;
+			clear: left;
 		}
 		
 		#svg{
@@ -32,17 +33,22 @@
 			height: 55%;
 			margin: 0 auto;
 			float: none;
+			
 		}
 		
-		#svg2{
+		#svg2, #table, #table2{
 			width: 40%;
 			float: right;
+			clear:right;
+			text-align:center;
+			min-height: 500px;
 		}
 		
 		#children{
 			width: 100%;
 			clear:both;
 			margin-top: -50px;
+			padding: 70px 0;
 		}
 	</style>
 	<div id="main">
@@ -50,11 +56,12 @@
 	</div>
 	<div id="children">
 		<h2 style="text-align:center;"></h2>
-		<svg id="svg3"></svg>
-		<svg id="svg2"></svg>
 		
 		<svg id="svg5"></svg>
-		<svg id="svg6"></svg>
+		<div id="table2"></div>
+		
+		<svg id="svg3"></svg>
+		<svg id="svg2"></svg>
 		
 		<svg id="svg4"></svg>
 		<div id="table"></div>
@@ -67,7 +74,7 @@
 		var dash = new ADL.XAPIDashboard('#svg');
 		var saveTest, scoreArr, totalStudents = 30;
 		
-		var table = dash.createTable({
+		var studentAnswersTable = dash.createTable({
 			container: '#table',
 			group: 'object.definition.name',
 			pre: function(data, event){
@@ -87,7 +94,7 @@
 			}
 		});
 
-		var grandchildChart = dash.createBarChart({
+		var studentsInRange = dash.createBarChart({
 			container: "#svg4",
 			group: 'actor.name',
 			pre: function(data, event){
@@ -97,14 +104,26 @@
 			},
 			aggregate: ADL.select('result.score.raw'),
 			customize: function(nvd3Chart, event){
-				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
+				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Student");
+				nvd3Chart.yAxis.axisLabel("Grade");
 				nvd3Chart.forceY([scoreArr[0] - 5, scoreArr[1]]);
 			},
-			child: table
+			child: studentAnswersTable
 		});
 		
-		var childChart3 = dash.createBarChart({
-			pre: function(data){
+		var incorrectStudentsTable = dash.createTable({
+			group: 'actor.name',
+			pre: function(data, event){
+				data.where('result.success = false and object.definition.name = "' + saveTest + '/' + event.point.in + '"')
+					.orderBy("actor.name");
+			},
+			aggregate: ADL.select("actor.name"),
+			container: '#table2'
+		});
+		
+		var incorrectChart = dash.createBarChart({
+			pre: function(data, event){
+				saveTest = event.point.in;
 				data.where('result.success = false');
 			},
 			aggregate: ADL.count(),
@@ -119,34 +138,38 @@
 					}
 				}
 				
-				return ADL.Collection.prototype.orderBy.call({contents: newArr}, "out", "descending").contents.slice(0, 15)
+				return ADL.Collection.prototype.orderBy.call({contents: newArr}, "out", "descending").contents.slice(0, 10);
 			},
 			customize: function(nvd3Chart){
 				nvd3Chart.forceY([0, 100]);
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Question");
-				nvd3Chart.yAxis.axisLabel("% Correct");
+				nvd3Chart.yAxis.axisLabel("% Incorrect");
+				ADL.$('h2').textContent = saveTest.charAt(0).toUpperCase() + saveTest.substr(1, saveTest.length) + ' Data';
 			},
-			container: '#svg5'
+			container: '#svg5',
+			child: incorrectStudentsTable
 		});
 		
-		var childChart = dash.createBarChart({
+		var scoreRanges = dash.createBarChart({
 			container: "#svg3",
 			group: "result.score.raw",
 			range: {start: 30, end: 100, increment: 10},
 			pre: function(data, event){
-				saveTest = event.point.in;
 				return data.where('result.score.raw != null and object.definition.name = "' + saveTest + '"');
+			},
+			post: function(data){
+				for(var i = 0; i < data.length; i++)
+					data[i].out *= 1/totalStudents * 100;
 			},
 			aggregate: ADL.count(),
 			customize: function(nvd3Chart, event){
-				var test = event.point.in;
-				ADL.$('h2').textContent = test.charAt(0).toUpperCase() + test.substr(1, test.length) + ' Score Ranges';
-				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade");
+				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade Range");
+				nvd3Chart.yAxis.axisLabel("% of Class");
 			},
-			child: [grandchildChart]
+			child: studentsInRange
 		});
 		
-		var childPieChart = dash.createPieChart({
+		var scoreRangesPie = dash.createPieChart({
 			container: "#svg2",
 			group: "result.score.raw",
 			range: {start: 30, end: 100, increment: 10},
@@ -154,11 +177,11 @@
 				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
 			},
 			aggregate: ADL.count(),
-			customize: function(chart){ chart.height(400).width(500); },
-			child: [grandchildChart]
+			customize: function(chart){ chart.height(450).width(500); },
+			child: studentsInRange
 		});
 
-		var chart = dash.createMultiBarChart({
+		var minMaxAverage = dash.createMultiBarChart({
 			pre: function(data){
 				return data.where("result.score.raw != null").orderBy("object.definition.name");
 			},
@@ -169,10 +192,10 @@
 				nvd3Chart.yAxis.axisLabel("Grade");
 				
 			}, 
-			child: [childChart, childPieChart, childChart3]
+			child: [incorrectChart, scoreRanges, scoreRangesPie]
 		});
 		
-		chart.draw();		
+		minMaxAverage.draw();		
 
 		/*$('#scores h1').textContent = 'High Scorers';
 		var data = test1Results.orderBy('result.score.raw','descending').selectFirst(10);

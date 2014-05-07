@@ -24188,6 +24188,22 @@ nv.models.multiBar = function() {
 			.call(chart);
 	};
 	
+	Chart.prototype.clear = function(container){
+		var myNode = ADL.$(container ? container : this.opts.container);
+		while (myNode.firstChild) {
+			myNode.removeChild(myNode.firstChild);
+		}
+		
+		if(this.child instanceof Array){
+			for(var g = 0; g < this.child.length; g++){
+				this.child[g].clear();
+			}
+		}
+		else if(this.child){
+			this.child.clear();
+		}
+	};
+	
 	Chart.prototype.draw = function(container){
 		var	opts = this.opts,
 			event = this.event,
@@ -24210,7 +24226,7 @@ nv.models.multiBar = function() {
 		
 		opts.cb = function(aggregateData){
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event);	
+				aggregateData = opts.post(aggregateData, event) || aggregateData;	
 				
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
@@ -24230,14 +24246,20 @@ nv.models.multiBar = function() {
 							for(var i = 0; i < next.length; i++){
 								console.log(next[i].opts.container);
 								if(self.opts.container == next[i].opts.container){
-									var myNode = ADL.$(self.opts.container);
-									while (myNode.firstChild) {
-										myNode.removeChild(myNode.firstChild);
-									}
+									self.clear();
 								}
 
 								next[i].event = e;
 								next[i].draw();
+								
+								if(next[i].child instanceof Array){
+									for(var g = 0; g < next[i].child.length; g++){
+										next[i].child[g].clear();
+									}
+								}
+								else if(next[i].child){
+									next[i].child.clear();
+								}
 							}
 						}
 						else if(next){
@@ -24470,7 +24492,7 @@ nv.models.multiBar = function() {
 		opts.cb = function(aggregateData){
 			
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event);	
+				aggregateData = opts.post(aggregateData, event) || aggregateData;	
 			
 			var markup = '<table>';
 			
