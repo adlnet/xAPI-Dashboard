@@ -23340,21 +23340,12 @@ nv.models.stackedAreaChart = function() {
 	
 	var XAPIDashboard = function(container, webworkerSrc){
 		
-		webworkerSrc = webworkerSrc ? 'src/collection-worker.js' : 'src/collection-worker.js';
-		
-		try{
-			this.data = new ADL.CollectionAsync(window.statements, webworkerSrc);
-		}
-		catch(e){
-			this.data = new ADL.Collection();
-			console.log(e);
-		}
-	
+		this.webworkerSrc = webworkerSrc ? this.webworkerSrc : 'src/collection-worker.js';	
 		this.container = container;
 	}
 
 	XAPIDashboard.prototype.fetchAllStatements = function(query, wrapper, cb){
-		var self = this;
+		var self = this, statementsArr = [];
 		if( !wrapper || typeof(wrapper) === 'function' ){
 			if(typeof(wrapper) === 'function' && !cb)
 				cb = wrapper;
@@ -23363,14 +23354,17 @@ nv.models.stackedAreaChart = function() {
 
 		wrapper.getStatements(query, null, function getMore(r){
 			var response = JSON.parse(r.response);
-			self.addStatements(response.statements);
+			
+			//Adds statements to a temp array so that addStatements is only called once
+			statementsArr.push.apply(statementsArr, response.statements);
 			
 			if(response.more){
 				wrapper.getStatements(null, response.more, getMore);
 			}
 			
-			else if(cb){
-				cb(self.statements);
+			else{
+				self.addStatements(statementsArr);
+				if(cb) cb(self.statements);
 			}
 		});
 	};
@@ -23382,6 +23376,7 @@ nv.models.stackedAreaChart = function() {
 	};
 	
 	XAPIDashboard.prototype.addStatements = function(statementsArr){
+	
 		if(statementsArr.response){
 			try{
 				statementsArr = JSON.parse(statementsArr.response).statements;
@@ -23390,6 +23385,14 @@ nv.models.stackedAreaChart = function() {
 				console.error("Error parsing JSON data", statementsArr.response);
 				return;
 			}
+		}
+	
+		try{
+			this.data = new ADL.CollectionAsync(statementsArr, this.webworkerSrc);
+		}
+		catch(e){
+			this.data = new ADL.Collection(statementsArr);
+			console.log("Caught error on ADL.CollectionAsync creation, falling back to ADL.Collection ", e);
 		}
 	};
 	
@@ -23454,8 +23457,7 @@ nv.models.stackedAreaChart = function() {
 	
 	/*
 	 * Class methods to perform graph "formatting" operations
-	 */
-	 
+	 */	 
 	ADL.select = function(xpath){		
 		
 		return function(opts){
@@ -24242,13 +24244,14 @@ nv.models.multiBar = function() {
 					
 					//Find a way to prevent the addition of click handlers every time this chart is drawn
 					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+						e.in = e.in ? e.in : e.point.in;
+						e.out = e.out ? e.out : e.point.out;
 						if(next instanceof Array){
 							for(var i = 0; i < next.length; i++){
-								console.log(next[i].opts.container);
 								if(self.opts.container == next[i].opts.container){
 									self.clear();
 								}
-
+								
 								next[i].event = e;
 								next[i].draw();
 								

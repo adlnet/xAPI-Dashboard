@@ -74,13 +74,14 @@
 					
 					//Find a way to prevent the addition of click handlers every time this chart is drawn
 					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+						e.in = e.in ? e.in : e.point.in;
+						e.out = e.out ? e.out : e.point.out;
 						if(next instanceof Array){
 							for(var i = 0; i < next.length; i++){
-								console.log(next[i].opts.container);
 								if(self.opts.container == next[i].opts.container){
 									self.clear();
 								}
-
+								
 								next[i].event = e;
 								next[i].draw();
 								

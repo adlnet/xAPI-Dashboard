@@ -68,17 +68,19 @@
 	</div>
 
 	<script type="text/javascript">
-		var wrapper = new XAPIWrapper({
-			"endpoint" : 'https://lrs.adlnet.gov/xAPI/',
-		});
+		//To-do: add comments
+	
+		var wrapper = new XAPIWrapper({"endpoint" : 'https://lrs.adlnet.gov/xAPI/'});
 		var dash = new ADL.XAPIDashboard('#svg');
-		var saveTest, scoreArr, totalStudents = 30;
+		var saveTest = '', scoreArr, totalStudents = 30;
 		
+		dash.addStatements(window.statements);
+
 		var studentAnswersTable = dash.createTable({
 			container: '#table',
 			group: 'object.definition.name',
 			pre: function(data, event){
-				data.where('actor.name = "' + event.point.in + '"');
+				data.where('actor.name = "' + event.in + '"');
 			},
 			aggregate: ADL.select('result.success'),
 			post: function(data){
@@ -98,7 +100,7 @@
 			container: "#svg4",
 			group: 'actor.name',
 			pre: function(data, event){
-				scoreArr = event.point.in.split('-');
+				scoreArr = event.in.split('-');
 				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw < '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"')
 					.orderBy('result.score.raw', 'desc');
 			},
@@ -114,7 +116,7 @@
 		var incorrectStudentsTable = dash.createTable({
 			group: 'actor.name',
 			pre: function(data, event){
-				data.where('result.success = false and object.definition.name = "' + saveTest + '/' + event.point.in + '"')
+				data.where('result.success = false and object.definition.name = "' + saveTest + '/' + event.in + '"')
 					.orderBy("actor.name");
 			},
 			aggregate: ADL.select("actor.name"),
@@ -123,7 +125,8 @@
 		
 		var incorrectChart = dash.createBarChart({
 			pre: function(data, event){
-				saveTest = event.point.in;
+				console.log(event);
+				saveTest = event.in;
 				data.where('result.success = false');
 			},
 			aggregate: ADL.count(),
@@ -145,6 +148,7 @@
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Question");
 				nvd3Chart.yAxis.axisLabel("% Incorrect");
 				ADL.$('h2').textContent = saveTest.charAt(0).toUpperCase() + saveTest.substr(1, saveTest.length) + ' Data';
+				
 			},
 			container: '#svg5',
 			child: incorrectStudentsTable
@@ -174,7 +178,7 @@
 			group: "result.score.raw",
 			range: {start: 30, end: 100, increment: 10},
 			pre: function(data, event){
-				return data.where('result.score.raw != null and object.definition.name = "' + event.point.in + '"');
+				return data.where('result.score.raw != null and object.definition.name = "' + event.in + '"');
 			},
 			aggregate: ADL.count(),
 			customize: function(chart){ chart.height(450).width(500); },
@@ -189,8 +193,7 @@
 			group:  'object.definition.name',
 			customize: function(nvd3Chart){
 				nvd3Chart.forceY([0, 120]);
-				nvd3Chart.yAxis.axisLabel("Grade");
-				
+				nvd3Chart.yAxis.axisLabel("Grade");			
 			}, 
 			child: [incorrectChart, scoreRanges, scoreRangesPie]
 		});
