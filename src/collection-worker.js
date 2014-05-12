@@ -89,15 +89,15 @@ onmessage = function(event)
 
 	// request to send result data back
 	case 'exec':
-		//try {
-			processCommandQueue();
-			var result = serialize([dataStack.pop()]);
+		
+		processCommandQueue();
+		var result = serialize([dataStack.pop()]);
+		try {
 			postMessage(result, [result]);
-		/*}
+		}
 		catch(e){
-			postMessage(serialize(['exec', 'error']));
-			throw e;
-		}*/
+			postMessage(result);
+		}
 
 		break;
 

@@ -428,7 +428,13 @@
 		this.worker = new Worker(workerLocation);
 
 		var payload = serialize(['datapush', array]);
-		this.worker.postMessage(payload,[payload]);
+		try{
+			this.worker.postMessage(payload,[payload]);
+		}
+		catch(e){
+			this.worker.postMessage(payload);
+		}
+			
 		if( payload.byteLength > 0 ){
 			console.log('Warning: Your browser does not support WebWorker transfers. Performance of this site may suffer as a result.');
 		}
