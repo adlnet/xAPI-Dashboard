@@ -7,6 +7,7 @@ from StringIO import StringIO
 random.seed()
 nameData = {}
 
+
 class EST(dt.tzinfo):
 	def utcoffset(self, d):
 		return dt.timedelta(hours=-5)
@@ -33,6 +34,8 @@ class Student(object):
 
 class Class(object):
 	def __init__(self, numStudents, classAverage, classVariance):
+		self.id = 'cop-3223'
+		self.instructor = Student(100)
 		self.students = []
 		for i in range(numStudents):
 			studentAverage = random.normalvariate(classAverage, math.sqrt(classVariance))
@@ -40,6 +43,7 @@ class Class(object):
 
 	def takeTest(self, test):
 		results = TestResults(len(test))
+		results.classHandle = self
 		for questionNum,difficulty in enumerate(test):
 			for student in self.students:
 				results.logAnswer( student, questionNum, student.answerQuestion(difficulty) )
@@ -93,21 +97,21 @@ def genStatements(results):
 			for student,result in qResults.items():
 
 				if qNum == 0:
-					xapiStatements.append( genStatement(student,'attempted',testid,startTime) )
+					xapiStatements.append( genStatement(questions.classHandle, student,'attempted',testid,startTime) )
 
 				activity = '{}/q{}'.format(testid,qNum)
 				times[student] = times.get(student, startTime) + dt.timedelta(seconds=random.randint(30,90))
 				sums[student] = sums.get(student,0) + (100 if result else 0)
 
-				xapiStatements.append( genStatement(student,'answered',activity,times[student],result) )
+				xapiStatements.append( genStatement(questions.classHandle, student,'answered',activity,times[student],result) )
 
 
 		for student,time in times.items():
-			xapiStatements.append( genStatement(student,'completed',testid,time) )
+			xapiStatements.append( genStatement(questions.classHandle, student,'completed',testid,time) )
 
 			average = sums[student]/len(questions)
 			passed = 'passed' if average >= 60 else 'failed'
-			xapiStatements.append( genStatement(student,passed,testid,time,average) )
+			xapiStatements.append( genStatement(questions.classHandle, student,passed,testid,time,average) )
 
 	def sortKey(e):
 		return e['stored']
@@ -116,7 +120,7 @@ def genStatements(results):
 	return xapiStatements
 
 			
-def genStatement(student, verb, activity, time, score=None):
+def genStatement(c, student, verb, activity, time, score=None):
 	stmt = {
 		'actor': {
 			'name': student.name,
@@ -127,9 +131,19 @@ def genStatement(student, verb, activity, time, score=None):
 			'display': {'en-US': verb}
 		},
 		'object': {
-			'id': 'http://myschool.edu/xapi_vocab/'+activity,
+			'id': 'http://myschool.edu/xapi/{}/{}'.format(c.id,activity),
 			'definition': {
 				'name': activity
+			}
+		},
+		'context': {
+			'instructor': {
+				'objectType': 'Agent',
+				'name': c.instructor.name,
+				'mbox': 'mailto:'+c.instructor.email
+			},
+			'contextActivities': {
+				'grouping': [{'id': 'http://myschool.edu/xapi/'+c.id}]
 			}
 		},
 
@@ -142,6 +156,11 @@ def genStatement(student, verb, activity, time, score=None):
 		'version': '1.0.1',
 		'id': str(uuid4())
 	}
+
+	if verb == 'answered':
+		stmt['context']['contextActivities']['parent'] = [{
+			'id': 'http://myschool.edu/xapi/{}/{}'.format(c.id, activity.split('/')[0])
+		}]
 
 	if isinstance(score, bool):
 		stmt['result'] = {
@@ -176,14 +195,14 @@ def main():
 
 
 	battery = Battery()
-	battery.tests.append( Test('test1', [random.randint(60,70) for i in range(50)]) )
-	battery.tests.append( Test('test2', [random.randint(70,75) for i in range(50)]) )
-	battery.tests.append( Test('test3', [random.randint(75,80) for i in range(50)]) )
-	battery.tests.append( Test('test4', [random.randint(80,88) for i in range(50)]) )
-	battery.tests.append( Test('final', [random.randint(88,90) for i in range(50)]) )
+	battery.tests.append( Test('test1', [random.randint(65,80) for i in range(50)]) )
+	battery.tests.append( Test('test2', [random.randint(65,80) for i in range(50)]) )
+	battery.tests.append( Test('test3', [random.randint(65,80) for i in range(50)]) )
+	battery.tests.append( Test('test4', [random.randint(65,80) for i in range(50)]) )
+	battery.tests.append( Test('final', [random.randint(70,85) for i in range(50)]) )
 	#battery.tests.append( Test('test2', [50 for i in range(100)]) )
 
-	myclass = Class(30, 75,10)
+	myclass = Class(30, 75,20)
 
 	results = battery.run(myclass)
 	statements = genStatements(results)
