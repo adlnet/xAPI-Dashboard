@@ -46,7 +46,7 @@ function xpath(path,obj)
  *   stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
  * 
  * Query grammar:
- *   value := parseInt | parseFloat | "(.*)"
+ *   value := parseInt | parseFloat | "(.*)" | /(.*)/i?
  *   xpath := [A-Za-z0-9_]+(\.[A-za-z0-9_]+)*
  *   cond := <xpath> (=|!=|>|<|>=|<=) <value>
  *   andGrp := <expr> 'and' <expr> | <cond>
@@ -175,16 +175,30 @@ function parseWhere(str)
 			// parse operands
 			var part1 = xpath(match[1]);
 			var part2 = value(match[3]);
-			if( part1 ){
-				// parse operator
-				switch(match[2]){
-					case  '=':  return {op: 'eq',xpath:part1,value:part2};
-					case '!=':  return {op:'neq',xpath:part1,value:part2};
-					case  '<':  return {op: 'lt',xpath:part1,value:part2};
-					case '<=':  return {op:'leq',xpath:part1,value:part2};
-					case  '>':  return {op: 'gt',xpath:part1,value:part2};
-					case '>=':  return {op:'geq',xpath:part1,value:part2};
-					default: return PARSE_ERROR;
+			if( part1 )
+			{
+				if( part2 instanceof RegExp ){
+					if( match[2] === '=' )
+						return {op:'re',xpath:part1,value:part2};
+					else if( match[2] === '!=' )
+						return {op:'nre',xpath:part1,value:part2};
+					else {
+						console.error('Regex comparison only supports = and !=');
+						return PARSE_ERROR;
+					}
+
+				}
+				else {
+					// parse operator
+					switch(match[2]){
+						case  '=':  return {op: 'eq',xpath:part1,value:part2};
+						case '!=':  return {op:'neq',xpath:part1,value:part2};
+						case  '<':  return {op: 'lt',xpath:part1,value:part2};
+						case '<=':  return {op:'leq',xpath:part1,value:part2};
+						case  '>':  return {op: 'gt',xpath:part1,value:part2};
+						case '>=':  return {op:'geq',xpath:part1,value:part2};
+						default: return PARSE_ERROR;
+					}
 				}
 			}
 			// fail if operator or operand doesn't parse
@@ -214,6 +228,9 @@ function parseWhere(str)
 		else if(val = /^\s*"(.*)"\s*$/.exec(str)){
 			return val[1];
 		}
+		else if(val = /^\s*\/(.*)\/(i?)\s*$/.exec(str)){
+			return new RegExp(val[1], val[2]);
+		}
 		else if(cacheTrim === 'null'){
 			return null;
 		}
@@ -224,7 +241,7 @@ function parseWhere(str)
 	}
 
 	var ret = expr(str);
-	return ret != NaN ? ret : null;
+	return ret != PARSE_ERROR ? ret : null;
 }
 
 
@@ -247,6 +264,8 @@ function evalConditions(parse, stmt)
 			case 'leq': return xpath(parse.xpath,stmt) <= parse.value;
 			case 'lt': return xpath(parse.xpath,stmt) < parse.value;
 			case 'gt': return xpath(parse.xpath,stmt) > parse.value;
+			case 're': return parse.value.test( xpath(parse.xpath,stmt) );
+			case 'nre': return !parse.value.test( xpath(parse.xpath,stmt) );
 			default: return false;
 		}
 	}
