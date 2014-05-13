@@ -13,7 +13,10 @@
 				c.where('verb.id = /(passed|failed)$/')
 					.groupBy('result.score.raw', [50,100,5])
 					.count()
-					.select('group, count')
+					.average('result.score.raw')
+					.min('result.score.raw')
+					.max('result.score.raw')
+					.select('groupStart, groupEnd, count, average, min, max')
 					.exec(function(msg){
 						clearInterval(handle);
 						console.timeEnd('Total operating time');

@@ -514,14 +514,15 @@ function count()
 	// loop over each group
 	for(var i=0; i<data.length; i++)
 	{
-		// copy group id fields to new object, add count and sample
-		ret.push({
-			group: data[i].group,
-			groupStart: data[i].groupStart,
-			groupEnd: data[i].groupEnd,
-			count: data[i].data.length,
-			sample: data[i].data[0]
-		});
+		// copy group id fields to new object
+		var group = {};
+		for(var j in data[i]){
+			group[j] = data[i][j];
+		}
+		// add count and sample
+		group.count = group.data.length;
+		group.sample = group.data[0];
+		ret.push(group);
 	}
 		
 	dataStack.push(ret);
@@ -553,14 +554,15 @@ function sum(path)
 			sum += xpath(path, data[i].data[j]);
 		}
 
-		// copy group id fields to new object, add sum and sample
-		ret.push({
-			group: data[i].group,
-			groupStart: data[i].groupStart,
-			groupEnd: data[i].groupEnd,
-			sum: sum,
-			sample: data[i].data[0]
-		});
+		// copy group id fields to new object
+		var group = {};
+		for(var j in data[i]){
+			group[j] = data[i][j];
+		}
+		// add sum and sample
+		group.sum = sum;
+		group.sample = group.data[0];
+		ret.push(group);
 	}
 
 	dataStack.push(ret);
@@ -591,14 +593,15 @@ function average(path)
 			sum += xpath(path, data[i].data[j]);
 		}
 
-		// copy group id fields to new object, add average and sample
-		ret.push({
-			group: data[i].group,
-			groupStart: data[i].groupStart,
-			groupEnd: data[i].groupEnd,
-			average: sum/data[i].data.length,
-			sample: data[i].data[0]
-		});
+		// copy group id fields to new object
+		var group = {};
+		for(var j in data[i]){
+			group[j] = data[i][j];
+		}
+		// add average and sample
+		group.average = sum/(group.data.length>0 ? group.data.length : 1);
+		group.sample = group.data[0];
+		ret.push(group);
 	}
 
 	dataStack.push(ret);
@@ -629,14 +632,15 @@ function min(path)
 			min = Math.min(min, xpath(path, data[i].data[j]));
 		}
 
-		// copy group id fields to new object, add min and sample
-		ret.push({
-			group: data[i].group,
-			groupStart: data[i].groupStart,
-			groupEnd: data[i].groupEnd,
-			min: min,
-			sample: data[i].data[0]
-		});
+		// copy group id fields to new object
+		var group = {};
+		for(var j in data[i]){
+			group[j] = data[i][j];
+		}
+		// add min and sample
+		group.min = min === Infinity ? 0 : min;
+		group.sample = group.data[0];
+		ret.push(group);
 	}
 
 	dataStack.push(ret);
@@ -667,14 +671,15 @@ function max(path)
 			max = Math.max(max, xpath(path, data[i].data[j]));
 		}
 
-		// copy group id fields to new object, add max and sample
-		ret.push({
-			group: data[i].group,
-			groupStart: data[i].groupStart,
-			groupEnd: data[i].groupEnd,
-			max: max,
-			sample: data[i].data[0]
-		});
+		// copy group id fields to new object
+		var group = {};
+		for(var j in data[i]){
+			group[j] = data[i][j];
+		}
+		// add max and sample
+		group.max = max === -Infinity ? 0 : max;
+		group.sample = group.data[0];
+		ret.push(group);
 	}
 
 	dataStack.push(ret);
