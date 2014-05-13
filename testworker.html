@@ -2,13 +2,15 @@
 <html>
 	<head>
 		<title>WebWorker test</title>
-		<script src='src/collection.js'></script>
+		<script src='src/collection-unified.js'></script>
 		<script src='extra/gen-lrs-data.js'></script>
 		<script>
 			function ready(){
-				var handle = setInterval(function(){document.body.innerHTML += '.';}, 20);
-				console.time('Total operating time');
 
+				var c = new ADL.Collection();
+
+				/*var handle = setInterval(function(){document.body.innerHTML += '.';}, 20);
+				console.time('Total operating time');
 				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
 				c.where('verb.id = /(passed|failed)$/')
 					.groupBy('result.score.raw', [50,100,5])
@@ -22,7 +24,7 @@
 						console.timeEnd('Total operating time');
 						document.body.innerHTML += '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
 						console.log('Result length', msg.length);
-					});
+					});*/
 			};
 		</script>
 	</head>
