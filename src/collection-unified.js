@@ -1,3 +1,11 @@
+/***********************************************************************
+ * collection.js: Run queries on Experience API data
+ *
+ * Initialize the ADL.Collection class with a list of xAPI statements,
+ * then run SQL-style queries over the data, e.g. where, select, count.
+ *
+ * Comes in two versions: CollectionSync and CollectionAsync.
+ ***********************************************************************/
 "use strict";
 
 // guarantee window.ADL, even in a worker
@@ -75,7 +83,11 @@ if(!Array.isArray){
 	 *************************************************************/
 
 	function CollectionSync(data, parent){
-		this.contents = data.slice();
+		if(Array.isArray(data))
+			this.contents = data.slice();
+		else
+			this.contents = [];
+
 		this.parent = parent;
 	}
 
@@ -94,11 +106,12 @@ if(!Array.isArray){
 	}
 
 
+	/*
+	 * Filter out data entries not matching the query expression
+	 */
 	CollectionSync.prototype.where = function(query)
 	{
 		/*
-		 * Helper functions to parse the Where query
-		 *
 		 * Query format example
 		 *   stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
 		 * 
@@ -380,6 +393,10 @@ if(!Array.isArray){
 		return this;
 	}
 	
+	/*
+	 * Pick out certain fields from each entry in the dataset
+	 * syntax of selector := xpath ['as' alias] [',' xpath ['as' alias]]*
+	 */
 	CollectionSync.prototype.select = function(selector)
 	{
 		// parse selector
@@ -422,6 +439,10 @@ if(!Array.isArray){
 		return this;
 	}
 
+	/*
+	 * Exactly what it sounds like
+	 * Return some continuous subset of the data
+	 */
 	CollectionSync.prototype.slice = function(start,end)
 	{
 		if(end === null)
@@ -430,6 +451,9 @@ if(!Array.isArray){
 		return this;
 	}
 	
+	/*
+	 * Sort dataset by given path
+	 */
 	CollectionSync.prototype.orderBy = function(path, direction)
 	{
 		var data = this.contents;
@@ -560,6 +584,9 @@ if(!Array.isArray){
 	}
 
 
+	/*
+	 * Group with discrete values
+	 */
 	CollectionSync.prototype.groupBy = function(path, range)
 	{
 		if(range)
@@ -590,6 +617,10 @@ if(!Array.isArray){
 		return this;
 	}
 
+
+	/*
+	 * Take grouped data and return number of entries in each group
+	 */
 	CollectionSync.prototype.count = function()
 	{
 		var data = this.contents;
@@ -621,6 +652,9 @@ if(!Array.isArray){
 		return this;
 	}
 
+	/*
+	 * Take grouped data and return total of values of entries in each group
+	 */
 	CollectionSync.prototype.sum = function(path)
 	{
 		if( !path )
@@ -660,6 +694,9 @@ if(!Array.isArray){
 		return this;
 	}
 
+	/*
+	 * Take grouped data and return average of values of entries in each group
+	 */
 	CollectionSync.prototype.average = function(path)
 	{
 		if( !path )
@@ -699,6 +736,9 @@ if(!Array.isArray){
 		return this;
 	}
 
+	/*
+	 * Take grouped data and return minimum of values of entries in each group
+	 */
 	CollectionSync.prototype.min = function(path)
 	{
 		if( !path ) return this;
@@ -736,6 +776,9 @@ if(!Array.isArray){
 		return this;
 	}
 
+	/*
+	 * Take grouped data and return maximum of values of entries in each group
+	 */
 	CollectionSync.prototype.max = function(path)
 	{
 		if( !path ) return this;
@@ -838,8 +881,10 @@ if(!Array.isArray){
 
 	CollectionAsync.prototype.exec = function(cb)
 	{
-		// generate random callback id
-		var id = Math.floor( Math.random() * 65536 );
+		// generate random callback id, check for duplicates
+		var id;
+		while( this._callbacks[id = Math.floor( Math.random() * 65536 )] );
+
 		this._callbacks[id] = cb;
 		this.worker.postMessage(CollectionAsync.serialize(['exec', id]));
 		return this;
@@ -879,6 +924,7 @@ if(!Array.isArray){
 	CollectionAsync.prototype.max     = proxyFactory('max');
 
 	ADL.CollectionSync = CollectionSync;
+	ADL.CollectionAsync = CollectionAsync;
 	ADL.Collection = CollectionAsync;
 
 }(window.ADL));

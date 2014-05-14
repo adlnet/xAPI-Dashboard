@@ -8,19 +8,18 @@
 			function ready(){
 
 				console.time('Total operating time');
-				var c = new ADL.CollectionSync(window.statements);
+				var c = new ADL.Collection(window.statements);
 				c
-				//	.where('id = "8a7abb66-c516-461b-8da7-d63c31d40ca3"')
 					.where('verb.id = /(passed|failed)$/')
 					.save()
 					.groupBy('result.score.raw', [50,100,5])
 					.count()
-					//.sum('result.score.raw')
-					//.average('result.score.raw')
-					//.min('result.score.raw')
-					//.max('result.score.raw')
-					.select('groupStart, groupEnd, count')
-					//.orderBy('sum')
+					.sum('result.score.raw')
+					.average('result.score.raw')
+					.min('result.score.raw')
+					.max('result.score.raw')
+					.select('groupStart, groupEnd, count, sum, min, max, average')
+					.orderBy('sum')
 					.exec(function(data){
 						console.timeEnd('Total operating time');
 						document.body.innerHTML += '<pre>'+JSON.stringify(data.contents, null, '    ')+'</pre>';
