@@ -125,7 +125,6 @@
 		
 		var incorrectChart = dash.createBarChart({
 			pre: function(data, event){
-				console.log(event);
 				saveTest = event.in;
 				data.where('result.success = false');
 			},
@@ -141,7 +140,7 @@
 					}
 				}
 				
-				return ADL.Collection.prototype.orderBy.call({contents: newArr}, "out", "descending").contents.slice(0, 10);
+				return ADL.CollectionSync.prototype.orderBy.call({contents: newArr}, "out", "descending").contents.slice(0, 10);
 			},
 			customize: function(nvd3Chart){
 				nvd3Chart.forceY([0, 100]);

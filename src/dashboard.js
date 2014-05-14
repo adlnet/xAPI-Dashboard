@@ -151,142 +151,135 @@
 			}
 		}
 	};
-	ADL.count = function(ignoreXpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group){
-					console.error("group has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
-			}
-		}
-		else{
-			return ADL.CollectionAsync.prototype.count.call(this);
-		}
-	};	 
 
-	ADL.sum = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).sum(xpath).select("group as in, sum as out").exec(opts.cb);
+	ADL.count = function(ignoreXpath, join){
+		return function(opts){
+			if(!opts.group){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.group, range).count().select('group as in, count as out').exec(opts.cb);
+			}
+			else {
+				return ret.count();
+			}
+
 		}
-		
-		else{
-			return ADL.CollectionAsync.prototype.sum.call(this, xpath);
+	};	
+	
+	ADL.sum = function(xpath, join){
+		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.group, range).sum(xpath).select('group as in, sum as out').exec(opts.cb);
+			}
+			else {
+				return ret.sum(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.min = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).min(xpath).select("group as in, min as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).min(xpath).select("group as in, min as out").exec(opts.cb);
+		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
-		}
-		
-		else{
-			return ADL.CollectionAsync.prototype.min.call(this, xpath);
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.group, range).min(xpath).select('group as in, min as out').exec(opts.cb);
+			}
+			else {
+				return ret.min(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.max = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).max(xpath).select("group as in, max as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).max(xpath).select("group as in, max as out").exec(opts.cb);
+		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
-		}
-		
-		else{
-			return ADL.CollectionAsync.prototype.max.call(this, xpath);
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.group, range).max(xpath).select('group as in, max as out').exec(opts.cb);
+			}
+			else {
+				return ret.max(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.average = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
+		return function(opts){
+			if(!opts.group || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
-		}
-		else{
-			return ADL.CollectionAsync.prototype.average.call(this, xpath);
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.group, range).average(xpath).select('group as in, average as out').exec(opts.cb);
+			}
+			else {
+				return ret.average(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.multiAggregate = function(xpath){
-		var saveArgs = arguments,
-			opsArr = ["group"],
-			saveIndex;
-		
-		for(var g = 1; g < saveArgs.length; g++){
-			opsArr.push(function(data){ 
-				saveArgs[saveIndex++].call(data, xpath, true);
-			});
-		}
 	
-		return function(opts){
+		var multi = Array.prototype.slice.call(arguments, 1);
+
+		return function(opts)
+		{
 			if(!opts.group || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
 			opts.xpath = xpath;
-			saveIndex = 1;
 			
-			var tempCb = function(data){
-				
+			var tempCb = function(data)
+			{
 				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
 					g = 1;
 				
+				// create series from aggregate fields of data
 				for(var i in data[0]){
-					if(i != "group" && i != "sample"){
+					if( /^(count|sum|min|average|max)$/.test(i) ){
 						aggArr.push({key: i, values: [], color: colorRange[g]});
 						g += 2;
 					}
 				}
 				
+				// add data to series
 				for(var i = 0; i < data.length; i++){
 					for(var g = 0; g < aggArr.length; g++){
 						aggArr[g].values.push({in: data[i].group, out: data[i][aggArr[g].key], series: g});
@@ -307,15 +300,12 @@
 				opts.cb(aggArr);
 			};
 			
-			if(opts.range) return opts.data
-				.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment])
-				.join.apply(opts.data, opsArr)
-				.exec(tempCb);
-			
-			else return opts.data
-				.groupBy(opts.group)
-				.join.apply(opts.data, opsArr)
-				.exec(tempCb);
+			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+			opts.data = opts.data.groupBy(opts.group);
+			for( var i=0; i<multi.length; i++ ){
+				multi[i](xpath,true)(opts);
+			}
+			opts.data.exec(tempCb);
 		}
 	};	 
 	

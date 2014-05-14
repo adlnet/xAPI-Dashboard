@@ -59,7 +59,7 @@
 		opts.cb = function(aggregateData){
 			if(opts.post)
 				aggregateData = opts.post(aggregateData, event) || aggregateData;	
-				
+
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 				
@@ -354,7 +354,6 @@
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
 
-			console.log(aggregateData);
 			isChartBusy = false;
 		};
 	

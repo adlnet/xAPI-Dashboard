@@ -92,7 +92,7 @@ if(!Array.isArray){
 	}
 
 	CollectionSync.prototype.exec = function(cb){
-		cb(this);
+		cb(this.contents);
 		return this.parent;
 	}
 
@@ -435,7 +435,6 @@ if(!Array.isArray){
 
 		// return the selection
 		this.contents = ret;
-
 		return this;
 	}
 
@@ -839,9 +838,8 @@ if(!Array.isArray){
 		this.worker.onmessage = function(evt)
 		{
 			var data = CollectionAsync.deserialize(evt.data);
-			var result = new CollectionSync(data[1]);
 			if( this._callbacks[data[0]] ){
-				this._callbacks[data[0]](result);
+				this._callbacks[data[0]](data[1]);
 				delete this._callbacks[data[0]];
 			}
 		}.bind(this);
@@ -947,7 +945,7 @@ if(!Array.isArray){
 				var cbHandle = data[1];
 				if(db){
 					db = db.exec(function(data){
-						var payload = CollectionAsync.serialize([cbHandle, data.contents]);
+						var payload = CollectionAsync.serialize([cbHandle, data]);
 						try {
 							postMessage(payload, [payload]);
 						}
