@@ -1,404 +1,866 @@
+/***********************************************************************
+ * collection.js: Run queries on Experience API data
+ *
+ * Initialize the ADL.Collection class with a list of xAPI statements,
+ * then run SQL-style queries over the data, e.g. where, select, count.
+ *
+ * Comes in two versions: CollectionSync and CollectionAsync.
+ ***********************************************************************/
 "use strict";
+
+// guarantee window.ADL, even in a worker
+try {
+	window.ADL = window.ADL || {};
+}
+catch(e){
+	var window = {'ADL': {}};
+}
+
+// figure out script path if available
+try {
+	var workerScript = document.querySelector('script[src$="collection.js"]').src;
+}
+catch(e){}
+
+// poly-fill array checking
+if(!Array.isArray){
+	Array.isArray = function(obj){
+		return obj.length >= 0 && !obj['length'];
+	}
+}
+
+/*
+ * Client scope
+ */
+
 (function(ADL){
 
-	/*************************************************
-	 * The Collection class exposes various set operations in a friendly syntax
-	 *************************************************/
-
-	function Collection(arr)
+	/*
+	 * Retrieves some deep value at path from an object
+	 */
+	function getVal(path,obj)
 	{
-		this.contents = [];
-		for(var i in arr){
-			if( this.contents.indexOf(arr[i]) === -1 ){
-				this.contents.push(arr[i]);
-			}
+		// if nothing to search, return null
+		if(obj === undefined){
+			return null;
 		}
-	}
 
-	// simple filter
-	Collection.prototype.select = function(filter)
-	{
-		/*return new Collection(
-			this.contents.reduce(
-				function(sum,val,index,array){
-					if( filter(val,index,array) )
-						sum.push(val);
-					return sum;
+		// if no descent, just return object
+		else if(path.length === 0){
+			return obj;
+		}
+
+		else {
+			//var parts = /^([^\.]+)(?:\.(.+))?$/.exec(path);
+			var parts;
+			if(Array.isArray(path)){
+				parts = path;
+			}
+			else {
+				parts = path.split('.');
+				var i=0;
+				while(i<parts.length){
+					if(parts[i].charAt(parts[i].length-1) === '\\')
+						parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
+					else
+						i++;
 				}
-			, [])
-		);*/
-		var sum = [];
-		for(var i=0; i<this.contents.length; i++){
-			var e = this.contents[i];
-			if( filter(e,i,this.contents) ){
-				sum.push(e);
 			}
-		}
-		return new Collection(sum);
-	};
 
-	// returns intersection of this and argument
-	Collection.prototype.intersect = function(set)
-	{
-		var ret = new Collection();
-		for(var i in this.contents){
-			var obj = this.contents[i];
-			if( set.contains(obj) )
-				ret.contents.push(obj);
-		}
-
-		return ret;
-	};
-
-	// returns union of this and argument
-	Collection.prototype.union = function(set)
-	{
-		var ret = new Collection(this.contents);
-		ret.contents.push.apply(ret.contents, set.contents);
-		return ret.selectDistinct();
-	};
-
-	// returns subtraction of this and argument
-	Collection.prototype.without = function(set)
-	{
-		var ret = new Collection();
-		for(var i in this.contents){
-			var obj = this.contents[i];
-			if( !set.contains(obj) )
-				ret.contents.push(obj);
-		}
-
-		return ret;
-	}
-
-	// aggregate and run callback
-	Collection.prototype.groupBy = function(xpath, cb)
-	{
-		var pathVals = this.selectDistinct(xpath).transform(Collection.getValue(xpath)).contents;
-		var ret = new Collection();
-		for( var i in pathVals )
-		{
-			var val = pathVals[i];
-			var group = this.selectEqual(xpath,val);
-			ret.contents.push({
-				'in': val,
-				'out': cb(group),
-				'sample': group.contents[0]
-			});
-		}
-
-		return ret;
-	};
-	
-	// aggregate and run callback
-	Collection.prototype.groupByRange = function(xpath, arr, cb)
-	{			
-		var ret = new Collection();
-
-		for( var i = 0; i < arr.length - 1; i++ )
-		{
-			var group = this.selectRange(xpath, arr[i], arr[i+1]);
-			ret.contents.push({
-				'in': arr[i],
-				'out': cb(group, arr[i], arr[i+1]),
-				'sample': group.contents[0]
-			});
-		}
-		
-		return ret;
-	};
-
-	// order the contents of the set by path
-	Collection.prototype.orderBy = function(xpath, comparator)
-	{
-		var sortFn;
-		if( typeof(comparator) === 'function' )
-			sortFn = comparator;
-		else {
-			sortFn = function(a,b){
-				if( !a || a<b )
-					return comparator === 'descending' ? 1 : -1;
-				else if( !b || a>b )
-					return comparator === 'descending' ? -1 : 1;
-				else return 0;
-			};
-		}
-
-		var path = Collection.getValue(xpath);
-		var ret = new Collection(this.contents);
-		ret.contents.sort(function(a,b){
-			return sortFn(path(a), path(b));
-		});
-		return ret;
-	};
-
-	// the number of elements in the set (or subset)
-	Collection.prototype.count = function(xpath)
-	{
-		if(xpath){
-			return this.selectDistinct(xpath).count();
-		}
-		else {
-			return this.contents.length;
+			var scoped = parts[0], rest = parts.slice(1);
+			return getVal(rest, obj[scoped]);
 		}
 	}
 
-	// the total of a particular field
-	Collection.prototype.sum = function(xpath)
-	{
-		var sum = 0;
-		for( var i in this.contents ){
-			sum += Collection.getValue(xpath)(this.contents[i]);
-		}
 
-		return sum;
+	/*************************************************************
+	 * CollectionSync - the core processor of statements
+	 *
+	 * This is where the magic happens. CollectionSync is initialized
+	 * with an array of statements, processes those statements
+	 * based on the method called, and returns a new CollectionSync
+	 * object containing the results of the query.
+	 *************************************************************/
+
+	function CollectionSync(data, parent){
+		if(Array.isArray(data))
+			this.contents = data.slice();
+		else
+			this.contents = [];
+
+		this.parent = parent;
 	}
 
-	// the largest value of field in the set
-	Collection.prototype.max = function(xpath)
-	{
-		var max = -Infinity;
-		for( var i in this.contents ){
-			var val = Collection.getValue(xpath)(this.contents[i]);
-			if( val > max )
-				max = val;
-		}
-		return max;
+	CollectionSync.prototype.exec = function(cb){
+		cb(this);
+		return this.parent;
 	}
 
-	// the smallest value of field in the set
-	Collection.prototype.min = function(xpath)
-	{
-		var min = Infinity;
-		for( var i in this.contents ){
-			var val = Collection.getValue(xpath)(this.contents[i]);
-			if( val < min )
-				min = val;
-		}
-		return min;
+	CollectionSync.prototype.save = function(){
+		return new CollectionSync(this.contents, this);
 	}
 
-	// the average of a particular field
-	Collection.prototype.average = function(xpath)
-	{
-		return this.sum(xpath)/this.count();
-	};
-
-	// whether or not a particular item is in the set
-	Collection.prototype.contains = function(item){
-		return this.contents.indexOf(item) !== -1;
+	CollectionSync.prototype.append = function(data){
+		this.contents.push.apply(this.contents, data);
+		return this;
 	}
-
-	// returns a new set with xfrm applied to each element
-	// xfrm takes (element, index, origArray)
-	Collection.prototype.transform = function(xfrm){
-		return new Collection( this.contents.map(xfrm) );
-	};
-
-	Collection.prototype.selectDistinct = function(xpath){
-		return this.select(Collection.distinct(xpath));
-	};
-
-	Collection.prototype.selectEqual = function(xpath, value){
-		return this.select(Collection.equals(xpath,value));
-	};
-
-	Collection.prototype.selectRange = function(xpath, startValue, endValue){
-		return this.select(Collection.range(xpath,startValue, endValue));
-	};
-
-	Collection.prototype.selectMatch = function(xpath, re){
-		return this.select(Collection.match(xpath, re));
-	};
-
-	Collection.prototype.selectFirst = function(n){
-		return this.select(Collection.first(n));
-	};
-
-	Collection.prototype.selectLast = function(n){
-		return this.select(Collection.last(n));
-	};
-
 
 
 	/*
-	 * Class methods to generate filters
+	 * Filter out data entries not matching the query expression
 	 */
-
-	// filters by uniqueness of xpath field
-	Collection.distinct = function(xpath)
+	CollectionSync.prototype.where = function(query)
 	{
-		var seen = [];
+		/*
+		 * Query format example
+		 *   stmts.where('verb.id = passed or verb.id = failed and result.score.raw >= 50');
+		 * 
+		 * Query grammar:
+		 *   value := parseInt | parseFloat | "(.*)" | /(.*)/i?
+		 *   xpath := [A-Za-z0-9_]+(\.[A-za-z0-9_]+)*
+		 *   cond := <xpath> (=|!=|>|<|>=|<=) <value>
+		 *   andGrp := <expr> 'and' <expr> | <cond>
+		 *   orGrp := <expr> 'or' <expr> | <andGrp>
+		 *   expr := '(' <expr> ')' | <orGrp>
+		 */
 
-		return function(elem)
+		var PARSE_ERROR = NaN;
+
+		function parseWhere(str)
 		{
-			var curElem = Collection.getValue(xpath)(elem);
-			
-			if( seen.indexOf(curElem) === -1 ){
-				seen.push(curElem);
+			// expr := '(' <expr> ')' | <orGrp>
+			function expr(str)
+			{
+				// check for parens
+				var match = /^\s*\((.*)\)\s*$/.exec(str);
+				if(match){
+					return expr(match[1]);
+				}
+				else {
+					return orGrp(str);
+				}
+			}
+		
+			// check if a string has the same number of left and right parens
+			function matchedParens(str){
+				var level = 0;
+				for(var i=0; i<str.length; i++){
+					if(str[i] === '('){
+						level++;
+					}
+					else if(str[i] === ')'){
+						level--;
+					}
+				}
+				return level === 0;
+			}
+		
+			// orGrp := <expr> 'or' <expr> | <andGrp>
+			function orGrp(str)
+			{
+				// loop over each possible combo of or arguments
+				var parts = str.split(/\bor\b/);
+				var expr1 = '', expr2 = '';
+				for(var i=1; i<parts.length; i++)
+				{
+					var tempexpr1 = parts.slice(0,i).join('or');
+					var tempexpr2 = parts.slice(i).join('or');
+		
+					// if both args have matched parens, continue
+					if( tempexpr1 != '' && matchedParens(tempexpr1)
+						&& tempexpr2 != '' && matchedParens(tempexpr2)
+					){
+						expr1 = tempexpr1;
+						expr2 = tempexpr2;
+						break;
+					}
+				}
+		
+				// parse the two operands
+				if( expr1 && expr2 )
+				{
+					var part1 = expr(expr1);
+					var part2 = expr(expr2);
+		
+					if( part1 && part2 )
+						return {or: [part1, part2]};
+					else
+						return PARSE_ERROR;
+				}
+				// or was not found, so try ands
+				else {
+					var ret = andGrp(str);
+					if(ret) return ret;
+					else return PARSE_ERROR;
+				}
+			}
+		
+			// andGrp := <expr> 'and' <expr> | <cond>
+			function andGrp(str)
+			{
+				// loop over each possible combo of and arguments
+				var parts = str.split(/\band\b/);
+				var expr1 = '', expr2 = '';
+				for(var i=1; i<parts.length; i++)
+				{
+					var tempexpr1 = parts.slice(0,i).join('and');
+					var tempexpr2 = parts.slice(i).join('and');
+		
+					// if both args have matched parens, continue
+					if( tempexpr1 != '' && matchedParens(tempexpr1)
+						&& tempexpr2 != '' && matchedParens(tempexpr2)
+					){
+						expr1 = tempexpr1;
+						expr2 = tempexpr2;
+						break;
+					}
+				}
+		
+				// parse operands
+				if( expr1 && expr2 )
+				{
+					var part1 = expr(expr1);
+					var part2 = expr(expr2);
+		
+					if( part1 && part2 )
+						return {and: [part1, part2]};
+					else
+						return PARSE_ERROR;
+				}
+				// no and found, try cond
+				else {
+					var ret = cond(str);
+					if(ret) return ret;
+					else return PARSE_ERROR;
+				}
+			}
+		
+			// cond := <xpath> (=|!=|>|<|>=|<=) <value>
+			function cond(str)
+			{
+				// check for an operator
+				var match = /^\s*(.*?)\s*(!=|>=|<=|=|>|<)\s*(.*)\s*$/.exec(str);
+				if(match)
+				{
+					// parse operands
+					var part1 = xpath(match[1]);
+					var part2 = value(match[3]);
+					if( part1 )
+					{
+						if( part2 instanceof RegExp ){
+							if( match[2] === '=' )
+								return {op:'re',xpath:part1,value:part2};
+							else if( match[2] === '!=' )
+								return {op:'nre',xpath:part1,value:part2};
+							else {
+								console.error('Regex comparison only supports = and !=');
+								return PARSE_ERROR;
+							}
+		
+						}
+						else {
+							// parse operator
+							switch(match[2]){
+								case  '=':  return {op: 'eq',xpath:part1,value:part2};
+								case '!=':  return {op:'neq',xpath:part1,value:part2};
+								case  '<':  return {op: 'lt',xpath:part1,value:part2};
+								case '<=':  return {op:'leq',xpath:part1,value:part2};
+								case  '>':  return {op: 'gt',xpath:part1,value:part2};
+								case '>=':  return {op:'geq',xpath:part1,value:part2};
+								default: return PARSE_ERROR;
+							}
+						}
+					}
+					// fail if operator or operand doesn't parse
+					else return PARSE_ERROR;
+				}
+				else return PARSE_ERROR;
+			}
+		
+			// xpath := [A-Za-z0-9_]+(\.[A-za-z0-9_]+)*
+			function xpath(str){
+				var match = /^\s*([^\.]+(?:\.[^\.]+)*)\s*$/.exec(str);
+				if(match)
+					return match[1];
+				else return PARSE_ERROR;
+			}
+		
+			// value := parseInt | parseFloat | "(.*)"
+			function value(str){
+				var val = null;
+				var cacheTrim = str.trim();
+				if(val = parseInt(str,10)){
+					return val;
+				}
+				else if(val = parseFloat(str)){
+					return val;
+				}
+				else if(val = /^\s*"(.*)"\s*$/.exec(str)){
+					return val[1];
+				}
+				else if(val = /^\s*\/(.*)\/(i?)\s*$/.exec(str)){
+					return new RegExp(val[1], val[2]);
+				}
+				else if(cacheTrim === 'null'){
+					return null;
+				}
+				else if(cacheTrim === 'true' || cacheTrim === 'false'){
+					return cacheTrim === 'true';
+				}
+				else return PARSE_ERROR;
+			}
+		
+			var ret = expr(str);
+			return ret != PARSE_ERROR ? ret : null;
+		}
+		
+		/*
+		 * Evaluate the parse tree generated by parseWhere
+		 */
+
+		function evalConditions(parse, stmt)
+		{
+			// check for missing logical operands
+			if(Array.isArray(parse.and) && parse.and.length === 0){
 				return true;
 			}
+			else if(Array.isArray(parse.or) && parse.or.length === 0){
+				return false;
+			}
+		
+			// check for conditions, and if so evaluate
+			else if(parse.op){
+				switch(parse.op){
+					case 'eq': return getVal(parse.xpath,stmt) === parse.value;
+					case 'neq': return getVal(parse.xpath,stmt) !== parse.value;
+					case 'geq': return getVal(parse.xpath,stmt) >= parse.value;
+					case 'leq': return getVal(parse.xpath,stmt) <= parse.value;
+					case 'lt': return getVal(parse.xpath,stmt) < parse.value;
+					case 'gt': return getVal(parse.xpath,stmt) > parse.value;
+					case 're': return parse.value.test( getVal(parse.xpath,stmt) );
+					case 'nre': return !parse.value.test( getVal(parse.xpath,stmt) );
+					default: return false;
+				}
+			}
+			// check for and, and if so evaluate
+			else if(parse.and){
+				// evaluate first operand
+				if( !evalConditions(parse.and[0], stmt) )
+					return false;
+				// evaluate remaining operands
+				else
+					return evalConditions({and: parse.and.slice(1)}, stmt);
+			}
+			// check for or, and if so evaluate
+			else if(parse.or){
+				// evaluate first operand
+				if( evalConditions(parse.or[0], stmt) )
+					return true;
+				// evaluate remaining operands
+				else
+					return evalConditions({or: parse.or.slice(1)}, stmt);
+			}
+			// fail for any other structures. shouldn't happen
 			else {
 				return false;
 			}
-		};
-	};
-
-	// filters by elem[xpath] == value
-	Collection.equals = function(xpath, value)
-	{
-		return function(elem){
-			return Collection.getValue(xpath)(elem) === value;
 		}
-	};
 
-	// filters by elem[xpath] matches re
-	Collection.match = function(xpath, re)
-	{
-		return function(elem){
-			return re.test( Collection.getValue(xpath)(elem) );
-		}
-	};
+		/*
+		 * Execute the giant functions above
+		 */
 
-	// filter to get first n elements
-	Collection.first = function(n)
-	{
-		return function(elem, index){
-			return index < n;
-		};
-	};	
+		// no-op if no query
+		if( !query ) return;
 	
-	// filter to get last n elements
-	Collection.last = function(n)
-	{
-		return function(elem, index, array){
-			return index >= array.length - n;
-		};
-	};
-
-	// return elem s.t. startVal <= elem < endVal
-	Collection.range = function(xpath, startVal, endVal)
-	{
-		return function(elem, index, array){
-			var val = Collection.getValue(xpath)(elem);
-			if( typeof(val) === 'string' )
-				val = val.toLowerCase();
-			return startVal <= val && val < endVal;
+		// parse the query, abort filter if query didn't parse
+		var parse = parseWhere(query);
+		if( !parse ){
+			console.error('Invalid where expression: '+query);
+			return;
 		}
-	};
+	
+		// for each entry in the dataset
+		for(var i=0; i<this.contents.length; i++)
+		{
+			// remove from dataset if it doesn't match the conditions
+			if( !evalConditions(parse, this.contents[i]) ){
+				this.contents.splice(i--,1);
+			}
+		}
+	
+		// return the filtered data
+		return this;
+	}
+	
+	/*
+	 * Pick out certain fields from each entry in the dataset
+	 * syntax of selector := xpath ['as' alias] [',' xpath ['as' alias]]*
+	 */
+	CollectionSync.prototype.select = function(selector)
+	{
+		// parse selector
+
+		// for each field to be selected
+		var cols = [];
+		var xpaths = selector.split(',');
+		for( var i=0; i<xpaths.length; i++ )
+		{
+			// break into an xpath and an optional alias
+			var parts = xpaths[i].split(' as ');
+			cols.push({
+				'xpath': parts[0].trim(),
+				'alias': parts[1] ? parts[1].trim() : null
+			});
+		}
+
+		// pick out selected fields
+
+		// loop over entries in dataset
+		var data = this.contents;
+		var ret = [];
+		for(var i=0; i<data.length; i++)
+		{
+			var row = {};
+			// for each selection field
+			for(var j=0; j<cols.length; j++){
+				// save as old name, or alias if provided
+				if(cols[j].alias)
+					row[cols[j].alias] = getVal(cols[j].xpath, data[i]);
+				else
+					row[cols[j].xpath] = getVal(cols[j].xpath, data[i]);
+			}
+			ret.push(row);
+		}
+
+		// return the selection
+		this.contents = ret;
+
+		return this;
+	}
+
+	/*
+	 * Exactly what it sounds like
+	 * Return some continuous subset of the data
+	 */
+	CollectionSync.prototype.slice = function(start,end)
+	{
+		if(end === null)
+			end = undefined;
+		this.contents = this.contents.slice(start,end);
+		return this;
+	}
+	
+	/*
+	 * Sort dataset by given path
+	 */
+	CollectionSync.prototype.orderBy = function(path, direction)
+	{
+		var data = this.contents;
+
+		// figure out ascending or descending
+		if(direction === 'descending' || direction === 'desc')
+			direction = -1;
+		else
+			direction = 1;
+
+		data.sort(function(a,b){
+			var aVal = getVal(path,a), bVal = getVal(path,b);
+
+			// any value is greater than null
+			if(aVal!=null && bVal==null)
+				return 1 * direction;
+			else if(aVal==null && bVal!=null)
+				return -1 * direction;
+
+			// check equivalence
+			else if(aVal == bVal)
+				return 0;
+
+			// all else fails, do a simple comparison
+			else
+				return (aVal<bVal ? -1 : 1) * direction;
+		});
+
+		return this;
+	}
+
+	/*
+	 * Group with continuous values
+	 */
+	CollectionSync.prototype.groupByRange = function(path, range)
+	{
+		// validate range
+		if( !(Array.isArray(range) && range.length === 3 && range[2]%1 === 0) )
+			return this.groupBy(path);
+
+		/*
+		 * Generate range dividers
+		 */
+
+		// determine type of values
+		var start = range[0], end = range[1], increment = range[2];
+		var value, next;
+		// values are date strings
+		if( typeof(start) === 'string' && typeof(end) === 'string' && Date.parse(start) && Date.parse(end) ){
+			value = function(x){
+				return Date.parse(x);
+			};
+			next = function(x,i){
+				var d = new Date(Date.parse(x)+i);
+				return d.toISOString();
+			};
+		}
+		// values are generic strings
+		else if( typeof(start) === 'string' && typeof(end) === 'string' ){
+			value = function(x){
+				return x.charAt(0).toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
+			};
+			next = function(x,i){
+				return String.fromCharCode(x.charAt(0).toLowerCase().charCodeAt(0) + i);
+			};
+		}
+		// all other types
+		else {
+			value = function(x){
+				return x;
+			};
+			next = function(x,i){
+				return x+i;
+			};
+		}
+
+		// make sure bounds are reachable
+		var bounds = [];
+		if( (value(end)-value(start))*increment <= 0 ){
+			console.error('Group range is open, cannot generate groups!');
+			console.log(JSON.stringify(range));
+			bounds = [start,end];
+		}
+		// flip bounds if end < start
+		else if( value(start) > value(end) ){
+			groupByRange(path, [end,start,-increment]);
+			dataStack.push( dataStack.pop().reverse() );
+			return;
+		}
+		else {
+			// create boundary array
+			for(var i=start; value(i)<value(end); i=next(i,increment)){
+				bounds.push(i);
+			}
+			bounds.push(end);
+		}
+
+		/*
+		 * Group by range
+		 */
+
+		// create groups by boundary
+		var ret = [];
+		for(var i=0; i<bounds.length-1; i++){
+			ret.push({
+				'group': bounds[i]+'-'+bounds[i+1],
+				'groupStart': bounds[i],
+				'groupEnd': bounds[i+1],
+				'data': []
+			});
+		}
+
+		// divide up data by group
+		var data = this.contents;
+		for(var i=0; i<data.length; i++)
+		{
+			var groupVal = value(getVal(path,data[i]));
+			for(var j=0; j<ret.length; j++){
+				if( value(ret[j].groupStart) <= groupVal && (
+					groupVal < value(ret[j].groupEnd) || j==ret.length-1 && groupVal==value(ret[j].groupEnd)
+				) )
+					ret[j].data.push(data[i]);
+			}
+		}
+
+		this.contents = ret;
+		return this;
+	}
 
 
 	/*
-	 * Miscellaneous functions
+	 * Group with discrete values
 	 */
-
-	// transform to get xpath values out of a set
-	Collection.getValue = function(xpath)
+	CollectionSync.prototype.groupBy = function(path, range)
 	{
-		var parts = [];
-		if(xpath){	
-			parts = xpath.split('.');
-			var i=0; while(i<parts.length){
-				if(/\\$/.test(parts[i]) && parts[i+1])
-					parts.splice(i, 2, /(.*)\\$/.exec(parts[i])[1]+'.'+parts[i+1]);
-				else
-					i++;
-			}
+		if(range)
+			return this.groupByRange(path, range);
+
+		// add each data entry to its respective group
+		var data = this.contents;
+		var groups = {};
+		for(var i=0; i<data.length; i++)
+		{
+			var groupVal = getVal(path,data[i]);
+			if( !groups[groupVal] )
+				groups[groupVal] = [data[i]];
+			else
+				groups[groupVal].push(data[i]);
 		}
 
-		return function(elem){
-			var curElem = elem;
-			for(var i=0; i<parts.length; i++){
-				if(curElem[parts[i]] !== undefined)
-					curElem = curElem[parts[i]];
-				else
-					return null;
-			}
-			return curElem;
-		};
-	};
-	
-	//Convenience function to generate input for groupByRange
-	//if start is parsable by date:
-	//	it is assumed that end is also a date and increment is an increment value in ms
-	//	format is used to call: Date.prototype[format]() - Default to 'toISOString' if falsy.
-	/*Collection.genRange = function(start, end, increment, format){
-		var outArr = [],
-			isDate = false;
-		
-		if(typeof start == "string"){
-			if(!format || ['toDateString', 'toGMTString', 'toISOString', 'toJSON', 'toLocaleDateString', 'toLocaleString', 'toLocaleTimeString', 'toString', 'toTimeString', 'toUTC'].indexOf(format) == -1){
-				format = 'toISOString';
-			}
-			
-			//if increment is unsuitable to act as an increment for dates, then default to a day
-			increment = typeof increment == "number" && increment > 0 ? increment : 1000 * 60 * 60 * 24; 
-		
-			if(!isNaN(Date.parse(start)) && !isNaN(Date.parse(end))){
-				start = Date.parse(start); 
-				end = Date.parse(end); 
-				isDate = true;
-			}
-			
-			else{
-				console.error("Date cannot parse arbitrary strings (Collection.genRange)");
-				return [];
-			}
+		// flatten groups
+		var ret = [];
+		for(var i in groups){
+			ret.push({
+				'group': i,
+				'data': groups[i]
+			});
 		}
-		
-		while(start < end){
-			//May want to eventually update this if it severely impacts performance
-			outArr.push(isDate ? (new Date(start))[format]() : start);
-			start += increment;
-		}
-		outArr.push(isDate ? (new Date(end))[format]() : end);
-		
-		return outArr;
-	};*/
 
-	Collection.genRange = function(start, end, i)
+		this.contents = ret;
+		return this;
+	}
+
+
+	/*
+	 * Take grouped data and return number of entries in each group
+	 */
+	CollectionSync.prototype.count = function()
 	{
-		var increment = function(x,i){ 
-			i = i > 0 ? i : 1;
-			return x+i; 
-		},
-		test = function(cur, end){ return cur < end; };
+		var data = this.contents;
 
-		if( start instanceof Date ){
-			i = i > 0 ? i : Collection.day;
-			increment = function(x,i){ return new Date( x.getTime()+i ); };
-		}
-		else if( typeof(start) === 'string' ){
-			start = start.toLowerCase().charAt(0);
-			end = end ? end.toLowerCase().charAt(0) : '{';
-			i = i > 0 ? i : 1;
-			increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
+		// if the data isn't grouped, treat as one large group
+		if(!data[0] || !data[0].group || !data[0].data){
+			data = [{
+				'group': 'all',
+				'data': data
+			}];
 		}
 
-		var groupArr = [];
-		while( test(start, end) ){
-			groupArr.push(start);
-			start = increment(start,i);
+		// loop over each group
+		var ret = [];
+		for(var i=0; i<data.length; i++)
+		{
+			// copy group id fields to new object
+			var group = {};
+			for(var j in data[i]){
+				group[j] = data[i][j];
+			}
+			// add count and sample
+			group.count = group.data.length;
+			group.sample = group.data[0];
+			ret.push(group);
 		}
-		groupArr.push(end);
-		return groupArr;
-	};
-	
-	Collection.second = 1000;
-	Collection.minute = Collection.second * 60;
-	Collection.hour = Collection.minute * 60;
-	Collection.day = Collection.hour * 24;
-	Collection.week = Collection.day * 7;
+		
+		this.contents = ret;
+		return this;
+	}
 
-	ADL.Collection = Collection;
+	/*
+	 * Take grouped data and return total of values of entries in each group
+	 */
+	CollectionSync.prototype.sum = function(path)
+	{
+		if( !path )
+			return this;
+
+		var data = this.contents;
+
+		// if the data isn't grouped, treat as one large group
+		if(!data[0] || !data[0].group || !data[0].data){
+			data = [{
+				'group': 'all',
+				'data': data
+			}];
+		}
+
+		// loop over each group
+		var ret = [];
+		for(var i=0; i<data.length; i++)
+		{
+			var sum = 0;
+			for(var j=0; j<data[i].data.length; j++){
+				sum += getVal(path, data[i].data[j]);
+			}
+
+			// copy group id fields to new object
+			var group = {};
+			for(var j in data[i]){
+				group[j] = data[i][j];
+			}
+			// add sum and sample
+			group.sum = sum;
+			group.sample = group.data[0];
+			ret.push(group);
+		}
+
+		this.contents = ret;
+		return this;
+	}
+
+	/*
+	 * Take grouped data and return average of values of entries in each group
+	 */
+	CollectionSync.prototype.average = function(path)
+	{
+		if( !path )
+			return this;
+
+		var data = this.contents;
+
+		// if the data isn't grouped, treat as one large group
+		if(!data[0] || !data[0].group || !data[0].data){
+			data = [{
+				'group': 'all',
+				'data': data
+			}];
+		}
+
+		// loop over each group
+		var ret = [];
+		for(var i=0; i<data.length; i++)
+		{
+			var sum = 0;
+			for(var j=0; j<data[i].data.length; j++){
+				sum += getVal(path, data[i].data[j]);
+			}
+
+			// copy group id fields to new object
+			var group = {};
+			for(var j in data[i]){
+				group[j] = data[i][j];
+			}
+			// add average and sample
+			group.average = group.data.length>0 ? sum/group.data.length : 0;
+			group.sample = group.data[0];
+			ret.push(group);
+		}
+
+		this.contents = ret;
+		return this;
+	}
+
+	/*
+	 * Take grouped data and return minimum of values of entries in each group
+	 */
+	CollectionSync.prototype.min = function(path)
+	{
+		if( !path ) return this;
+		var data = this.contents;
+
+		// if the data isn't grouped, treat as one large group
+		var ret = [];
+		if(!data[0] || !data[0].group || !data[0].data){
+			data = [{
+				'group': 'all',
+				'data': data
+			}];
+		}
+
+		// loop over each group
+		for(var i=0; i<data.length; i++)
+		{
+			var min = Infinity;
+			for(var j=0; j<data[i].data.length; j++){
+				min = Math.min(min, getVal(path, data[i].data[j]));
+			}
+
+			// copy group id fields to new object
+			var group = {};
+			for(var j in data[i]){
+				group[j] = data[i][j];
+			}
+			// add min and sample
+			group.min = min === Infinity ? 0 : min;
+			group.sample = group.data[0];
+			ret.push(group);
+		}
+
+		this.contents = ret;
+		return this;
+	}
+
+	/*
+	 * Take grouped data and return maximum of values of entries in each group
+	 */
+	CollectionSync.prototype.max = function(path)
+	{
+		if( !path ) return this;
+		var data = this.contents;
+
+		// if the data isn't grouped, treat as one large group
+		if(!data[0] || !data[0].group || !data[0].data){
+			data = [{
+				'group': 'all',
+				'data': data
+			}];
+		}
+
+		// loop over each group
+		var ret = [];
+		for(var i=0; i<data.length; i++)
+		{
+			var max = -Infinity;
+			for(var j=0; j<data[i].data.length; j++){
+				max = Math.max(max, getVal(path, data[i].data[j]));
+			}
+
+			// copy group id fields to new object
+			var group = {};
+			for(var j in data[i]){
+				group[j] = data[i][j];
+			}
+			// add max and sample
+			group.max = max === -Infinity ? 0 : max;
+			group.sample = group.data[0];
+			ret.push(group);
+		}
+
+		this.contents = ret;
+		return this;
+	}
 
 
-	/***************************************************
-	 * The CollectionAsync class offloads all operations to a webworker
-	 * so the interface doesn't lock up
-	 ***************************************************/
+	/*****************************************************************
+	 * Collection class - asynchronous version of CollectionSync
+	 *
+	 * For any decently-sized dataset, CollectionSync will lock up the
+	 * UI for an unnecessary amount of time. The Collection class
+	 * exposes the same API, but wraps that functionality in a thread
+	 * so the UI remains responsive.
+	 *****************************************************************/
 
-	function serialize(obj){
+
+	function CollectionAsync(data)
+	{
+		this._callbacks = {};
+
+		if( !window.Worker ){
+			throw new Error('Your browser does not support WebWorkers, and cannot use the Collection class. Use CollectionSync instead.');
+		}
+
+		this.worker = new Worker(workerScript);
+		this.worker.onmessage = function(evt)
+		{
+			var data = CollectionAsync.deserialize(evt.data);
+			var result = new CollectionSync(data[1]);
+			if( this._callbacks[data[0]] ){
+				this._callbacks[data[0]](result);
+				delete this._callbacks[data[0]];
+			}
+		}.bind(this);
+
+		var payload = CollectionAsync.serialize(['push',data]);
+		try {
+			this.worker.postMessage(payload, [payload]);
+		}
+		catch(e){
+			this.worker.postMessage(payload);
+		}
+
+		if( payload.byteLength > 0 ){
+			console.log('Warning: Your browser does not support WebWorker transfers. Performance of this site may suffer as a result.');
+		}
+	}
+
+	CollectionAsync.serialize = function(obj)
+	{
 		var json = JSON.stringify(obj);
 		var buf = new ArrayBuffer(2*json.length);
 		var view = new Uint16Array(buf);
@@ -406,9 +868,10 @@
 			view[offset] = json.charCodeAt(offset);
 		}
 		return buf;
-	}
+	};
 
-	function deserialize(buffer){
+	CollectionAsync.deserialize = function(buffer)
+	{
 		var json = '';
 		var intBuffer = new Uint16Array(buffer);
 		for(var i=0; i<intBuffer.length; i+=1000)
@@ -416,124 +879,102 @@
 		return JSON.parse(json);
 	}
 
-
-	function CollectionAsync(array, workerLocation)
+	CollectionAsync.prototype.exec = function(cb)
 	{
-		if( !window.Worker ){
-			throw new Error('Your browser does not support WebWorkers, and cannot use the CollectionAsync class');
-		}
+		// generate random callback id, check for duplicates
+		var id;
+		while( this._callbacks[id = Math.floor( Math.random() * 65536 )] );
 
-		if(!workerLocation)
-			workerLocation = 'collection-worker.js';
-		this.worker = new Worker(workerLocation);
+		this._callbacks[id] = cb;
+		this.worker.postMessage(CollectionAsync.serialize(['exec', id]));
+		return this;
+	}
 
-		var payload = serialize(['datapush', array]);
-		try{
-			this.worker.postMessage(payload,[payload]);
+	CollectionAsync.prototype.append = function(data)
+	{
+		var payload = CollectionAsync.serialize(['append',data]);
+		try {
+			this.worker.postMessage(payload, [payload]);
 		}
 		catch(e){
 			this.worker.postMessage(payload);
 		}
-			
-		if( payload.byteLength > 0 ){
-			console.log('Warning: Your browser does not support WebWorker transfers. Performance of this site may suffer as a result.');
-		}
-		//this.worker.postMessage(['datapush', array]);
+
+		return this;
 	}
 
-	CollectionAsync.prototype.append = function(array)
-	{
-		var payload = serialize(['append', array]);
-		this.worker.postMessage(payload, [payload]);
-		return this;
-	};
-
-	CollectionAsync.prototype.exec = function(cb){
-		this.worker.postMessage(serialize(['exec']));
-		this.worker.onmessage = function(event){
-			var result = deserialize(event.data);
-			cb(result[0]);
-			event.target.onmessage = undefined;
-		};
-		return this;
-	};
-
-	CollectionAsync.prototype.save = function(){
-		this.worker.postMessage(serialize(['save']));
-		return this;
-	};
-	
-	CollectionAsync.prototype.where = function(query){
-		this.worker.postMessage(serialize(['where', query]));
-		return this;
-	};
-
-	CollectionAsync.prototype.select = function(selector){
-		this.worker.postMessage(serialize(['select', selector]));
-		return this;
-	};
-
-	CollectionAsync.prototype.slice = function(start,end){
-		this.worker.postMessage(serialize(['slice',start,end]));
-		return this;
-	};
-
-	CollectionAsync.prototype.orderBy = function(xpath, direction){
-		this.worker.postMessage(serialize(['orderBy',xpath,direction]));
-		return this;
-	};
-
-	CollectionAsync.prototype.groupBy = function(xpath, ranges){
-		if( !(Array.isArray(ranges) && ranges.length === 3 && ranges[2]%1 === 0) )
-			ranges = null;
-		this.worker.postMessage(serialize(['groupBy',xpath,ranges]));
-		return this;
-	};
-
-	CollectionAsync.prototype.join = function(){
-		var args = Array.prototype.slice.call(arguments);
-		var path = args[0];
-		var branches = args.slice(1);
-
-		for(var i=0; i<branches.length; i++)
-		{
-			this.worker.postMessage(serialize(['newbranch']));
-			branches[i].call(this,this);
+	function proxyFactory(name){
+		return function(){
+			var args = Array.prototype.slice.call(arguments);
+			this.worker.postMessage(CollectionAsync.serialize([name].concat(args)));
+			return this;
 		}
-		this.worker.postMessage(serialize(['join',path]));
+	}
 
-		return this;
-	};
+	CollectionAsync.prototype.save    = proxyFactory('save');
+	CollectionAsync.prototype.where   = proxyFactory('where');
+	CollectionAsync.prototype.select  = proxyFactory('select');
+	CollectionAsync.prototype.slice   = proxyFactory('slice');
+	CollectionAsync.prototype.orderBy = proxyFactory('orderBy');
+	CollectionAsync.prototype.groupBy = proxyFactory('groupBy');
+	CollectionAsync.prototype.count   = proxyFactory('count');
+	CollectionAsync.prototype.sum     = proxyFactory('sum');
+	CollectionAsync.prototype.average = proxyFactory('average');
+	CollectionAsync.prototype.min     = proxyFactory('min');
+	CollectionAsync.prototype.max     = proxyFactory('max');
 
-
-
-
-
-	CollectionAsync.prototype.count = function(){
-		this.worker.postMessage(serialize(['count']));
-		return this;
-	};
-
-	CollectionAsync.prototype.sum = function(xpath){
-		this.worker.postMessage(serialize(['sum',xpath]));
-		return this;
-	};
-
-	CollectionAsync.prototype.average = function(xpath){
-		this.worker.postMessage(serialize(['average',xpath]));
-		return this;
-	};
-
-	CollectionAsync.prototype.min = function(xpath){
-		this.worker.postMessage(serialize(['min',xpath]));
-		return this;
-	};
-
-	CollectionAsync.prototype.max = function(xpath){
-		this.worker.postMessage(serialize(['max',xpath]));
-		return this;
-	};
-
+	ADL.CollectionSync = CollectionSync;
 	ADL.CollectionAsync = CollectionAsync;
+	ADL.Collection = CollectionAsync;
 
-})(window.ADL = window.ADL || {});
+}(window.ADL));
+
+
+/*
+ * Thread-specific scope
+ */
+(function(CollectionAsync, CollectionSync){
+
+	var db = null;
+
+	try {
+		onmessage = function(evt)
+		{
+			var data = CollectionAsync.deserialize(evt.data);
+
+			if( data[0] === 'exec' )
+			{
+				var cbHandle = data[1];
+				if(db){
+					db = db.exec(function(data){
+						var payload = CollectionAsync.serialize([cbHandle, data.contents]);
+						try {
+							postMessage(payload, [payload]);
+						}
+						catch(e){
+							postMessage(payload);
+						}
+					});
+				}
+				else {
+					postMessage(CollectionAsync.serialize([cbHandle, 'error','nodata']));
+				}
+			}
+			else if( data[0] === 'push' ){
+				var newdb = new CollectionSync(data[1], db);
+				db = newdb;
+			}
+			else {
+				// execute the function at [0] with [1-n] as args
+				db = db[data[0]].apply(db, data.slice(1));
+			}
+		};
+	}
+	catch(e){
+		if( e.message !== 'onmessage is not defined' ){
+			throw e;
+		}
+	}
+
+}(window.ADL.Collection, window.ADL.CollectionSync));
+
