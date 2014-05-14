@@ -7,12 +7,8 @@
 		<script>
 			function ready(){
 
-				var c = new ADL.Collection();
-				c.where('something');
-
-				/*var handle = setInterval(function(){document.body.innerHTML += '.';}, 20);
 				console.time('Total operating time');
-				var c = new ADL.CollectionAsync(window.statements, 'src/collection-worker.js');
+				var c = new ADL.Collection(window.statements);
 				c.where('verb.id = /(passed|failed)$/')
 					.groupBy('result.score.raw', [50,100,5])
 					.count()
@@ -20,12 +16,10 @@
 					.min('result.score.raw')
 					.max('result.score.raw')
 					.select('groupStart, groupEnd, count, average, min, max')
-					.exec(function(msg){
-						clearInterval(handle);
+					.exec(function(data){
 						console.timeEnd('Total operating time');
-						document.body.innerHTML += '<pre>'+JSON.stringify(msg, null, '    ')+'</pre>';
-						console.log('Result length', msg.length);
-					});*/
+						document.body.innerHTML += '<pre>'+JSON.stringify(data.contents, null, '    ')+'</pre>';
+					});
 			};
 		</script>
 	</head>
