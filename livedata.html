@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Live LRS Demo</title>
+		<link rel='stylesheet' href='lib/nv.d3.css'/>
+		<script src='dist/xapiCollection.min.js'></script>
+		<script src='dist/xapidashboard.min.js'></script>
+
+		<style>
+			h1 {
+				text-align: center;
+			}
+			#graphContainer {
+				width: 500px;
+				height: 300px;
+			}
+		</style>
+
+		<script>
+			function ready(){
+
+				var wrapper = ADL.XAPIWrapper;
+				var dash = new ADL.XAPIDashboard('#graphContainer svg');
+				wrapper.changeConfig({'endpoint': 'https://lrs.adlnet.gov/xAPI/'});
+
+				var cutoff = new Date(Date.now()-1000*3600*24*30).toISOString();
+				dash.fetchAllStatements({since: cutoff}, wrapper, function(){
+					var chart = dash.createBarChart({
+						groupBy: 'verb.id',
+						aggregate: ADL.count(),
+						post: function(data){
+							data = new ADL.CollectionSync(data);
+							return data.orderBy('out','descending').slice(0,10).contents;
+						},
+						customize: function(nvd3chart){
+							nvd3chart.xAxis.rotateLabels(45);
+							nvd3chart.xAxis.tickFormat(function(label){
+								var parts = /https?:\/\/.*?(\w+\.\w{2,3}).*(\/.+)$/.exec(label);
+								return parts.slice(1,3).join('');
+							});
+							nvd3chart.margin({right:100});
+						}
+					});
+					chart.draw();
+				});
+
+			};
+		</script>
+	</head>
+	<body onload='ready()'>
+		<div id='graphContainer'>
+			<h1>Verb Popularity in Last 30 Days</h1>
+			<svg></svg>
+		</div>
+	</body>
+</html>

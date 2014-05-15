@@ -2,9 +2,7 @@
 
 (function(ADL){
 	
-	var XAPIDashboard = function(container, webworkerSrc){
-		
-		this.webworkerSrc = webworkerSrc ? this.webworkerSrc : 'src/collection-worker.js';	
+	var XAPIDashboard = function(container){
 		this.container = container;
 	}
 
