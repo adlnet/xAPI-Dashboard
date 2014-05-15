@@ -70,27 +70,62 @@ A function that is passed the results of the query (an array of objects).
 
 ##### Returns
 
-A reference to the collection containing the latest data.
+A reference to the collection containing the previous set of data.
 
 
 <a id='where'></a>
 #### where(query)
 
-Description
+Filter the contents of the collection by some query, and return the filtered results collection. `where` queries use a similar syntax to the SQL SELECT WHERE clause. You can use `and`, `or`, and parentheses to combine different search terms in any way you wish. `where` supports only the basic comparison operators (`>,>=,<,<=,=,!=`), plus regular expressions to replace the SQL LIKE operator.
+
+Selecting fields inside of an xAPI statement is similarly simple. The selector is patterned after the Javascript object notation for property access: a dot-delineated list of property names. The property names can contain any non-whitespace character, though if you need to use a dot you'll need to escape it with a backslash (e.g. `adlnet\\.gov`). If the given field or any of its parent objects do not exist, then its value is considered `null`.
+
+For example:
+```javascript
+stmts.where(
+	'actor.name = "Steven" and ('+
+		'verb.id = "http://adlnet.gov/expapi/verbs/passed"'+
+		' or '+
+		'verb.id = "http://adlnet.gov/expapi/verbs/failed"'+
+	')'
+)
+```
+
+Or more compactly, using a regular expression:
+
+```javascript
+stmts.where('actor.name = "Steven" and verb.id = /(passed|failed)$/')
+```
+
 
 ##### Arguments
 
+`query` (`String`)  
+The query expression used to filter the data.
+
 ##### Returns
+
+A reference to the collection containing the latest data.
 
 
 <a id='select'></a>
 #### select(fields)
 
-Description
+For each item in the dataset, pick out the requested fields and return them.
 
 ##### Arguments
 
+`fields` (`String`)  
+The comma-delineated list of selection fields. Each field can also use an alias via the `as` keyword. For example:
+
+```javascript
+stmts.select('group, count as value');
+>>> [{group: 'someGroupId', value: 42}, ...]
+```
+
 ##### Returns
+
+A reference to the collection containing the newly reduced datasets.
 
 
 <a id='slice'></a>
