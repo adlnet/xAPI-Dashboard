@@ -1,8 +1,6 @@
 "use strict";
 (function(ADL){
-	
-	var isChartBusy = false;
-	
+
 	//Base chart class
 	function Chart(opts)
 	{
@@ -41,14 +39,6 @@
 			event = this.event,
 			self = this;
 		
-		//Hack to stop simultaneous requests to CollectionWorker
-		//Would instantiating new worker here work?
-		if(isChartBusy){
-			window.setTimeout(function(){ self.draw(container) }, 1000);
-			return;
-		}
-		
-		isChartBusy = true;
 		container = container ? container : this.opts.container;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
@@ -114,8 +104,6 @@
 				window.onResize = chart.update;
 				
 				//chart.update();
-				
-				isChartBusy = false;
 				return chart;
 			});
 		};
@@ -306,15 +294,7 @@
 		var	opts = this.opts,
 			event = this.event,
 			self = this;
-		
-		//Hack to stop simultaneous requests to CollectionWorker
-		//Would instantiating new worker here work?
-		if(isChartBusy){
-			window.setTimeout(function(){ self.draw(container) }, 1000);
-			return;
-		}
-		
-		isChartBusy = true;
+			
 		container = container ? container : this.opts.container;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
@@ -353,8 +333,6 @@
 			
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
-
-			isChartBusy = false;
 		};
 	
 		opts.data.save();
