@@ -8,7 +8,7 @@ module.exports = function(grunt) {
 			separator: ';'
 		},
 		dist: {
-			src: ['lib/d3.v3.js', 'lib/nv.d3.js', 'lib/xapiwrapper.min.js','src/collection.js', 'src/dashboard.js', 'src/chart.js'],
+			src: ['lib/d3.v3.js', 'lib/nv.d3.js', 'lib/xapiwrapper.min.js','src/dashboard.js', 'src/chart.js'],
 			dest: 'dist/xapidashboard.js'
 		}
 	},

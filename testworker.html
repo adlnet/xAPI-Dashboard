@@ -2,13 +2,13 @@
 <html>
 	<head>
 		<title>WebWorker test</title>
-		<script src='src/collection.js'></script>
-		<script src='extra/gen-lrs-data.js'></script>
+		<script src='dist/xapiCollection.js'></script>
+		<script src='extra/large-test.js'></script>
 		<script>
 			function ready(){
 
 				console.time('Total operating time');
-				var c = new ADL.Collection(window.statements);
+				var c = new ADL.CollectionAsync(window.statements);
 				c
 					.where('verb.id = /(passed|failed)$/')
 					.save()
@@ -21,12 +21,12 @@
 					.select('groupStart, groupEnd, count, sum, min, max, average')
 					.orderBy('sum')
 					.exec(function(data){
-						console.timeEnd('Total operating time');
-						document.body.innerHTML += '<pre>'+JSON.stringify(data.contents, null, '    ')+'</pre>';
+						document.body.innerHTML += '<pre>'+JSON.stringify(data, null, '    ')+'</pre>';
 					})
 					.count().select('count')
 					.exec(function(data){
-						console.log('Total test attempts:', data.contents[0].count);
+						console.log('Total test attempts:', data[0].count);
+						console.timeEnd('Total operating time');
 					});
 			};
 		</script>

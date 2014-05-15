@@ -22802,539 +22802,6 @@ nv.models.stackedAreaChart = function() {
   return chart;
 }
 })();;function toBase64(t){return CryptoJS&&CryptoJS.enc.Base64?CryptoJS.enc.Base64.stringify(CryptoJS.enc.Latin1.parse(t)):Base64.encode(t)}function toSHA1(t){return CryptoJS&&CryptoJS.SHA1?CryptoJS.SHA1(t).toString():Crypto.util.bytesToHex(Crypto.SHA1(t,{asBytes:!0}))}var CryptoJS=CryptoJS||function(t,e){var n={},i=n.lib={},r=i.Base=function(){function t(){}return{extend:function(e){t.prototype=this;var n=new t;return e&&n.mixIn(e),n.hasOwnProperty("init")||(n.init=function(){n.$super.init.apply(this,arguments)}),n.init.prototype=n,n.$super=this,n},create:function(){var t=this.extend();return t.init.apply(t,arguments),t},init:function(){},mixIn:function(t){for(var e in t)t.hasOwnProperty(e)&&(this[e]=t[e]);t.hasOwnProperty("toString")&&(this.toString=t.toString)},clone:function(){return this.init.prototype.extend(this)}}}(),o=i.WordArray=r.extend({init:function(t,n){t=this.words=t||[],this.sigBytes=n!=e?n:4*t.length},toString:function(t){return(t||a).stringify(this)},concat:function(t){var e=this.words,n=t.words,i=this.sigBytes,r=t.sigBytes;if(this.clamp(),i%4)for(var o=0;r>o;o++){var s=n[o>>>2]>>>24-o%4*8&255;e[i+o>>>2]|=s<<24-(i+o)%4*8}else if(n.length>65535)for(var o=0;r>o;o+=4)e[i+o>>>2]=n[o>>>2];else e.push.apply(e,n);return this.sigBytes+=r,this},clamp:function(){var e=this.words,n=this.sigBytes;e[n>>>2]&=4294967295<<32-n%4*8,e.length=t.ceil(n/4)},clone:function(){var t=r.clone.call(this);return t.words=this.words.slice(0),t},random:function(e){for(var n=[],i=0;e>i;i+=4)n.push(4294967296*t.random()|0);return new o.init(n,e)}}),s=n.enc={},a=s.Hex={stringify:function(t){for(var e=t.words,n=t.sigBytes,i=[],r=0;n>r;r++){var o=e[r>>>2]>>>24-r%4*8&255;i.push((o>>>4).toString(16)),i.push((15&o).toString(16))}return i.join("")},parse:function(t){for(var e=t.length,n=[],i=0;e>i;i+=2)n[i>>>3]|=parseInt(t.substr(i,2),16)<<24-i%8*4;return new o.init(n,e/2)}},p=s.Latin1={stringify:function(t){for(var e=t.words,n=t.sigBytes,i=[],r=0;n>r;r++){var o=e[r>>>2]>>>24-r%4*8&255;i.push(String.fromCharCode(o))}return i.join("")},parse:function(t){for(var e=t.length,n=[],i=0;e>i;i++)n[i>>>2]|=(255&t.charCodeAt(i))<<24-i%4*8;return new o.init(n,e)}},c=s.Utf8={stringify:function(t){try{return decodeURIComponent(escape(p.stringify(t)))}catch(e){throw new Error("Malformed UTF-8 data")}},parse:function(t){return p.parse(unescape(encodeURIComponent(t)))}},d=(s.Base64={stringify:function(t){var e=t.words,n=t.sigBytes,i=this._map;t.clamp();for(var r=[],o=0;n>o;o+=3)for(var s=e[o>>>2]>>>24-o%4*8&255,a=e[o+1>>>2]>>>24-(o+1)%4*8&255,p=e[o+2>>>2]>>>24-(o+2)%4*8&255,c=s<<16|a<<8|p,d=0;4>d&&n>o+.75*d;d++)r.push(i.charAt(c>>>6*(3-d)&63));var h=i.charAt(64);if(h)for(;r.length%4;)r.push(h);return r.join("")},parse:function(t){var e=t.length,n=this._map,i=n.charAt(64);if(i){var r=t.indexOf(i);-1!=r&&(e=r)}for(var s=[],a=0,p=0;e>p;p++)if(p%4){var c=n.indexOf(t.charAt(p-1))<<p%4*2,d=n.indexOf(t.charAt(p))>>>6-p%4*2;s[a>>>2]|=(c|d)<<24-a%4*8,a++}return o.create(s,a)},_map:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="},i.BufferedBlockAlgorithm=r.extend({reset:function(){this._data=new o.init,this._nDataBytes=0},_append:function(t){"string"==typeof t&&(t=c.parse(t)),this._data.concat(t),this._nDataBytes+=t.sigBytes},_process:function(e){var n=this._data,i=n.words,r=n.sigBytes,s=this.blockSize,a=4*s,p=r/a;p=e?t.ceil(p):t.max((0|p)-this._minBufferSize,0);var c=p*s,d=t.min(4*c,r);if(c){for(var h=0;c>h;h+=s)this._doProcessBlock(i,h);var l=i.splice(0,c);n.sigBytes-=d}return new o.init(l,d)},clone:function(){var t=r.clone.call(this);return t._data=this._data.clone(),t},_minBufferSize:0})),h=i.Hasher=d.extend({cfg:r.extend(),init:function(t){this.cfg=this.cfg.extend(t),this.reset()},reset:function(){d.reset.call(this),this._doReset()},update:function(t){return this._append(t),this._process(),this},finalize:function(t){t&&this._append(t);var e=this._doFinalize();return e},blockSize:16,_createHelper:function(t){return function(e,n){return new t.init(n).finalize(e)}},_createHmacHelper:function(t){return function(e,n){return new l.HMAC.init(t,n).finalize(e)}}}),l=n.algo={},u=[],f=l.SHA1=h.extend({_doReset:function(){this._hash=new o.init([1732584193,4023233417,2562383102,271733878,3285377520])},_doProcessBlock:function(t,e){for(var n=this._hash.words,i=n[0],r=n[1],o=n[2],s=n[3],a=n[4],p=0;80>p;p++){if(16>p)u[p]=0|t[e+p];else{var c=u[p-3]^u[p-8]^u[p-14]^u[p-16];u[p]=c<<1|c>>>31}var d=(i<<5|i>>>27)+a+u[p];d+=20>p?(r&o|~r&s)+1518500249:40>p?(r^o^s)+1859775393:60>p?(r&o|r&s|o&s)-1894007588:(r^o^s)-899497514,a=s,s=o,o=r<<30|r>>>2,r=i,i=d}n[0]=n[0]+i|0,n[1]=n[1]+r|0,n[2]=n[2]+o|0,n[3]=n[3]+s|0,n[4]=n[4]+a|0},_doFinalize:function(){var e=this._data,n=e.words,i=8*this._nDataBytes,r=8*e.sigBytes;return n[r>>>5]|=128<<24-r%32,n[(r+64>>>9<<4)+14]=t.floor(i/4294967296),n[(r+64>>>9<<4)+15]=i,e.sigBytes=4*n.length,this._process(),this._hash},clone:function(){var t=h.clone.call(this);return t._hash=this._hash.clone(),t}});return n.SHA1=h._createHelper(f),n.HmacSHA1=h._createHmacHelper(f),n}(Math);!function(t){t.verbs={answered:{id:"http://adlnet.gov/expapi/verbs/answered",display:{"en-US":"answered"}},asked:{id:"http://adlnet.gov/expapi/verbs/asked",display:{"en-US":"asked"}},attempted:{id:"http://adlnet.gov/expapi/verbs/attempted",display:{"en-US":"attempted"}},attended:{id:"http://adlnet.gov/expapi/verbs/attended",display:{"en-US":"attended"}},commented:{id:"http://adlnet.gov/expapi/verbs/commented",display:{"en-US":"commented"}},completed:{id:"http://adlnet.gov/expapi/verbs/completed",display:{"en-US":"completed"}},exited:{id:"http://adlnet.gov/expapi/verbs/exited",display:{"en-US":"exited"}},experienced:{id:"http://adlnet.gov/expapi/verbs/experienced",display:{"en-US":"experienced"}},failed:{id:"http://adlnet.gov/expapi/verbs/failed",display:{"en-US":"failed"}},imported:{id:"http://adlnet.gov/expapi/verbs/imported",display:{"en-US":"imported"}},initialized:{id:"http://adlnet.gov/expapi/verbs/initialized",display:{"en-US":"initialized"}},interacted:{id:"http://adlnet.gov/expapi/verbs/interacted",display:{"en-US":"interacted"}},launched:{id:"http://adlnet.gov/expapi/verbs/launched",display:{"en-US":"launched"}},mastered:{id:"http://adlnet.gov/expapi/verbs/mastered",display:{"en-US":"mastered"}},passed:{id:"http://adlnet.gov/expapi/verbs/passed",display:{"en-US":"passed"}},preferred:{id:"http://adlnet.gov/expapi/verbs/preferred",display:{"en-US":"preferred"}},progressed:{id:"http://adlnet.gov/expapi/verbs/progressed",display:{"en-US":"progressed"}},registered:{id:"http://adlnet.gov/expapi/verbs/registered",display:{"en-US":"registered"}},responded:{id:"http://adlnet.gov/expapi/verbs/responded",display:{"en-US":"responded"}},resumed:{id:"http://adlnet.gov/expapi/verbs/resumed",display:{"en-US":"resumed"}},scored:{id:"http://adlnet.gov/expapi/verbs/scored",display:{"en-US":"scored"}},shared:{id:"http://adlnet.gov/expapi/verbs/shared",display:{"en-US":"shared"}},suspended:{id:"http://adlnet.gov/expapi/verbs/suspended",display:{"en-US":"suspended"}},terminated:{id:"http://adlnet.gov/expapi/verbs/terminated",display:{"en-US":"terminated"}},voided:{id:"http://adlnet.gov/expapi/verbs/voided",display:{"en-US":"voided"}}}}(window.ADL=window.ADL||{}),Date.prototype.toISOString||!function(){function t(t){var e=String(t);return 1===e.length&&(e="0"+e),e}Date.prototype.toISOString=function(){return this.getUTCFullYear()+"-"+t(this.getUTCMonth()+1)+"-"+t(this.getUTCDate())+"T"+t(this.getUTCHours())+":"+t(this.getUTCMinutes())+":"+t(this.getUTCSeconds())+"."+String((this.getUTCMilliseconds()/1e3).toFixed(3)).slice(2,5)+"Z"}}(),function(t){function e(){try{return void 0!=this.lrs.endpoint&&""!=this.lrs.endpoint}catch(t){return!1}}function n(t){if(!n.debug)return!1;try{return console.log(t),!0}catch(e){return!1}}function i(t,e){for(var n in e){prop=e[n],console.log(n+" : "+prop);try{e[n].constructor==Object?t[n]=i(t[n],e[n]):(void 0==t&&(t=new Object),t[n]=e[n])}catch(r){void 0==t&&(t=new Object),t[n]=e[n]}}return t}function r(t){var e,n,r=["endpoint","auth","actor","registration","activity_id","grouping","activity_platform"],s=new Object;if(e=o(),void 0!==e){for(var a=0;a<r.length;a++)n=r[a],e[n]&&(s[n]=e[n],delete e[n]);s.extended=e,s=i(t,s)}else s=t;return s}function o(){var t,e,n,i,r,o;if(t=window.location.href.split("?"),2===t.length)for(e=t[1],n=e.split("&"),o={},r=0;r<n.length;r++)i=n[r].split("="),2===i.length&&i[0]&&(o[i[0]]=decodeURIComponent(i[1]));return o}function a(){var e=new XMLHttpRequest,n=window.location+"?forcenocache="+t.ruuid();e.open("GET",n,!1),e.send(null)}function p(t,e,n,i){var r=e,o=new Array,s=r.indexOf("?");if(s>0&&(o.push(r.substr(s+1)),r=r.substr(0,s)),r=r+"?method="+t,null!==n)for(var a in n)o.push(a+"="+encodeURIComponent(n[a]));return null!==i&&o.push("content="+encodeURIComponent(i)),{method:"POST",url:r,headers:{},data:o.join("&")}}n.debug=!0;var c=function(){var t={};t.endpoint="http://localhost:8000/xapi/";try{t.auth="Basic "+toBase64("tom:1234")}catch(e){n("Exception in Config trying to encode auth: "+e)}return t}();XAPIWrapper=function(n,o){function s(e){var n=document.createElement("a");return n.href=e,n.protocol&&n.host?n.protocol+"//"+n.host:void t.XAPIWrapper.log("Couldn't create base url from endpoint: "+this.lrs.endpoint)}function a(t,e,n){t.auth="Basic "+toBase64(e+":"+n)}this.lrs=r(n),this.lrs.user&&this.lrs.password&&a(this.lrs,this.lrs.user,this.lrs.password),this.base=s(this.lrs.endpoint),o&&e.call(this)&&window.ADL.XHR_request(this.lrs,this.lrs.endpoint+"about","GET",null,null,function(e){if(200==e.status)try{var n=JSON.parse(e.response),i=!1;for(var r in n.version)if(n.version[r]==t.XAPIWrapper.xapiVersion){i=!0;break}i||t.XAPIWrapper.log("The lrs version ["+n.version+"] does not match this wrapper's XAPI version ["+t.XAPIWrapper.xapiVersion+"]")}catch(o){t.XAPIWrapper.log("The response was not an about object")}else t.XAPIWrapper.log("The request to get information about the LRS failed: "+e)}),this.searchParams=function(){var t={format:"exact"};return t},this.hash=function(e){if(!e)return null;try{return toSHA1(e)}catch(n){return t.XAPIWrapper.log("Error trying to hash -- "+n),null}},this.changeConfig=function(e){try{t.XAPIWrapper.log("updating lrs object with new configuration"),this.lrs=i(this.lrs,e),e.user&&e.password&&this.updateAuth(this.lrs,e.user,e.password),this.base=s(this.lrs.endpoint)}catch(n){t.XAPIWrapper.log("error while changing configuration -- "+n)}},this.updateAuth=a},XAPIWrapper.prototype.xapiVersion="1.0.1",XAPIWrapper.prototype.build="2014-02-25T14:00Z",XAPIWrapper.prototype.prepareStatement=function(t){void 0===t.actor?t.actor=JSON.parse(this.lrs.actor):"string"==typeof t.actor&&(t.actor=JSON.parse(t.actor)),(this.lrs.grouping||this.lrs.registration||this.lrs.activity_platform)&&(t.context||(t.context={})),this.lrs.grouping&&(t.context.contextActivities||(t.context.contextActivities={}),t.context.contextActivities.grouping=[{id:this.lrs.grouping}]),this.lrs.registration&&(t.context.registration=this.lrs.registration),this.lrs.activity_platform&&(t.context.platform=this.lrs.activity_platform)},XAPIWrapper.prototype.testConfig=e,XAPIWrapper.prototype.log=n,XAPIWrapper.prototype.sendStatement=function(e,n){if(this.testConfig()){this.prepareStatement(e);var i;e.id?i=e.id:(i=t.ruuid(),e.id=i);var r=t.XHR_request(this.lrs,this.lrs.endpoint+"statements","POST",JSON.stringify(e),this.lrs.auth,n,{id:i});if(!n)return{xhr:r,id:i}}},XAPIWrapper.prototype.sendStatements=function(e,n){if(this.testConfig()){for(var i in e)this.prepareStatement(e[i]);var r=t.XHR_request(this.lrs,this.lrs.endpoint+"statements","POST",JSON.stringify(e),this.lrs.auth,n);if(!n)return r}},XAPIWrapper.prototype.getStatements=function(e,n,i){if(this.testConfig()){var r=this.lrs.endpoint+"statements";if(n)r=this.base+n;else{var o=new Array;for(s in e)o.push(s+"="+encodeURIComponent(e[s]));o.length>0&&(r=r+"?"+o.join("&"))}var a=t.XHR_request(this.lrs,r,"GET",null,this.lrs.auth,i);if(void 0===a||404==a.status)return null;try{return JSON.parse(a.response)}catch(p){return a.response}}},XAPIWrapper.prototype.getActivities=function(e,n){if(this.testConfig()){var i=this.lrs.endpoint+"activities?activityId=<activityid>";i=i.replace("<activityid>",encodeURIComponent(e));var r=t.XHR_request(this.lrs,i,"GET",null,this.lrs.auth,n,null,!0);if(void 0===r||404==r.status)return null;try{return JSON.parse(r.response)}catch(o){return r.response}}},XAPIWrapper.prototype.sendState=function(e,i,r,o,s,a,p,c){if(this.testConfig()){var d=this.lrs.endpoint+"activities/state?activityId=<activity ID>&agent=<agent>&stateId=<stateid>";d=d.replace("<activity ID>",encodeURIComponent(e)),d=d.replace("<agent>",encodeURIComponent(JSON.stringify(i))),d=d.replace("<stateid>",encodeURIComponent(r)),o&&(d+="&registration="+encodeURIComponent(o));var h=null;a&&p?n("Can't have both If-Match and If-None-Match"):a?h={"If-Match":'"'+a+'"'}:p&&(h={"If-None-Match":'"'+p+'"'});var l="PUT";if(!s)return this.log("No activity state was included."),!1;s instanceof Array?(s=JSON.stringify(s),h=h||{},h["Content-Type"]="application/json"):s instanceof Object?(s=JSON.stringify(s),h=h||{},h["Content-Type"]="application/json",l="POST"):(h=h||{},h["Content-Type"]="application/octect-stream"),t.XHR_request(this.lrs,d,l,s,this.lrs.auth,c,null,null,h)}},XAPIWrapper.prototype.getState=function(e,n,i,r,o,s){if(this.testConfig()){var a=this.lrs.endpoint+"activities/state?activityId=<activity ID>&agent=<agent>";a=a.replace("<activity ID>",encodeURIComponent(e)),a=a.replace("<agent>",encodeURIComponent(JSON.stringify(n))),i&&(a+="&stateId="+encodeURIComponent(i)),r&&(a+="&registration="+encodeURIComponent(r)),o&&(a+="&since="+encodeURIComponent(o.toISOString()));var p=t.XHR_request(this.lrs,a,"GET",null,this.lrs.auth,s,null,!0);if(void 0===p||404==p.status)return null;try{return JSON.parse(p.response)}catch(c){return p.response}}},XAPIWrapper.prototype.sendActivityProfile=function(e,i,r,o,s,a){if(this.testConfig()){var p=this.lrs.endpoint+"activities/profile?activityId=<activity ID>&profileId=<profileid>";p=p.replace("<activity ID>",encodeURIComponent(e)),p=p.replace("<profileid>",encodeURIComponent(i));var c=null;o&&s?n("Can't have both If-Match and If-None-Match"):o?c={"If-Match":'"'+o+'"'}:s&&(c={"If-None-Match":'"'+s+'"'});var d="PUT";if(!r)return this.log("No activity profile was included."),!1;r instanceof Array?(r=JSON.stringify(r),c=c||{},c["Content-Type"]="application/json"):r instanceof Object?(r=JSON.stringify(r),c=c||{},c["Content-Type"]="application/json",d="POST"):(c=c||{},c["Content-Type"]="application/octect-stream"),t.XHR_request(this.lrs,p,d,r,this.lrs.auth,a,null,!1,c)}},XAPIWrapper.prototype.getActivityProfile=function(e,n,i,r){if(this.testConfig()){var o=this.lrs.endpoint+"activities/profile?activityId=<activity ID>";o=o.replace("<activity ID>",encodeURIComponent(e)),n&&(o+="&profileId="+encodeURIComponent(n)),i&&(o+="&since="+encodeURIComponent(i.toISOString()));var s=t.XHR_request(this.lrs,o,"GET",null,this.lrs.auth,r,null,!0);if(void 0===s||404==s.status)return null;try{return JSON.parse(s.response)}catch(a){return s.response}}},XAPIWrapper.prototype.getAgents=function(e,n){if(this.testConfig()){var i=this.lrs.endpoint+"agents?agent=<agent>";i=i.replace("<agent>",encodeURIComponent(JSON.stringify(e)));var r=t.XHR_request(this.lrs,i,"GET",null,this.lrs.auth,n,null,!0);if(void 0===r||404==r.status)return null;try{return JSON.parse(r.response)}catch(o){return r.response}}},XAPIWrapper.prototype.sendAgentProfile=function(e,i,r,o,s,a){if(this.testConfig()){var p=this.lrs.endpoint+"agents/profile?agent=<agent>&profileId=<profileid>";p=p.replace("<agent>",encodeURIComponent(JSON.stringify(e))),p=p.replace("<profileid>",encodeURIComponent(i));var c=null;o&&s?n("Can't have both If-Match and If-None-Match"):o?c={"If-Match":'"'+o+'"'}:s&&(c={"If-None-Match":'"'+s+'"'});var d="PUT";if(!r)return this.log("No agent profile was included."),!1;r instanceof Array?(r=JSON.stringify(r),c=c||{},c["Content-Type"]="application/json"):r instanceof Object?(r=JSON.stringify(r),c=c||{},c["Content-Type"]="application/json",d="POST"):(c=c||{},c["Content-Type"]="application/octect-stream"),t.XHR_request(this.lrs,p,d,r,this.lrs.auth,a,null,!1,c)}},XAPIWrapper.prototype.getAgentProfile=function(e,n,i,r){if(this.testConfig()){var o=this.lrs.endpoint+"agents/profile?agent=<agent>";o=o.replace("<agent>",encodeURIComponent(JSON.stringify(e))),o=o.replace("<profileid>",encodeURIComponent(n)),n&&(o+="&profileId="+encodeURIComponent(n)),i&&(o+="&since="+encodeURIComponent(i.toISOString()));var s=t.XHR_request(this.lrs,o,"GET",null,this.lrs.auth,r,null,!0);if(void 0===s||404==s.status)return null;try{return JSON.parse(s.response)}catch(a){return s.response}}},t.ruuid=function(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var e=16*Math.random()|0,n="x"==t?e:3&e|8;return n.toString(16)})},t.dateFromISOString=function(t){var e="([0-9]{4})(-([0-9]{2})(-([0-9]{2})([T| ]([0-9]{2}):([0-9]{2})(:([0-9]{2})(.([0-9]+))?)?(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?",n=t.match(new RegExp(e)),i=0,r=new Date(n[1],0,1);n[3]&&r.setMonth(n[3]-1),n[5]&&r.setDate(n[5]),n[7]&&r.setHours(n[7]),n[8]&&r.setMinutes(n[8]),n[10]&&r.setSeconds(n[10]),n[12]&&r.setMilliseconds(1e3*Number("0."+n[12])),n[14]&&(i=60*Number(n[16])+Number(n[17]),i*="-"==n[15]?1:-1),i-=r.getTimezoneOffset(),time=Number(r)+60*i*1e3;var o=new Date;return o.setTime(Number(time)),o},t.XHR_request=function(e,n,i,r,o,s,c,d,h){"use strict";function l(){if(m)return v;m=!0;var t=d&&404===u.status;if(!(void 0===u.status||u.status>=200&&u.status<400||t)){try{alert("There was a problem communicating with the Learning Record Store. ( "+u.status+" | "+u.response+" )"+u.url)}catch(e){alert(e.toString())}return v=u,u}if(!s)return v=u,u;if(c)s(u,c);else try{var n=JSON.parse(u.responseText);s(u,n)}catch(i){s(u,u.responseText)}}var u,f,g,v,y,m=!1,S=!1,x=!1,b=n.toLowerCase().match(/^(.+):\/\/([^:\/]*):?(\d+)?(\/.*)?$/),I=window.location,w={};if(w["Content-Type"]="application/json",w.Authorization=o,w["X-Experience-API-Version"]=t.XAPIWrapper.xapiVersion,null!==h)for(var A in h)w[A]=h[A];if(S=I.protocol.toLowerCase()!==b[1]||I.hostname.toLowerCase()!==b[2],S||(g=null===b[3]?"http"===b[1]?"80":"443":b[3],S=g===I.port),S&&"undefined"!=typeof XDomainRequest)x=!0,f=p(i,n,w,r),u=new XDomainRequest,u.open(f.method,f.url);else{u=new XMLHttpRequest,u.open(i,n,null!=s);for(var A in w)u.setRequestHeader(A,w[A])}if(u.onreadystatechange=function(){return 4===u.readyState?l():void 0},u.onload=l,u.onerror=l,u.send(x?f.data:r),!s){if(x)for(y=1e3+new Date;new Date<y&&4!==u.readyState&&!m;)a();return l()}},t.XAPIWrapper=new XAPIWrapper(c,!1)}(window.ADL=window.ADL||{}),function(t){function e(t,n){var i=n.split("."),r=i[0];return n=i.slice(1).join("."),t[r]||(/\[\]$/.test(r)?(r=r.slice(0,-2),t[r]=[]):t[r]={}),n?e(t[r],n):t[r]}var n=function(e,n,c){if(e&&e.actor&&e.verb&&e.object){var d=e;for(var h in d)"actor"!=h&&"verb"!=h&&"object"!=h&&(this[h]=d[h]);e=d.actor,n=d.verb,c=d.object}e?e instanceof i?this.actor=e:"Agent"!==e.objectType&&e.objectType?"Group"===e.objectType&&(this.actor=new r(e)):this.actor=new i(e):this.actor=null,this.verb=n?n instanceof o?n:new o(n):null,this.object=c?"Activity"!==c.objectType&&c.objectType?"Agent"===c.objectType?c instanceof i?c:new i(c):"Group"===c.objectType?c instanceof r?c:new r(c):"StatementRef"===c.objectType?c instanceof a?c:new a(c):"SubStatement"===c.objectType?c instanceof p?c:new p(c):null:c instanceof s?c:new s(c):null,this.generateId=function(){this.id=t.ruuid()}};n.prototype.toString=function(){return this.actor.toString()+" "+this.verb.toString()+" "+this.object.toString()},n.prototype.isValid=function(){return this.actor&&this.actor.isValid()&&this.verb&&this.verb.isValid()&&this.object&&this.object.isValid()},n.prototype.generateRegistration=function(){e(this,"context").registration=t.ruuid()},n.prototype.addParentActivity=function(t){e(this,"context.contextActivities.parent[]").push(new s(t))},n.prototype.addGroupingActivity=function(t){e(this,"context.contextActivities.grouping[]").push(new s(t))},n.prototype.addOtherContextActivity=function(t){e(this,"context.contextActivities.other[]").push(new s(t))};var i=function(t,e){if(this.objectType="Agent",this.name=e,t&&(t.mbox||t.mbox_sha1sum||t.openid||t.account))for(var n in t)this[n]=t[n];else/^mailto:/.test(t)?this.mbox=t:/^[0-9a-f]{20}$/i.test(t)?this.mbox_sha1sum=t:/^http[s]?:/.test(t)?this.openid=t:t&&t.homePage&&t.name&&(this.account=t)};i.prototype.toString=function(){return this.name||this.mbox||this.openid||this.mbox_sha1sum||this.account.name},i.prototype.isValid=function(){return this.mbox||this.mbox_sha1sum||this.openid||this.account.homePage&&this.account.name||"Group"===this.objectType&&this.member};var r=function(t,e,n){i.call(this,t,n),this.member=e,this.objectType="Group"};r.prototype=new i;var o=function(t,e){if(t&&t.id)for(var n in t)this[n]=t[n];else this.id=t,e&&(this.display="string"==typeof e||e instanceof String?{"en-US":e}:e)};o.prototype.toString=function(){return this.display&&(this.display["en-US"]||this.display.en)?this.display["en-US"]||this.display.en:this.id},o.prototype.isValid=function(){return this.id};var s=function(t,e,n){if(t&&t.id){var i=t;for(var r in i)this[r]=i[r]}else this.objectType="Activity",this.id=t,(e||n)&&(this.definition={},"string"==typeof e||e instanceof String?this.definition.name={"en-US":e}:e&&(this.definition.name=e),"string"==typeof n||n instanceof String?this.definition.description={"en-US":n}:n&&(this.definition.description=n))};s.prototype.toString=function(){return this.definition&&this.definition.name&&(this.definition.name["en-US"]||this.definition.name.en)?this.definition.name["en-US"]||this.definition.name.en:this.id},s.prototype.isValid=function(){return this.id&&(!this.objectType||"Activity"===this.objectType)};var a=function(t){if(t&&t.id)for(var e in t)this[e]=t[e];else this.objectType="StatementRef",this.id=t};a.prototype.toString=function(){return"statement("+this.id+")"},a.prototype.isValid=function(){return this.id&&this.objectType&&"StatementRef"===this.objectType};var p=function(t,e,i){n.call(this,t,e,i),this.objectType="SubStatement",delete this.id,delete this.stored,delete this.version,delete this.authority};p.prototype=new n,p.prototype.toString=function(){return'"'+p.prototype.prototype.toString.call(this)+'"'},n.Agent=i,n.Group=r,n.Verb=o,n.Activity=s,n.StatementRef=a,n.SubStatement=p,t.XAPIStatement=n}(window.ADL=window.ADL||{});;"use strict";
-(function(ADL){
-
-	/*************************************************
-	 * The Collection class exposes various set operations in a friendly syntax
-	 *************************************************/
-
-	function Collection(arr)
-	{
-		this.contents = [];
-		for(var i in arr){
-			if( this.contents.indexOf(arr[i]) === -1 ){
-				this.contents.push(arr[i]);
-			}
-		}
-	}
-
-	// simple filter
-	Collection.prototype.select = function(filter)
-	{
-		/*return new Collection(
-			this.contents.reduce(
-				function(sum,val,index,array){
-					if( filter(val,index,array) )
-						sum.push(val);
-					return sum;
-				}
-			, [])
-		);*/
-		var sum = [];
-		for(var i=0; i<this.contents.length; i++){
-			var e = this.contents[i];
-			if( filter(e,i,this.contents) ){
-				sum.push(e);
-			}
-		}
-		return new Collection(sum);
-	};
-
-	// returns intersection of this and argument
-	Collection.prototype.intersect = function(set)
-	{
-		var ret = new Collection();
-		for(var i in this.contents){
-			var obj = this.contents[i];
-			if( set.contains(obj) )
-				ret.contents.push(obj);
-		}
-
-		return ret;
-	};
-
-	// returns union of this and argument
-	Collection.prototype.union = function(set)
-	{
-		var ret = new Collection(this.contents);
-		ret.contents.push.apply(ret.contents, set.contents);
-		return ret.selectDistinct();
-	};
-
-	// returns subtraction of this and argument
-	Collection.prototype.without = function(set)
-	{
-		var ret = new Collection();
-		for(var i in this.contents){
-			var obj = this.contents[i];
-			if( !set.contains(obj) )
-				ret.contents.push(obj);
-		}
-
-		return ret;
-	}
-
-	// aggregate and run callback
-	Collection.prototype.groupBy = function(xpath, cb)
-	{
-		var pathVals = this.selectDistinct(xpath).transform(Collection.getValue(xpath)).contents;
-		var ret = new Collection();
-		for( var i in pathVals )
-		{
-			var val = pathVals[i];
-			var group = this.selectEqual(xpath,val);
-			ret.contents.push({
-				'in': val,
-				'out': cb(group),
-				'sample': group.contents[0]
-			});
-		}
-
-		return ret;
-	};
-	
-	// aggregate and run callback
-	Collection.prototype.groupByRange = function(xpath, arr, cb)
-	{			
-		var ret = new Collection();
-
-		for( var i = 0; i < arr.length - 1; i++ )
-		{
-			var group = this.selectRange(xpath, arr[i], arr[i+1]);
-			ret.contents.push({
-				'in': arr[i],
-				'out': cb(group, arr[i], arr[i+1]),
-				'sample': group.contents[0]
-			});
-		}
-		
-		return ret;
-	};
-
-	// order the contents of the set by path
-	Collection.prototype.orderBy = function(xpath, comparator)
-	{
-		var sortFn;
-		if( typeof(comparator) === 'function' )
-			sortFn = comparator;
-		else {
-			sortFn = function(a,b){
-				if( !a || a<b )
-					return comparator === 'descending' ? 1 : -1;
-				else if( !b || a>b )
-					return comparator === 'descending' ? -1 : 1;
-				else return 0;
-			};
-		}
-
-		var path = Collection.getValue(xpath);
-		var ret = new Collection(this.contents);
-		ret.contents.sort(function(a,b){
-			return sortFn(path(a), path(b));
-		});
-		return ret;
-	};
-
-	// the number of elements in the set (or subset)
-	Collection.prototype.count = function(xpath)
-	{
-		if(xpath){
-			return this.selectDistinct(xpath).count();
-		}
-		else {
-			return this.contents.length;
-		}
-	}
-
-	// the total of a particular field
-	Collection.prototype.sum = function(xpath)
-	{
-		var sum = 0;
-		for( var i in this.contents ){
-			sum += Collection.getValue(xpath)(this.contents[i]);
-		}
-
-		return sum;
-	}
-
-	// the largest value of field in the set
-	Collection.prototype.max = function(xpath)
-	{
-		var max = -Infinity;
-		for( var i in this.contents ){
-			var val = Collection.getValue(xpath)(this.contents[i]);
-			if( val > max )
-				max = val;
-		}
-		return max;
-	}
-
-	// the smallest value of field in the set
-	Collection.prototype.min = function(xpath)
-	{
-		var min = Infinity;
-		for( var i in this.contents ){
-			var val = Collection.getValue(xpath)(this.contents[i]);
-			if( val < min )
-				min = val;
-		}
-		return min;
-	}
-
-	// the average of a particular field
-	Collection.prototype.average = function(xpath)
-	{
-		return this.sum(xpath)/this.count();
-	};
-
-	// whether or not a particular item is in the set
-	Collection.prototype.contains = function(item){
-		return this.contents.indexOf(item) !== -1;
-	}
-
-	// returns a new set with xfrm applied to each element
-	// xfrm takes (element, index, origArray)
-	Collection.prototype.transform = function(xfrm){
-		return new Collection( this.contents.map(xfrm) );
-	};
-
-	Collection.prototype.selectDistinct = function(xpath){
-		return this.select(Collection.distinct(xpath));
-	};
-
-	Collection.prototype.selectEqual = function(xpath, value){
-		return this.select(Collection.equals(xpath,value));
-	};
-
-	Collection.prototype.selectRange = function(xpath, startValue, endValue){
-		return this.select(Collection.range(xpath,startValue, endValue));
-	};
-
-	Collection.prototype.selectMatch = function(xpath, re){
-		return this.select(Collection.match(xpath, re));
-	};
-
-	Collection.prototype.selectFirst = function(n){
-		return this.select(Collection.first(n));
-	};
-
-	Collection.prototype.selectLast = function(n){
-		return this.select(Collection.last(n));
-	};
-
-
-
-	/*
-	 * Class methods to generate filters
-	 */
-
-	// filters by uniqueness of xpath field
-	Collection.distinct = function(xpath)
-	{
-		var seen = [];
-
-		return function(elem)
-		{
-			var curElem = Collection.getValue(xpath)(elem);
-			
-			if( seen.indexOf(curElem) === -1 ){
-				seen.push(curElem);
-				return true;
-			}
-			else {
-				return false;
-			}
-		};
-	};
-
-	// filters by elem[xpath] == value
-	Collection.equals = function(xpath, value)
-	{
-		return function(elem){
-			return Collection.getValue(xpath)(elem) === value;
-		}
-	};
-
-	// filters by elem[xpath] matches re
-	Collection.match = function(xpath, re)
-	{
-		return function(elem){
-			return re.test( Collection.getValue(xpath)(elem) );
-		}
-	};
-
-	// filter to get first n elements
-	Collection.first = function(n)
-	{
-		return function(elem, index){
-			return index < n;
-		};
-	};	
-	
-	// filter to get last n elements
-	Collection.last = function(n)
-	{
-		return function(elem, index, array){
-			return index >= array.length - n;
-		};
-	};
-
-	// return elem s.t. startVal <= elem < endVal
-	Collection.range = function(xpath, startVal, endVal)
-	{
-		return function(elem, index, array){
-			var val = Collection.getValue(xpath)(elem);
-			if( typeof(val) === 'string' )
-				val = val.toLowerCase();
-			return startVal <= val && val < endVal;
-		}
-	};
-
-
-	/*
-	 * Miscellaneous functions
-	 */
-
-	// transform to get xpath values out of a set
-	Collection.getValue = function(xpath)
-	{
-		var parts = [];
-		if(xpath){	
-			parts = xpath.split('.');
-			var i=0; while(i<parts.length){
-				if(/\\$/.test(parts[i]) && parts[i+1])
-					parts.splice(i, 2, /(.*)\\$/.exec(parts[i])[1]+'.'+parts[i+1]);
-				else
-					i++;
-			}
-		}
-
-		return function(elem){
-			var curElem = elem;
-			for(var i=0; i<parts.length; i++){
-				if(curElem[parts[i]] !== undefined)
-					curElem = curElem[parts[i]];
-				else
-					return null;
-			}
-			return curElem;
-		};
-	};
-	
-	//Convenience function to generate input for groupByRange
-	//if start is parsable by date:
-	//	it is assumed that end is also a date and increment is an increment value in ms
-	//	format is used to call: Date.prototype[format]() - Default to 'toISOString' if falsy.
-	/*Collection.genRange = function(start, end, increment, format){
-		var outArr = [],
-			isDate = false;
-		
-		if(typeof start == "string"){
-			if(!format || ['toDateString', 'toGMTString', 'toISOString', 'toJSON', 'toLocaleDateString', 'toLocaleString', 'toLocaleTimeString', 'toString', 'toTimeString', 'toUTC'].indexOf(format) == -1){
-				format = 'toISOString';
-			}
-			
-			//if increment is unsuitable to act as an increment for dates, then default to a day
-			increment = typeof increment == "number" && increment > 0 ? increment : 1000 * 60 * 60 * 24; 
-		
-			if(!isNaN(Date.parse(start)) && !isNaN(Date.parse(end))){
-				start = Date.parse(start); 
-				end = Date.parse(end); 
-				isDate = true;
-			}
-			
-			else{
-				console.error("Date cannot parse arbitrary strings (Collection.genRange)");
-				return [];
-			}
-		}
-		
-		while(start < end){
-			//May want to eventually update this if it severely impacts performance
-			outArr.push(isDate ? (new Date(start))[format]() : start);
-			start += increment;
-		}
-		outArr.push(isDate ? (new Date(end))[format]() : end);
-		
-		return outArr;
-	};*/
-
-	Collection.genRange = function(start, end, i)
-	{
-		var increment = function(x,i){ 
-			i = i > 0 ? i : 1;
-			return x+i; 
-		},
-		test = function(cur, end){ return cur < end; };
-
-		if( start instanceof Date ){
-			i = i > 0 ? i : Collection.day;
-			increment = function(x,i){ return new Date( x.getTime()+i ); };
-		}
-		else if( typeof(start) === 'string' ){
-			start = start.toLowerCase().charAt(0);
-			end = end ? end.toLowerCase().charAt(0) : '{';
-			i = i > 0 ? i : 1;
-			increment = function(x,i){ return String.fromCharCode( x.charCodeAt(0)+i ); };
-		}
-
-		var groupArr = [];
-		while( test(start, end) ){
-			groupArr.push(start);
-			start = increment(start,i);
-		}
-		groupArr.push(end);
-		return groupArr;
-	};
-	
-	Collection.second = 1000;
-	Collection.minute = Collection.second * 60;
-	Collection.hour = Collection.minute * 60;
-	Collection.day = Collection.hour * 24;
-	Collection.week = Collection.day * 7;
-
-	ADL.Collection = Collection;
-
-
-	/***************************************************
-	 * The CollectionAsync class offloads all operations to a webworker
-	 * so the interface doesn't lock up
-	 ***************************************************/
-
-	function serialize(obj){
-		var json = JSON.stringify(obj);
-		var buf = new ArrayBuffer(2*json.length);
-		var view = new Uint16Array(buf);
-		for(var offset=0; offset<json.length; offset++){
-			view[offset] = json.charCodeAt(offset);
-		}
-		return buf;
-	}
-
-	function deserialize(buffer){
-		var json = '';
-		var intBuffer = new Uint16Array(buffer);
-		for(var i=0; i<intBuffer.length; i+=1000)
-			json += String.fromCharCode.apply(null, intBuffer.subarray(i,i+1000));
-		return JSON.parse(json);
-	}
-
-
-	function CollectionAsync(array, workerLocation)
-	{
-		if( !window.Worker ){
-			throw new Error('Your browser does not support WebWorkers, and cannot use the CollectionAsync class');
-		}
-
-		if(!workerLocation)
-			workerLocation = 'collection-worker.js';
-		this.worker = new Worker(workerLocation);
-
-		var payload = serialize(['datapush', array]);
-		this.worker.postMessage(payload,[payload]);
-		if( payload.byteLength > 0 ){
-			console.log('Warning: Your browser does not support WebWorker transfers. Performance of this site may suffer as a result.');
-		}
-		//this.worker.postMessage(['datapush', array]);
-	}
-
-	CollectionAsync.prototype.append = function(array)
-	{
-		var payload = serialize(['append', array]);
-		this.worker.postMessage(payload, [payload]);
-		return this;
-	};
-
-	CollectionAsync.prototype.exec = function(cb){
-		this.worker.postMessage(serialize(['exec']));
-		this.worker.onmessage = function(event){
-			var result = deserialize(event.data);
-			cb(result[0]);
-			event.target.onmessage = undefined;
-		};
-		return this;
-	};
-
-	CollectionAsync.prototype.save = function(){
-		this.worker.postMessage(serialize(['save']));
-		return this;
-	};
-	
-	CollectionAsync.prototype.where = function(query){
-		this.worker.postMessage(serialize(['where', query]));
-		return this;
-	};
-
-	CollectionAsync.prototype.select = function(selector){
-		this.worker.postMessage(serialize(['select', selector]));
-		return this;
-	};
-
-	CollectionAsync.prototype.slice = function(start,end){
-		this.worker.postMessage(serialize(['slice',start,end]));
-		return this;
-	};
-
-	CollectionAsync.prototype.orderBy = function(xpath, direction){
-		this.worker.postMessage(serialize(['orderBy',xpath,direction]));
-		return this;
-	};
-
-	CollectionAsync.prototype.groupBy = function(xpath, ranges){
-		if( !(Array.isArray(ranges) && ranges.length === 3 && ranges[2]%1 === 0) )
-			ranges = null;
-		this.worker.postMessage(serialize(['groupBy',xpath,ranges]));
-		return this;
-	};
-
-	CollectionAsync.prototype.join = function(){
-		var args = Array.prototype.slice.call(arguments);
-		var path = args[0];
-		var branches = args.slice(1);
-
-		for(var i=0; i<branches.length; i++)
-		{
-			this.worker.postMessage(serialize(['newbranch']));
-			branches[i].call(this,this);
-		}
-		this.worker.postMessage(serialize(['join',path]));
-
-		return this;
-	};
-
-
-
-
-
-	CollectionAsync.prototype.count = function(){
-		this.worker.postMessage(serialize(['count']));
-		return this;
-	};
-
-	CollectionAsync.prototype.sum = function(xpath){
-		this.worker.postMessage(serialize(['sum',xpath]));
-		return this;
-	};
-
-	CollectionAsync.prototype.average = function(xpath){
-		this.worker.postMessage(serialize(['average',xpath]));
-		return this;
-	};
-
-	CollectionAsync.prototype.min = function(xpath){
-		this.worker.postMessage(serialize(['min',xpath]));
-		return this;
-	};
-
-	CollectionAsync.prototype.max = function(xpath){
-		this.worker.postMessage(serialize(['max',xpath]));
-		return this;
-	};
-
-	ADL.CollectionAsync = CollectionAsync;
-
-})(window.ADL = window.ADL || {});
-;"use strict";
 
 (function(ADL){
 	
@@ -23461,16 +22928,16 @@ nv.models.stackedAreaChart = function() {
 	ADL.select = function(xpath){		
 		
 		return function(opts){
-			if(!opts.group){
+			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
 			opts.xpath = xpath;
 			if(opts.range){
-				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+				return opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 			}
-			else return opts.data.groupBy(opts.group).exec(formatData);
+			else return opts.data.groupBy(opts.groupBy).exec(formatData);
 			
 			//Used as an intermediate callback for exec
 			function formatData(data){
@@ -23487,142 +22954,135 @@ nv.models.stackedAreaChart = function() {
 			}
 		}
 	};
-	ADL.count = function(ignoreXpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group){
-					console.error("group has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).count().select("group as in, count as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).count().select("group as in, count as out").exec(opts.cb);
-			}
-		}
-		else{
-			return ADL.CollectionAsync.prototype.count.call(this);
-		}
-	};	 
 
-	ADL.sum = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).sum(xpath).select("group as in, sum as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).sum(xpath).select("group as in, sum as out").exec(opts.cb);
+	ADL.count = function(ignoreXpath, join){
+		return function(opts){
+			if(!opts.groupBy){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.groupBy, range).count().select('group as in, count as out').exec(opts.cb);
+			}
+			else {
+				return ret.count();
+			}
+
 		}
-		
-		else{
-			return ADL.CollectionAsync.prototype.sum.call(this, xpath);
+	};	
+	
+	ADL.sum = function(xpath, join){
+		return function(opts){
+			if(!opts.groupBy || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
+			}
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.groupBy, range).sum(xpath).select('group as in, sum as out').exec(opts.cb);
+			}
+			else {
+				return ret.sum(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.min = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).min(xpath).select("group as in, min as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).min(xpath).select("group as in, min as out").exec(opts.cb);
+		return function(opts){
+			if(!opts.groupBy || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
-		}
-		
-		else{
-			return ADL.CollectionAsync.prototype.min.call(this, xpath);
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.groupBy, range).min(xpath).select('group as in, min as out').exec(opts.cb);
+			}
+			else {
+				return ret.min(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.max = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).max(xpath).select("group as in, max as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).max(xpath).select("group as in, max as out").exec(opts.cb);
+		return function(opts){
+			if(!opts.groupBy || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
-		}
-		
-		else{
-			return ADL.CollectionAsync.prototype.max.call(this, xpath);
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.groupBy, range).max(xpath).select('group as in, max as out').exec(opts.cb);
+			}
+			else {
+				return ret.max(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.average = function(xpath, join){
-		if(!join){
-			return function(opts){
-				if(!opts.group || !xpath){
-					console.error("group or xpath has not been specified, aborting aggregation", opts);
-					return;
-				}
-				
-				opts.xpath = xpath;
-				if(opts.range){
-					return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).average(xpath).select("group as in, average as out").exec(opts.cb);
-				}
-				else return opts.data.groupBy(opts.group).average(xpath).select("group as in, average as out").exec(opts.cb);
+		return function(opts){
+			if(!opts.groupBy || !xpath){
+				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				return;
 			}
-		}
-		else{
-			return ADL.CollectionAsync.prototype.average.call(this, xpath);
+				
+			opts.xpath = xpath;
+			var ret = opts.data;
+			if(!join){
+				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+				return ret.groupBy(opts.groupBy, range).average(xpath).select('group as in, average as out').exec(opts.cb);
+			}
+			else {
+				return ret.average(xpath);
+			}
+
 		}
 	};	
 	
 	ADL.multiAggregate = function(xpath){
-		var saveArgs = arguments,
-			opsArr = ["group"],
-			saveIndex;
-		
-		for(var g = 1; g < saveArgs.length; g++){
-			opsArr.push(function(data){ 
-				saveArgs[saveIndex++].call(data, xpath, true);
-			});
-		}
 	
-		return function(opts){
-			if(!opts.group || !xpath){
+		var multi = Array.prototype.slice.call(arguments, 1);
+
+		return function(opts)
+		{
+			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
 			opts.xpath = xpath;
-			saveIndex = 1;
 			
-			var tempCb = function(data){
-				
+			var tempCb = function(data)
+			{
 				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
 					g = 1;
 				
+				// create series from aggregate fields of data
 				for(var i in data[0]){
-					if(i != "group" && i != "sample"){
+					if( /^(count|sum|min|average|max)$/.test(i) ){
 						aggArr.push({key: i, values: [], color: colorRange[g]});
 						g += 2;
 					}
 				}
 				
+				// add data to series
 				for(var i = 0; i < data.length; i++){
 					for(var g = 0; g < aggArr.length; g++){
 						aggArr[g].values.push({in: data[i].group, out: data[i][aggArr[g].key], series: g});
@@ -23643,15 +23103,12 @@ nv.models.stackedAreaChart = function() {
 				opts.cb(aggArr);
 			};
 			
-			if(opts.range) return opts.data
-				.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment])
-				.join.apply(opts.data, opsArr)
-				.exec(tempCb);
-			
-			else return opts.data
-				.groupBy(opts.group)
-				.join.apply(opts.data, opsArr)
-				.exec(tempCb);
+			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+			opts.data = opts.data.groupBy(opts.groupBy);
+			for( var i=0; i<multi.length; i++ ){
+				multi[i](xpath,true)(opts);
+			}
+			opts.data.exec(tempCb);
 		}
 	};	 
 	
@@ -24168,7 +23625,8 @@ nv.models.multiBar = function() {
 
 
   return chart;
-};"use strict";
+}
+;"use strict";
 (function(ADL){
 	
 	var isChartBusy = false;
@@ -24229,7 +23687,7 @@ nv.models.multiBar = function() {
 		opts.cb = function(aggregateData){
 			if(opts.post)
 				aggregateData = opts.post(aggregateData, event) || aggregateData;	
-				
+
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 				
@@ -24280,7 +23738,7 @@ nv.models.multiBar = function() {
 					});
 				}
 
-				self.pipeData.call(self, aggregateData, chart);
+				self.pipeData(aggregateData, chart);
 				window.onResize = chart.update;
 				
 				//chart.update();
@@ -24503,7 +23961,7 @@ nv.models.multiBar = function() {
 				for(var i = -1; i < aggregateData[0].values.length; i++){
 					
 					var g = 0;
-					markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.group +'</th>';
+					markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.groupBy +'</th>';
 					
 					for(; g < aggregateData.length; g++){
 						if(i >= 0) markup += '<td>'+aggregateData[g].values[i].out+'</td>';
@@ -24515,7 +23973,7 @@ nv.models.multiBar = function() {
 			}
 			
 			else{
-				markup += '<tr><th>'+opts.group+'</th><th>'+opts.xpath+'</th></tr>';
+				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
 				for(var i = 0; i < aggregateData.length; i++){
 					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
 				}
@@ -24524,7 +23982,6 @@ nv.models.multiBar = function() {
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
 
-			console.log(aggregateData);
 			isChartBusy = false;
 		};
 	

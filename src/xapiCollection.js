@@ -18,7 +18,7 @@ catch(e){
 
 // figure out script path if available
 try {
-	var workerScript = document.querySelector('script[src$="collection.js"]').src;
+	var workerScript = document.querySelector('script[src*="xapiCollection"]').src;
 }
 catch(e){}
 
