@@ -146,7 +146,7 @@ var chart = dash.createBarGraph({
 	},
 	customize: function(chart){
 		chart.xAxis.rotateLabels(45);
-		chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
+		chart.xAxis.tickFormat(function(d){ return /\/[^\/]+$/.exec(d)[0]; });
 	}
 });
 chart.draw();

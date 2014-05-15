@@ -834,8 +834,8 @@ if(!Array.isArray){
 			throw new Error('Your browser does not support WebWorkers, and cannot use the CollectionAsync class. Use CollectionSync instead.');
 		}
 
-		this.worker = new Worker(workerScript);
-		this.worker.onmessage = function(evt)
+		this._worker = new Worker(workerScript);
+		this._worker.onmessage = function(evt)
 		{
 			var data = CollectionAsync.deserialize(evt.data);
 			if( this._callbacks[data[0]] ){
@@ -846,10 +846,10 @@ if(!Array.isArray){
 
 		var payload = CollectionAsync.serialize(['push',data]);
 		try {
-			this.worker.postMessage(payload, [payload]);
+			this._worker.postMessage(payload, [payload]);
 		}
 		catch(e){
-			this.worker.postMessage(payload);
+			this._worker.postMessage(payload);
 		}
 
 		if( payload.byteLength > 0 ){
@@ -884,7 +884,7 @@ if(!Array.isArray){
 		while( this._callbacks[id = Math.floor( Math.random() * 65536 )] );
 
 		this._callbacks[id] = cb;
-		this.worker.postMessage(CollectionAsync.serialize(['exec', id]));
+		this._worker.postMessage(CollectionAsync.serialize(['exec', id]));
 		return this;
 	}
 
@@ -892,10 +892,10 @@ if(!Array.isArray){
 	{
 		var payload = CollectionAsync.serialize(['append',data]);
 		try {
-			this.worker.postMessage(payload, [payload]);
+			this._worker.postMessage(payload, [payload]);
 		}
 		catch(e){
-			this.worker.postMessage(payload);
+			this._worker.postMessage(payload);
 		}
 
 		return this;
@@ -904,7 +904,7 @@ if(!Array.isArray){
 	function proxyFactory(name){
 		return function(){
 			var args = Array.prototype.slice.call(arguments);
-			this.worker.postMessage(CollectionAsync.serialize([name].concat(args)));
+			this._worker.postMessage(CollectionAsync.serialize([name].concat(args)));
 			return this;
 		}
 	}
@@ -923,7 +923,7 @@ if(!Array.isArray){
 
 	ADL.CollectionSync = CollectionSync;
 	ADL.CollectionAsync = CollectionAsync;
-	ADL.Collection = CollectionAsync;
+	ADL.Collection = window.Worker ? CollectionAsync : CollectionSync;
 
 }(window.ADL));
 
@@ -974,5 +974,5 @@ if(!Array.isArray){
 		}
 	}
 
-}(window.ADL.Collection, window.ADL.CollectionSync));
+}(window.ADL.CollectionAsync, window.ADL.CollectionSync));
 
