@@ -4,6 +4,12 @@
 	
 	var XAPIDashboard = function(container){
 		this.container = container;
+		try {
+			this.data = new ADL.Collection();
+		}
+		catch(e){
+			this.data = new ADL.CollectionSync();
+		}
 	}
 
 	XAPIDashboard.prototype.fetchAllStatements = function(query, wrapper, cb){
@@ -17,16 +23,10 @@
 		wrapper.getStatements(query, null, function getMore(r){
 			var response = JSON.parse(r.response);
 			
-			//Adds statements to a temp array so that addStatements is only called once
-			statementsArr.push.apply(statementsArr, response.statements);
-			
+			self.data.append(response.statements);
+
 			if(response.more){
 				wrapper.getStatements(null, response.more, getMore);
-			}
-			
-			else{
-				self.addStatements(statementsArr);
-				if(cb) cb(self.statements);
 			}
 		});
 	};
@@ -48,14 +48,7 @@
 				return;
 			}
 		}
-	
-		try{
-			this.data = new ADL.CollectionAsync(statementsArr, this.webworkerSrc);
-		}
-		catch(e){
-			this.data = new ADL.Collection(statementsArr);
-			console.log("Caught error on ADL.CollectionAsync creation, falling back to ADL.Collection ", e);
-		}
+		this.data.append(statementsArr);
 	};
 	
 	// default aggregator requires opts.xField
