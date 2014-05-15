@@ -110,7 +110,7 @@
 					});
 				}
 
-				self.pipeData.call(self, aggregateData, chart);
+				self.pipeData(aggregateData, chart);
 				window.onResize = chart.update;
 				
 				//chart.update();
@@ -333,7 +333,7 @@
 				for(var i = -1; i < aggregateData[0].values.length; i++){
 					
 					var g = 0;
-					markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.group +'</th>';
+					markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.groupBy +'</th>';
 					
 					for(; g < aggregateData.length; g++){
 						if(i >= 0) markup += '<td>'+aggregateData[g].values[i].out+'</td>';
@@ -345,7 +345,7 @@
 			}
 			
 			else{
-				markup += '<tr><th>'+opts.group+'</th><th>'+opts.xpath+'</th></tr>';
+				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
 				for(var i = 0; i < aggregateData.length; i++){
 					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
 				}
