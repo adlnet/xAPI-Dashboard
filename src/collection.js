@@ -487,7 +487,7 @@ if(!Array.isArray){
 	/*
 	 * Group with continuous values
 	 */
-	CollectionSync.prototype.groupByRange = function(path, range)
+	CollectionSync.prototype._groupByRange = function(path, range)
 	{
 		// validate range
 		if( !(Array.isArray(range) && range.length === 3 && range[2]%1 === 0) )
@@ -589,7 +589,7 @@ if(!Array.isArray){
 	CollectionSync.prototype.groupBy = function(path, range)
 	{
 		if(range)
-			return this.groupByRange(path, range);
+			return this._groupByRange(path, range);
 
 		// add each data entry to its respective group
 		var data = this.contents;
@@ -820,7 +820,7 @@ if(!Array.isArray){
 	 * Collection class - asynchronous version of CollectionSync
 	 *
 	 * For any decently-sized dataset, CollectionSync will lock up the
-	 * UI for an unnecessary amount of time. The Collection class
+	 * UI for an unnecessary amount of time. The CollectionAsync class
 	 * exposes the same API, but wraps that functionality in a thread
 	 * so the UI remains responsive.
 	 *****************************************************************/
@@ -831,7 +831,7 @@ if(!Array.isArray){
 		this._callbacks = {};
 
 		if( !window.Worker ){
-			throw new Error('Your browser does not support WebWorkers, and cannot use the Collection class. Use CollectionSync instead.');
+			throw new Error('Your browser does not support WebWorkers, and cannot use the CollectionAsync class. Use CollectionSync instead.');
 		}
 
 		this.worker = new Worker(workerScript);
