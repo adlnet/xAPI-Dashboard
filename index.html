@@ -78,7 +78,7 @@
 
 		var studentAnswersTable = dash.createTable({
 			container: '#table',
-			group: 'object.definition.name',
+			groupBy: 'object.definition.name',
 			pre: function(data, event){
 				data.where('actor.name = "' + event.in + '"');
 			},
@@ -98,7 +98,7 @@
 
 		var studentsInRange = dash.createBarChart({
 			container: "#svg4",
-			group: 'actor.name',
+			groupBy: 'actor.name',
 			pre: function(data, event){
 				scoreArr = event.in.split('-');
 				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw < '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"')
@@ -114,7 +114,7 @@
 		});
 		
 		var incorrectStudentsTable = dash.createTable({
-			group: 'actor.name',
+			groupBy: 'actor.name',
 			pre: function(data, event){
 				data.where('result.success = false and object.definition.name = "' + saveTest + '/' + event.in + '"')
 					.orderBy("actor.name");
@@ -129,7 +129,7 @@
 				data.where('result.success = false');
 			},
 			aggregate: ADL.count(),
-			group: 'object.definition.name',
+			groupBy: 'object.definition.name',
 			post: function(data){
 				var newArr = [];
 				for(var i = 0; i < data.length; i++){
@@ -155,7 +155,7 @@
 		
 		var scoreRanges = dash.createBarChart({
 			container: "#svg3",
-			group: "result.score.raw",
+			groupBy: "result.score.raw",
 			range: {start: 30, end: 100, increment: 10},
 			pre: function(data, event){
 				return data.where('result.score.raw != null and object.definition.name = "' + saveTest + '"');
@@ -174,7 +174,7 @@
 		
 		var scoreRangesPie = dash.createPieChart({
 			container: "#svg2",
-			group: "result.score.raw",
+			groupBy: "result.score.raw",
 			range: {start: 30, end: 100, increment: 10},
 			pre: function(data, event){
 				return data.where('result.score.raw != null and object.definition.name = "' + event.in + '"');
@@ -189,7 +189,7 @@
 				return data.where("result.score.raw != null").orderBy("object.definition.name");
 			},
 			aggregate: ADL.multiAggregate("result.score.raw", ADL.min, ADL.average, ADL.max),
-			group:  'object.definition.name',
+			groupBy:  'object.definition.name',
 			customize: function(nvd3Chart){
 				nvd3Chart.forceY([0, 120]);
 				nvd3Chart.yAxis.axisLabel("Grade");			

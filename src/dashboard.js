@@ -125,16 +125,16 @@
 	ADL.select = function(xpath){		
 		
 		return function(opts){
-			if(!opts.group){
+			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
 			opts.xpath = xpath;
 			if(opts.range){
-				return opts.data.groupBy(opts.group, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+				return opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 			}
-			else return opts.data.groupBy(opts.group).exec(formatData);
+			else return opts.data.groupBy(opts.groupBy).exec(formatData);
 			
 			//Used as an intermediate callback for exec
 			function formatData(data){
@@ -154,7 +154,7 @@
 
 	ADL.count = function(ignoreXpath, join){
 		return function(opts){
-			if(!opts.group){
+			if(!opts.groupBy){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
@@ -163,7 +163,7 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.group, range).count().select('group as in, count as out').exec(opts.cb);
+				return ret.groupBy(opts.groupBy, range).count().select('group as in, count as out').exec(opts.cb);
 			}
 			else {
 				return ret.count();
@@ -174,7 +174,7 @@
 	
 	ADL.sum = function(xpath, join){
 		return function(opts){
-			if(!opts.group || !xpath){
+			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
@@ -183,7 +183,7 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.group, range).sum(xpath).select('group as in, sum as out').exec(opts.cb);
+				return ret.groupBy(opts.groupBy, range).sum(xpath).select('group as in, sum as out').exec(opts.cb);
 			}
 			else {
 				return ret.sum(xpath);
@@ -194,7 +194,7 @@
 	
 	ADL.min = function(xpath, join){
 		return function(opts){
-			if(!opts.group || !xpath){
+			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
@@ -203,7 +203,7 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.group, range).min(xpath).select('group as in, min as out').exec(opts.cb);
+				return ret.groupBy(opts.groupBy, range).min(xpath).select('group as in, min as out').exec(opts.cb);
 			}
 			else {
 				return ret.min(xpath);
@@ -214,7 +214,7 @@
 	
 	ADL.max = function(xpath, join){
 		return function(opts){
-			if(!opts.group || !xpath){
+			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
@@ -223,7 +223,7 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.group, range).max(xpath).select('group as in, max as out').exec(opts.cb);
+				return ret.groupBy(opts.groupBy, range).max(xpath).select('group as in, max as out').exec(opts.cb);
 			}
 			else {
 				return ret.max(xpath);
@@ -234,7 +234,7 @@
 	
 	ADL.average = function(xpath, join){
 		return function(opts){
-			if(!opts.group || !xpath){
+			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
@@ -243,7 +243,7 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.group, range).average(xpath).select('group as in, average as out').exec(opts.cb);
+				return ret.groupBy(opts.groupBy, range).average(xpath).select('group as in, average as out').exec(opts.cb);
 			}
 			else {
 				return ret.average(xpath);
@@ -258,7 +258,7 @@
 
 		return function(opts)
 		{
-			if(!opts.group || !xpath){
+			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
 			}
@@ -301,7 +301,7 @@
 			};
 			
 			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-			opts.data = opts.data.groupBy(opts.group);
+			opts.data = opts.data.groupBy(opts.groupBy);
 			for( var i=0; i<multi.length; i++ ){
 				multi[i](xpath,true)(opts);
 			}
