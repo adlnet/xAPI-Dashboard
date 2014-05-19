@@ -28,6 +28,9 @@
 			if(response.more){
 				wrapper.getStatements(null, response.more, getMore);
 			}
+			else {
+				cb();
+			}
 		});
 	};
 	
@@ -154,7 +157,15 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).count().select('group as in, count as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).count().select(rangeLabel+' as in, count as out').exec(opts.cb);
 			}
 			else {
 				return ret.count();
@@ -174,7 +185,15 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).sum(xpath).select('group as in, sum as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).sum(xpath).select(rangeLabel+' as in, sum as out').exec(opts.cb);
 			}
 			else {
 				return ret.sum(xpath);
@@ -194,7 +213,15 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).min(xpath).select('group as in, min as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).min(xpath).select(rangeLabel+' as in, min as out').exec(opts.cb);
 			}
 			else {
 				return ret.min(xpath);
@@ -214,7 +241,15 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).max(xpath).select('group as in, max as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).max(xpath).select(rangeLabel+' as in, max as out').exec(opts.cb);
 			}
 			else {
 				return ret.max(xpath);
@@ -234,7 +269,15 @@
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).average(xpath).select('group as in, average as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).average(xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
 			}
 			else {
 				return ret.average(xpath);

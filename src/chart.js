@@ -171,6 +171,7 @@
 			'y': function(d,i){ return d.out; },
 			'showXAxis': true,
 			'showYAxis': true,
+			'showLegend': false,
 			'transitionDuration': 250,
 			'margin': {left: 80, bottom: 100}
 		};
