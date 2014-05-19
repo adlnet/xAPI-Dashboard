@@ -21,8 +21,8 @@ module.exports = function(grunt) {
 					src: 'dist/xapidashboard.js',
 					dest: 'dist/xapidashboard.min.js'
 				},{
-					src: 'src/xapiCollection.js',
-					dest: 'dist/xapiCollection.min.js'
+					src: 'src/xapicollection.js',
+					dest: 'dist/xapicollection.min.js'
 				}]
 			}
 		}

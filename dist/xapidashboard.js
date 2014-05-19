@@ -22805,10 +22805,14 @@ nv.models.stackedAreaChart = function() {
 
 (function(ADL){
 	
-	var XAPIDashboard = function(container, webworkerSrc){
-		
-		this.webworkerSrc = webworkerSrc ? this.webworkerSrc : 'src/collection-worker.js';	
+	var XAPIDashboard = function(container){
 		this.container = container;
+		try {
+			this.data = new ADL.Collection();
+		}
+		catch(e){
+			this.data = new ADL.CollectionSync();
+		}
 	}
 
 	XAPIDashboard.prototype.fetchAllStatements = function(query, wrapper, cb){
@@ -22822,16 +22826,13 @@ nv.models.stackedAreaChart = function() {
 		wrapper.getStatements(query, null, function getMore(r){
 			var response = JSON.parse(r.response);
 			
-			//Adds statements to a temp array so that addStatements is only called once
-			statementsArr.push.apply(statementsArr, response.statements);
-			
+			self.data.append(response.statements);
+
 			if(response.more){
 				wrapper.getStatements(null, response.more, getMore);
 			}
-			
-			else{
-				self.addStatements(statementsArr);
-				if(cb) cb(self.statements);
+			else {
+				cb();
 			}
 		});
 	};
@@ -22853,14 +22854,7 @@ nv.models.stackedAreaChart = function() {
 				return;
 			}
 		}
-	
-		try{
-			this.data = new ADL.CollectionAsync(statementsArr, this.webworkerSrc);
-		}
-		catch(e){
-			this.data = new ADL.Collection(statementsArr);
-			console.log("Caught error on ADL.CollectionAsync creation, falling back to ADL.Collection ", e);
-		}
+		this.data.append(statementsArr);
 	};
 	
 	// default aggregator requires opts.xField
@@ -22966,7 +22960,15 @@ nv.models.stackedAreaChart = function() {
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).count().select('group as in, count as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).count().select(rangeLabel+' as in, count as out').exec(opts.cb);
 			}
 			else {
 				return ret.count();
@@ -22986,7 +22988,15 @@ nv.models.stackedAreaChart = function() {
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).sum(xpath).select('group as in, sum as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).sum(xpath).select(rangeLabel+' as in, sum as out').exec(opts.cb);
 			}
 			else {
 				return ret.sum(xpath);
@@ -23006,7 +23016,15 @@ nv.models.stackedAreaChart = function() {
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).min(xpath).select('group as in, min as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).min(xpath).select(rangeLabel+' as in, min as out').exec(opts.cb);
 			}
 			else {
 				return ret.min(xpath);
@@ -23026,7 +23044,15 @@ nv.models.stackedAreaChart = function() {
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).max(xpath).select('group as in, max as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).max(xpath).select(rangeLabel+' as in, max as out').exec(opts.cb);
 			}
 			else {
 				return ret.max(xpath);
@@ -23046,7 +23072,15 @@ nv.models.stackedAreaChart = function() {
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-				return ret.groupBy(opts.groupBy, range).average(xpath).select('group as in, average as out').exec(opts.cb);
+				var rangeLabel;
+				if( opts.rangeLabel === 'start' )
+					rangeLabel = 'groupStart';
+				else if( opts.rangeLabel === 'end' )
+					rangeLabel = 'groupEnd';
+				else
+					rangeLabel = opts.rangeLabel || 'group';
+					
+				return ret.groupBy(opts.groupBy, range).average(xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
 			}
 			else {
 				return ret.average(xpath);
@@ -23628,9 +23662,7 @@ nv.models.multiBar = function() {
 }
 ;"use strict";
 (function(ADL){
-	
-	var isChartBusy = false;
-	
+
 	//Base chart class
 	function Chart(opts)
 	{
@@ -23669,14 +23701,6 @@ nv.models.multiBar = function() {
 			event = this.event,
 			self = this;
 		
-		//Hack to stop simultaneous requests to CollectionWorker
-		//Would instantiating new worker here work?
-		if(isChartBusy){
-			window.setTimeout(function(){ self.draw(container) }, 1000);
-			return;
-		}
-		
-		isChartBusy = true;
 		container = container ? container : this.opts.container;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
@@ -23742,8 +23766,6 @@ nv.models.multiBar = function() {
 				window.onResize = chart.update;
 				
 				//chart.update();
-				
-				isChartBusy = false;
 				return chart;
 			});
 		};
@@ -23811,6 +23833,7 @@ nv.models.multiBar = function() {
 			'y': function(d,i){ return d.out; },
 			'showXAxis': true,
 			'showYAxis': true,
+			'showLegend': false,
 			'transitionDuration': 250,
 			'margin': {left: 80, bottom: 100}
 		};
@@ -23934,15 +23957,7 @@ nv.models.multiBar = function() {
 		var	opts = this.opts,
 			event = this.event,
 			self = this;
-		
-		//Hack to stop simultaneous requests to CollectionWorker
-		//Would instantiating new worker here work?
-		if(isChartBusy){
-			window.setTimeout(function(){ self.draw(container) }, 1000);
-			return;
-		}
-		
-		isChartBusy = true;
+			
 		container = container ? container : this.opts.container;
 			
 		if(!opts.aggregate || !opts.chartType || !container){
@@ -23981,8 +23996,6 @@ nv.models.multiBar = function() {
 			
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
-
-			isChartBusy = false;
 		};
 	
 		opts.data.save();

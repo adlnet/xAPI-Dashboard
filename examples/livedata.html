@@ -8,29 +8,40 @@
 		<script type="text/javascript" src="../lib/xapiwrapper.min.js"></script>
 		<script type="text/javascript" src="../src/chart.js"></script>
 		<script type="text/javascript" src="../src/dashboard.js"></script>
-		<script type="text/javascript" src="../src/xapiCollection.js"></script>
+		<script type="text/javascript" src="../src/xapicollection.js"></script>
 
 		<style>
 			h2 {
 				text-align: center;
 			}
+			#graphContainer {
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				align-items: center;
+				flex-wrap: wrap;
+			}
+
 			.container {
 				width: 500px;
 				height: 300px;
+				overflow: hidden;
 			}
 		</style>
 
 	</head>
 	<body>
 		<span id='status'>Fetching data</span>
-		<div id='verbs' class='container'>
-			<svg></svg>
-		</div>
-		<div id='lrsActivity' class='container'>
-			<svg></svg>
-		</div>
-		<div id='actorActivity' class='container'>
-			<svg></svg>
+		<div id='graphContainer'>
+			<div id='verbs' class='container'>
+				<svg></svg>
+			</div>
+			<div id='lrsActivity' class='container'>
+				<svg></svg>
+			</div>
+			<div id='actorActivity' class='container'>
+				<svg></svg>
+			</div>
 		</div>
 		<script>
 
@@ -53,7 +64,7 @@
 				// label for first graph
 				var container = document.querySelector('#verbs');
 				var header = document.createElement('h2');
-				header.innerHTML = 'Verb Popularity Over Last 29 Days';
+				header.innerHTML = 'Verb Popularity Over Last 30 Days';
 				container.insertBefore(header, container.firstChild);
 	
 				// create first graph
@@ -66,7 +77,7 @@
 						return data.orderBy('out','descending').slice(0,10).contents;
 					},
 					customize: function(nvd3chart){
-						nvd3chart.margin({right: 50});
+						nvd3chart.margin({bottom: 150, right: 50});
 						nvd3chart.xAxis.rotateLabels(45);
 						nvd3chart.xAxis.tickFormat(function(label){
 							//var parts = /https?:\/\/.*?(\w+\.\w{2,3}).*(\/.+)$/.exec(label);
@@ -131,7 +142,7 @@
 						nvd3chart.xAxis.tickFormat(function(label){
 							return label.slice(7);
 						});
-						nvd3chart.margin({right: 80, bottom: 100});
+						nvd3chart.margin({right: 80, bottom: 150});
 					}
 				});
 				actorChart.draw();
