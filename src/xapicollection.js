@@ -90,6 +90,9 @@ if(!Array.isArray){
 			this.contents = data.contents.slice();
 			this.parent = data;
 		}
+		else {
+			this.contents = [];
+		}
 	}
 
 	CollectionSync.prototype.exec = function(cb){
@@ -984,6 +987,7 @@ if(!Array.isArray){
 	CollectionAsync.prototype.save    = proxyFactory('save');
 	CollectionAsync.prototype.where   = proxyFactory('where');
 	CollectionAsync.prototype.select  = proxyFactory('select');
+	CollectionAsync.prototype.join    = proxyFactory('join');
 	CollectionAsync.prototype.slice   = proxyFactory('slice');
 	CollectionAsync.prototype.orderBy = proxyFactory('orderBy');
 	CollectionAsync.prototype.groupBy = proxyFactory('groupBy');
