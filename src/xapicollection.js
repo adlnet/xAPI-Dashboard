@@ -82,13 +82,14 @@ if(!Array.isArray){
 	 * object containing the results of the query.
 	 *************************************************************/
 
-	function CollectionSync(data, parent){
-		if(Array.isArray(data))
+	function CollectionSync(data){
+		if(Array.isArray(data)){
 			this.contents = data.slice();
-		else
-			this.contents = [];
-
-		this.parent = parent;
+		}
+		else if(data instanceof CollectionSync){
+			this.contents = data.contents.slice();
+			this.parent = data;
+		}
 	}
 
 	CollectionSync.prototype.exec = function(cb){
@@ -97,7 +98,7 @@ if(!Array.isArray){
 	}
 
 	CollectionSync.prototype.save = function(){
-		return new CollectionSync(this.contents, this);
+		return new CollectionSync(this);
 	}
 
 	CollectionSync.prototype.append = function(data){
@@ -397,44 +398,91 @@ if(!Array.isArray){
 	 * Pick out certain fields from each entry in the dataset
 	 * syntax of selector := xpath ['as' alias] [',' xpath ['as' alias]]*
 	 */
-	CollectionSync.prototype.select = function(selector)
+	CollectionSync.prototype.select = function(selector, level)
 	{
-		// parse selector
-
-		// for each field to be selected
-		var cols = [];
-		var xpaths = selector.split(',');
-		for( var i=0; i<xpaths.length; i++ )
+		// check for recursive depth
+		if(level && level > 0)
 		{
-			// break into an xpath and an optional alias
-			var parts = xpaths[i].split(' as ');
-			cols.push({
-				'xpath': parts[0].trim(),
-				'alias': parts[1] ? parts[1].trim() : null
-			});
-		}
-
-		// pick out selected fields
-
-		// loop over entries in dataset
-		var data = this.contents;
-		var ret = [];
-		for(var i=0; i<data.length; i++)
-		{
-			var row = {};
-			// for each selection field
-			for(var j=0; j<cols.length; j++){
-				// save as old name, or alias if provided
-				if(cols[j].alias)
-					row[cols[j].alias] = getVal(cols[j].xpath, data[i]);
-				else
-					row[cols[j].xpath] = getVal(cols[j].xpath, data[i]);
+			var data = this.contents;
+			for(var i=0; i<data.length; i++){
+				var subdata = new CollectionSync(data[i].data);
+				subdata.select(selector, level-1);
+				data[i].data = subdata.contents;
 			}
-			ret.push(row);
+		}
+		else
+		{
+			// parse selector
+	
+			// for each field to be selected
+			var cols = [];
+			var xpaths = selector.split(',');
+			for( var i=0; i<xpaths.length; i++ )
+			{
+				// break into an xpath and an optional alias
+				var parts = xpaths[i].split(' as ');
+				cols.push({
+					'xpath': parts[0].trim(),
+					'alias': parts[1] ? parts[1].trim() : null
+				});
+			}
+	
+			// pick out selected fields
+	
+			// loop over entries in dataset
+			var data = this.contents;
+			var ret = [];
+			for(var i=0; i<data.length; i++)
+			{
+				var row = {};
+				// for each selection field
+				for(var j=0; j<cols.length; j++){
+					// save as old name, or alias if provided
+					if(cols[j].alias)
+						row[cols[j].alias] = getVal(cols[j].xpath, data[i]);
+					else
+						row[cols[j].xpath] = getVal(cols[j].xpath, data[i]);
+				}
+				ret.push(row);
+			}
+	
+			// return the selection
+			this.contents = ret;
 		}
 
-		// return the selection
-		this.contents = ret;
+		return this;
+	}
+
+	/*
+	 * Perform a series of disjoint queries, and merge results
+	 */
+	CollectionSync.prototype.join = function(keypath, valuepath, level)
+	{
+		var data = this.contents;
+
+		// check for recursion
+		if( level && level > 0 )
+		{
+			// loop over datasets
+			for(var i=0; i<data.length; i++){
+				var subdata = new CollectionSync(data[i].data);
+				subdata.join(keypath, valuepath, level-1);
+				data[i].data = subdata.contents;
+			}
+		}
+		else
+		{
+			// loop over datasets
+			for(var i=0; i<data.length; i++)
+			{
+				for(var j=0; j<data[i].data.length; j++){
+					var key = getVal(keypath, data[i].data[j]);
+					var val = getVal(valuepath, data[i].data[j]);
+					data[i][key] = val;
+				}
+			}
+		}
+
 		return this;
 	}
 
@@ -591,28 +639,52 @@ if(!Array.isArray){
 		if(range)
 			return this._groupByRange(path, range);
 
-		// add each data entry to its respective group
 		var data = this.contents;
-		var groups = {};
-		for(var i=0; i<data.length; i++)
+
+		// if data is already grouped, group the groups
+		if( data[0] && data[0].group && data[0].data )
 		{
-			var groupVal = getVal(path,data[i]);
-			if( !groups[groupVal] )
-				groups[groupVal] = [data[i]];
-			else
-				groups[groupVal].push(data[i]);
+			for(var i=0; i<data.length; i++)
+			{
+				var subgroup = new CollectionSync(data[i].data);
+				subgroup.groupBy(path);
+				data[i].data = subgroup.contents;
+			}
+		}
+		else
+		{
+			// add each data entry to its respective group
+			var groups = {};
+			for(var i=0; i<data.length; i++)
+			{
+				var groupVal = getVal(path,data[i]);
+	
+				// if group field isn't found, 
+				if( !groupVal ){
+					continue;
+				}
+				// no group for found value, create one
+				else if( !groups[groupVal] ){
+					groups[groupVal] = [data[i]];
+				}
+				// add to existing group
+				else {
+					groups[groupVal].push(data[i]);
+				}
+			}
+	
+			// flatten groups
+			var ret = [];
+			for(var i in groups){
+				ret.push({
+					'group': i,
+					'data': groups[i]
+				});
+			}
+	
+			this.contents = ret;
 		}
 
-		// flatten groups
-		var ret = [];
-		for(var i in groups){
-			ret.push({
-				'group': i,
-				'data': groups[i]
-			});
-		}
-
-		this.contents = ret;
 		return this;
 	}
 

@@ -8,25 +8,21 @@
 			function ready(){
 
 				console.time('Total operating time');
-				var c = new ADL.CollectionAsync(window.statements);
+				var c = new ADL.CollectionSync(window.statements);
 				c
-					.where('verb.id = /(passed|failed)$/')
-					.save()
-					.groupBy('result.score.raw', [50,100,5])
-					.count()
-					.sum('result.score.raw')
-					.average('result.score.raw')
-					.min('result.score.raw')
-					.max('result.score.raw')
-					.select('groupStart, groupEnd, count, sum, min, max, average')
-					.orderBy('sum')
+					.where('result.score.raw != null')
+					.groupBy('actor.name')
+					//.groupBy('object.id')
+					//.select('group as test, data.0.result.score.raw as score', 1)
+					//.join('group','data.0.result.score.raw')
+					.join('object.id','result.score.raw')
+					.select('group, http://myschool\\.edu/xapi/cop-3223/final as final, '+
+						'http://myschool\\.edu/xapi/cop-3223/test1 as test1, '+
+						'http://myschool\\.edu/xapi/cop-3223/test2 as test2, '+
+						'http://myschool\\.edu/xapi/cop-3223/test3 as test3, '+
+						'http://myschool\\.edu/xapi/cop-3223/test4 as test4')
 					.exec(function(data){
 						document.body.innerHTML += '<pre>'+JSON.stringify(data, null, '    ')+'</pre>';
-					})
-					.count().select('count')
-					.exec(function(data){
-						console.log('Total test attempts:', data[0].count);
-						console.timeEnd('Total operating time');
 					});
 			};
 		</script>
