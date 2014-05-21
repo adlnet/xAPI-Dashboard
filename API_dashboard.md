@@ -97,22 +97,84 @@ Generates an SVG chart of the given `type` using the `options` specified.
 Determines what kind of chart is generated. Must be one of `lineChart`, `barChart`, `pieChart`, `multiBarChart`, or `linePlusBarChart`.
 
 
-`options` (`Object`)
+`options` (`Object`)  
 An object containing some/all of the following properties:
 
-* `pre` (`function(data)` or `String`)(optional)
+* `container` (`String`)(optional)
+
+	A CSS-style selector indicating where in the DOM the chart should be placed. If omitted, the chart is placed in the default location for this dashboard (from the Dashboard constructor).
+	
+* `pre` (`function(data,event)` or `String`)(optional)
 
 	Preprocesses the raw xAPI data however the user chooses. Takes in a Collection of statements, and must output another dataset, usually some filtered subset of the input (e.g. `return data.where(...);`). All `Collection` methods are available, but the system will break if `exec` is called at this stage.
 	
 	If the `pre` field is a string, it is assumed to be a query string suitable for passing into `Collection.where()`.
 
-* `aggregate` (ADL aggregate function)
+* `aggregate` (`Function`)
 
-	Groups the data in preparation for chart generation. Takes in the preprocessed data, and should output a `Collection` of objects with an `in` and an `out` property, which map to the *x* and *y* axes on the graph. If omitted, a sensible default will be substituted for the graph type.
+	Processes the xAPI data into a format consumable by the chart backend. Generally provided by an ADL generator function like `ADL.average`. E.g.
+	
+	```javascript
+	"aggregate": ADL.average("result.score.raw")
+	```
+	
+* `groupBy` (`String`)
+
+	Indicates that the aggregate function should be called for each group of statements with the same value for the field specified by this property. You can think of this as the *x* axis on the chart, whereas the result of the aggregate function is the *y* axis.
+	
+	For example, if you wanted to know how many times each actor is mentioned, you could say `aggregate: ADL.count(), groupBy: "actor.mbox"` or something similar, and would get a chart with a bar for each actor, and the bar's height would correspond to the number of statements that actor had.
+	
+* `range` (`Object`)
+
+	Modifies the `groupBy` option by allowing similar values to be grouped instead of just equal values. The value of this property must be an object containing `start`, `end`, and `increment` properties. The value space between `start` and `end` will be divided up into groups of size `increment`.
+	
+	Works for three value types: numbers, strings, and ISO-formatted date strings. The type of `start` and `end` should match the type of the value being compared (the value of the field given by `groupBy`).
+	
+	For numeric types like test scores, you can group into grade brackets by 10's:
+	
+	```javascript
+	groupBy: "result.score.raw",
+	range: {
+		start: 60,
+		end: 100,
+		increment: 10
+	}
+	```
+	
+	For string types, this will group by first letter into groups a-h, i-p, q-x, and y-z:
+	
+	```javascript
+	groupBy: "actor.name",
+	range: {
+		start: "a",
+		end: "z",
+		increment: 8
+	}
+	```
+
+	Finally, for date string types, this will group into days, where increment is in milliseconds:
+	
+	```javascript
+	groupBy: "timestamp",
+	range: {
+		start: "2014-04-21",
+		end: "2014-05-21",
+		increment: 1000*60*60*24
+	}
+	```
+	
+* `post` (`function(data)`)(optional)
+
+	Processes the data after everything has been aggregated and prepared for the chart, where `data` is the array of series to be drawn to the chart. Use this function to operate on the chart data. For example, you could sort the bars of a bar graph by height from here. Should return the processed data.
+
+* `customize` (`function(nvd3chart)`)(optional)
+
+	Change the appearance and behavior of the chart by calling nvd3's format functions. See the [nvd3](http://nvd3.org/index.html) documentation for more details.
+	
 
 **Returns:**
 
-*(nothing)*
+The instance of the `Chart` class created by the function call. Must call `draw()` before the chart will be displayed.
 
 
 <a id='createBarChart'></a>
