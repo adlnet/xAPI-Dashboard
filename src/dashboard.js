@@ -29,7 +29,7 @@
 				wrapper.getStatements(null, response.more, getMore);
 			}
 			else {
-				cb();
+				cb(self.data);
 			}
 		});
 	};
@@ -64,6 +64,7 @@
 			case "barChart": opts.chart = new ADL.BarChart(opts); break;
 			case "lineChart": opts.chart = new ADL.LineChart(opts); break;
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
+			case "multiBarChart": opts.chart = new ADL.MultiBarChart(opts); break;
 			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
