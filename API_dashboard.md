@@ -7,16 +7,6 @@ There are several classes necessary to create charts, and they are documented be
 
 Used to query the LRS and generate visualizations from the returned xAPI data.
 
-### Properties
-
-<a id='data'></a>
-#### data
-
-Type: `ADL.Collection`
-
-Stores the statements retrieved by the [fetchAllStatements](#fetchAllStatements) and [addStatements](#addStatements) methods. Is also used as the database for generated graphs.
-
-
 ### Constructor
 
 #### new ADL.XAPIDashboard(container)
@@ -27,6 +17,17 @@ Creates a new instance of the XAPIDashboard. Used to fetch statements from an LR
 
 `container` (`String`)(optional)  
 The default container for charts generated for this dashboard. If omitted, the `container` option must be specified per chart.
+
+
+### Properties
+
+<a id='data'></a>
+#### data
+
+Type: `ADL.Collection`
+
+Stores the statements retrieved by the [fetchAllStatements](#fetchAllStatements) and [addStatements](#addStatements) methods. Is also used as the database for generated graphs.
+
 
 
 ### Methods
@@ -84,6 +85,10 @@ Is passed the Collection of fetched statements (i.e. [data](#data)).
 
 *(nothing)*
 
+<a id='createBarChart'></a>
+#### createBarChart(options)
+
+Equivalent to [createChart](#createChart)("barChart", options).
 
 
 <a id='createChart'></a>
@@ -106,7 +111,7 @@ An object containing some/all of the following properties:
 	
 * `pre` (`function(data,event)` or `String`)(optional)
 
-	Preprocesses the raw xAPI data however the user chooses. Takes in a Collection of statements, and must output another dataset, usually some filtered subset of the input (e.g. `return data.where(...);`). All `Collection` methods are available, but the system will break if `exec` is called at this stage.
+	Preprocesses the raw xAPI data however the user chooses. Takes in a Collection of statements, and must output another Collection, usually some filtered subset of the input (e.g. `return data.where(...);`). All Collection methods are available, but the system will break if `exec` is called at this stage.
 	
 	If this chart is a "child" chart, the second argument to the `pre` function (the `event` parameter) will contain a d3 click event object. Use this object to determine what was clicked in the parent chart and filter the data appropriately. Most significantly, `event.in` contains the name of the bar, or the x-value of the point, clicked on.
 	
@@ -121,6 +126,8 @@ An object containing some/all of the following properties:
 	```javascript
 	"aggregate": ADL.average("result.score.raw")
 	```
+	
+	See [Aggregate functions](#aggregateFunctions) for more about this field.
 	
 * `groupBy` (`String`)
 
@@ -183,13 +190,7 @@ An object containing some/all of the following properties:
 
 **Returns:**
 
-The instance of the `Chart` class created by the function call. Must call `draw()` before the chart will be displayed.
-
-
-<a id='createBarChart'></a>
-#### createBarChart(options)
-
-Equivalent to [createChart](#createChart)("barChart", options).
+The instance of the [Chart](#chart) class created by the function call. Must call `draw()` or hook it to another chart before the chart will be displayed.
 
 
 <a id='createLineChart'></a>
@@ -197,6 +198,15 @@ Equivalent to [createChart](#createChart)("barChart", options).
 
 Equivalent to [createChart](#createChart)("lineChart", options).
 
+<a id='createLinePlusBarChart'></a>
+#### createLinePlusBarChart(options)
+
+Equivalent to [createChart](#createChart)("linePlusBarChart", options).
+
+<a id='createMultiBarChart'></a>
+#### createMultiBarChart(options)
+
+Equivalent to [createChart](#createChart)("multiBarChart", options).
 
 <a id='createPieChart'></a>
 #### createPieChart(options)
@@ -204,13 +214,100 @@ Equivalent to [createChart](#createChart)("lineChart", options).
 Equivalent to [createChart](#createChart)("pieChart", options).
 
 
-<a id='createMultiBarChart'></a>
-#### createMultiBarChart(options)
 
-Equivalent to [createChart](#createChart)("multiBarChart", options).
+<a id='chart'></a>
+## Chart class
+
+### Constructors
+
+Do not construct this class directly. Instead, use the Dashboard methods.
+
+### Properties
+
+`event` (NVD3 Event)  
+If this chart is a child chart, this contains the event that caused the `draw()` call.
+
+`parent` (`Chart`)  
+If this chart is a child chart, this contains a reference to the parent chart.
+
+`child` (`Array`)  
+If this chart has children, then this contains an Array containing references to the child charts.
+
+### Methods
+
+#### clear()
+
+Erases the chart from its container.
+
+**Arguments:**
+
+*(none)*
+
+**Returns:**
+
+*(nothing)*
+
+#### draw()
+
+Perform all requisite data processing, generate the chart, and place it in its container.
+
+**Arguments:**
+
+*(none)*
+
+**Returns:**
+
+*(nothing)*
 
 
-<a id='createLinePlusBarChart'></a>
-#### createLinePlusBarChart(options)
+<a id='aggregateFunctions'></a>
+## Aggregate functions
 
-Equivalent to [createChart](#createChart)("linePlusBarChart", options).
+These functions are all found under the `ADL` namespace, and perform different calculations over xAPI data. These compose a key component of the charting infrastructure.
+
+### ADL.average(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the average value of the members' `xpath` fields to the y-axis of the resulting chart.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to average. 
+
+### ADL.count()
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the sizes of the groups to the y-axis of the resulting chart.
+
+**Arguments:**
+
+*(none)*
+
+
+### ADL.max(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the maximum value of the members' `xpath` fields to the y-axis of the resulting chart.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to find the maximum of. 
+
+
+
+### ADL.min(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the minimum value of the members' `xpath` fields to the y-axis of the resulting chart.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to find the minimum of. 
+
+### ADL.sum(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the total value of the members' `xpath` fields to the y-axis of the resulting chart.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to total. 
