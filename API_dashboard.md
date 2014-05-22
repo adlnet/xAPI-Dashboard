@@ -3,7 +3,7 @@
 There are several classes necessary to create charts, and they are documented below. From a high level, the `XAPIDashboard` class retrieves, stores, and distributes your xAPI data, the `Chart` class encapsulates a particular visualization that uses the Dashboard data, and the `ADL` global object contains helper functions necessary for the use of the other two classes.
 
 
-## ADL.XAPIDashboard
+## XAPIDashboard class
 
 Used to query the LRS and generate visualizations from the returned xAPI data.
 
@@ -108,7 +108,11 @@ An object containing some/all of the following properties:
 
 	Preprocesses the raw xAPI data however the user chooses. Takes in a Collection of statements, and must output another dataset, usually some filtered subset of the input (e.g. `return data.where(...);`). All `Collection` methods are available, but the system will break if `exec` is called at this stage.
 	
+	If this chart is a "child" chart, the second argument to the `pre` function (the `event` parameter) will contain a d3 click event object. Use this object to determine what was clicked in the parent chart and filter the data appropriately. Most significantly, `event.in` contains the name of the bar, or the x-value of the point, clicked on.
+	
 	If the `pre` field is a string, it is assumed to be a query string suitable for passing into `Collection.where()`.
+	
+	
 
 * `aggregate` (`Function`)
 
@@ -171,6 +175,11 @@ An object containing some/all of the following properties:
 
 	Change the appearance and behavior of the chart by calling nvd3's format functions. See the [nvd3](http://nvd3.org/index.html) documentation for more details.
 	
+* `child` (`Array`)(optional)
+
+	Pass click event data from this chart into these "child" charts when a data point is clicked on. Used to "drill into" the data further, and examine derivative relationships.
+	
+	This property should contain an array of `Chart` objects. They will be redrawn when this chart is clicked on.
 
 **Returns:**
 
