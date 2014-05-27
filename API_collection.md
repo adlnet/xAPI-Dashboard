@@ -135,22 +135,36 @@ A reference to the collection containing the newly reduced datasets.
 <a id='slice'></a>
 #### slice(start, [end])
 
-Description
+Just like the `Array` function of the same name, throw out all data except for those whose position in the dataset falls between `start` and `end`.
 
 **Arguments:**
 
+`start` (integer)  
+The beginning of the selection. Data at this index will be included in the result.
+
+`end` (integer)(optional)  
+The end of the selection. Data at this index will NOT be included in the result. If omitted, all data after `start` will be included.
+
 **Returns:**
 
+A reference to the collection containing the newly reduced data.
 
 <a id='orderBy'></a>
 #### orderBy(field, [direction])
 
-Description
+Sort the data by the given field, in the given direction.
 
 **Arguments:**
 
+`field` (`String`)  
+The path to the field to be sorted by. E.g. `object.id`.
+
+`direction` (`String`)(optional)  
+If equal to "descending" or "desc", will sort the data from high to low. Otherwise will sort from low to high.
+
 **Returns:**
 
+A reference to the collection containing the newly sorted data.
 
 <a id='groupBy'></a>
 #### groupBy(field, [intervals])
