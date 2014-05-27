@@ -141,7 +141,7 @@ var chart = dash.createBarGraph({
 	post: function(data){
 		return (new ADL.CollectionSync(data))
 			.orderBy('result.count', 'descending')
-			.select(ADL.Collection.first(10))
+			.slice(0,10)
 			.contents;
 	},
 	customize: function(chart){

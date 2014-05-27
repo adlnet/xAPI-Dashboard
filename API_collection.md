@@ -1,10 +1,26 @@
-# xAPI Collection API Reference
+﻿# xAPI Collection API Reference
 
 ## ADL.Collection
 
 The `Collection` Class is designed to run advanced SQL-like queries over a body of [Experience API](http://www.adlnet.gov/tla/experience-api/faq/)-formatted activity statements. Simply load statements into the class by passing an array into the constructor or using the `append` method, and use the API documented below to map and filter through the statements.
 
 There are two implementations of this class, `CollectionSync` and `CollectionAsync`. Their APIs are the same, but the Async class runs the queries in a worker thread. The downside of this is that the statements must be serialized and passed into the worker, which can be slow. On the other hand, the UI does not lock up for heavy queries like the synchronous version will. If you don't care which one you use, or are worried that worker threads won't be supported on your target audience browsers, use the generic `Collection` class. It will detect whether or not workers are supported, and fall back on the Sync class if they are not.
+
+### Constructors
+
+<a id='constructor'></a>
+#### new Collection([statements])
+
+**Arguments:**
+
+`statements` (`Array`) (optional)  
+An array of xAPI statements to be processed.
+
+**Returns:**
+
+An instantiated Collection class (either sync or async, see [introduction](#)).
+
+
 
 ### Properties
 
@@ -18,28 +34,16 @@ The contents of the current dataset. This is the same data as would be passed in
 
 ### Methods
 
-<a id='constructor'></a>
-#### new Collection([statements])
-
-##### Arguments
-
-`statements` (`Array`) (optional)  
-An array of xAPI statements to be processed.
-
-##### Returns
-
-An instantiated Collection class (either sync or async, see [introduction](#)).
-
 
 <a id='append'></a>
 #### append(statements)
 
-##### Arguments
+**Arguments:**
 
 `statements` (`Array`)  
 An array of xAPI statements to be added to the collection.
 
-##### Returns
+**Returns:**
 
 A reference to the collection with the new data appended to the end of the old dataset.
 
@@ -49,11 +53,11 @@ A reference to the collection with the new data appended to the end of the old d
 
 Takes a snapshot of the current data in the collection, and stores it for use after the next [exec](#exec).
 
-##### Arguments
+**Arguments:**
 
 *(none)*
 
-##### Returns
+**Returns:**
 
 A reference to the collection containing the latest data.
 
@@ -63,12 +67,12 @@ A reference to the collection containing the latest data.
 
 Calls the provided callback with the results of the query.
 
-##### Arguments
+**Arguments:**
 
 `callback` (`Function`)  
 A function that is passed the results of the query (an array of objects).
 
-##### Returns
+**Returns:**
 
 A reference to the collection containing the previous set of data.
 
@@ -98,12 +102,12 @@ stmts.where('actor.name = "Steven" and verb.id = /(passed|failed)$/')
 ```
 
 
-##### Arguments
+**Arguments:**
 
 `query` (`String`)  
 The query expression used to filter the data.
 
-##### Returns
+**Returns:**
 
 A reference to the collection containing the latest data.
 
@@ -113,7 +117,7 @@ A reference to the collection containing the latest data.
 
 For each item in the dataset, pick out the requested fields and return them.
 
-##### Arguments
+**Arguments:**
 
 `fields` (`String`)  
 The comma-delineated list of selection fields. Each field can also use an alias via the `as` keyword. For example:
@@ -123,7 +127,7 @@ stmts.select('group, count as value');
 >>> [{group: 'someGroupId', value: 42}, ...]
 ```
 
-##### Returns
+**Returns:**
 
 A reference to the collection containing the newly reduced datasets.
 
@@ -133,9 +137,9 @@ A reference to the collection containing the newly reduced datasets.
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='orderBy'></a>
@@ -143,9 +147,9 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='groupBy'></a>
@@ -153,9 +157,9 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='count'></a>
@@ -163,9 +167,9 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='sum'></a>
@@ -173,9 +177,9 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='average'></a>
@@ -183,9 +187,9 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='min'></a>
@@ -193,9 +197,9 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
 
 
 <a id='max'></a>
@@ -203,6 +207,6 @@ Description
 
 Description
 
-##### Arguments
+**Arguments:**
 
-##### Returns
+**Returns:**
