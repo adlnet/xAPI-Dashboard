@@ -1,7 +1,10 @@
 ﻿# xAPI-Dashboard
 
-Provides a quick and easy way to generate graphs from your xAPI data, as well as a powerful
-query language to manipulate it.
+This project attempts to simplify the process of extracting meaningful aggregate data from
+Experience API statements. It is composed of two parts. The first part, the *Collection* class,
+allows developers to run SQL-like queries, filters, and aggregations over xAPI data. The second
+part, the *XAPIDashboard* class, can generate numerous types of charts and visualizations based on
+that aggregated xAPI data.
 
 
 ## Making Your First Chart
@@ -11,7 +14,7 @@ Generating your first chart is easy. First, include the libraries:
 ```html
 <link rel='stylesheet' href='nvd3/nv.d3.css'></link>
 <script type="text/javascript" src="dist/xapidashboard.min.js"></script>
-<script type="text/javascript" src="dist/xapiCollection.min.js"></script>
+<script type="text/javascript" src="dist/xapicollection.min.js"></script>
 ```
 
 Next, you should fetch your data from an LRS. You can either retrieve them yourself, or use the
