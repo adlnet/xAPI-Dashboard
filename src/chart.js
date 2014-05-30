@@ -48,7 +48,7 @@
 		
 		opts.cb = function(aggregateData){
 			if(opts.post)
-				aggregateData = opts.post(aggregateData, event) || aggregateData;	
+				aggregateData = opts.post.call(self, aggregateData, event) || aggregateData;	
 
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
@@ -115,7 +115,7 @@
 				opts.data.where(opts.pre);
 			}
 			else{
-				opts.pre(opts.data, event);
+				opts.pre.call(self, opts.data, event);
 			}
 		}
 
