@@ -12,7 +12,7 @@ that aggregated xAPI data.
 Generating your first chart is easy. First, include the libraries:
 
 ```html
-<link rel='stylesheet' href='nvd3/nv.d3.css'></link>
+<link rel="stylesheet" href="lib/nv.d3.css"></link>
 <script type="text/javascript" src="dist/xapidashboard.min.js"></script>
 <script type="text/javascript" src="dist/xapicollection.min.js"></script>
 ```
@@ -37,7 +37,7 @@ Now that your data is loaded, the real magic happens:
 
 ```javascript
 function fetchDoneCallback(){
-	var chart = dash.createBarGraph({
+	var chart = dash.createBarChart({
 		container: '#graphContainer svg',
 		groupBy: 'verb.id',
 		aggregate: ADL.count(),
@@ -50,7 +50,7 @@ function fetchDoneCallback(){
 }
 ```
 
-This generates a bar graph (`dash.createBarGraph`), places it in a particular place in the DOM
+This generates a bar graph (`dash.createBarChart`), places it in a particular place in the DOM
 (`'#graphContainer svg'`), and populates it with your previously fetched data. Each bar
 corresponds with a unique value of a specified section in the statements (in this example,
 `groupBy: 'verb.id'`), and each bar's height is the number of statements with that value
@@ -138,7 +138,7 @@ So to finish our chart, we want to sort the bars by height, and for good measure
 of bars to 10. We can do all of this by providing a post-format hook to our `createBarChart` call:
 
 ```javascript
-var chart = dash.createBarGraph({
+var chart = dash.createBarChart({
 	container: '#graphContainer svg',
 	groupBy: 'verb.id',
 	post: function(data){
