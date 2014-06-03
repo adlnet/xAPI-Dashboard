@@ -107,8 +107,7 @@
 				return chart;
 			});
 		};
-	
-		opts.data.save();
+		opts.data = opts.data.save();
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
@@ -336,7 +335,7 @@
 			ADL.$(container).innerHTML = markup;
 		};
 	
-		opts.data.save();
+		opts.data = opts.data.save();
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){

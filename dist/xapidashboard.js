@@ -22930,9 +22930,11 @@ nv.models.stackedAreaChart = function() {
 			
 			opts.xpath = xpath;
 			if(opts.range){
-				return opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+				return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 			}
-			else return opts.data.groupBy(opts.groupBy).exec(formatData);
+			else {
+				return opts.data = opts.data.groupBy(opts.groupBy).exec(formatData);
+			}
 			
 			//Used as an intermediate callback for exec
 			function formatData(data){
@@ -22969,7 +22971,7 @@ nv.models.stackedAreaChart = function() {
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return ret.groupBy(opts.groupBy, range).count().select(rangeLabel+' as in, count as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).count().select(rangeLabel+' as in, count as out').exec(opts.cb);
 			}
 			else {
 				return ret.count();
@@ -22997,7 +22999,7 @@ nv.models.stackedAreaChart = function() {
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return ret.groupBy(opts.groupBy, range).sum(xpath).select(rangeLabel+' as in, sum as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).sum(xpath).select(rangeLabel+' as in, sum as out').exec(opts.cb);
 			}
 			else {
 				return ret.sum(xpath);
@@ -23025,7 +23027,7 @@ nv.models.stackedAreaChart = function() {
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return ret.groupBy(opts.groupBy, range).min(xpath).select(rangeLabel+' as in, min as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).min(xpath).select(rangeLabel+' as in, min as out').exec(opts.cb);
 			}
 			else {
 				return ret.min(xpath);
@@ -23053,7 +23055,7 @@ nv.models.stackedAreaChart = function() {
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return ret.groupBy(opts.groupBy, range).max(xpath).select(rangeLabel+' as in, max as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).max(xpath).select(rangeLabel+' as in, max as out').exec(opts.cb);
 			}
 			else {
 				return ret.max(xpath);
@@ -23081,7 +23083,7 @@ nv.models.stackedAreaChart = function() {
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return ret.groupBy(opts.groupBy, range).average(xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).average(xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
 			}
 			else {
 				return ret.average(xpath);
@@ -23143,7 +23145,7 @@ nv.models.stackedAreaChart = function() {
 			for( var i=0; i<multi.length; i++ ){
 				multi[i](xpath,true)(opts);
 			}
-			opts.data.exec(tempCb);
+			return opts.data = opts.data.exec(tempCb);
 		}
 	};	 
 	
@@ -23770,8 +23772,7 @@ nv.models.multiBar = function() {
 				return chart;
 			});
 		};
-	
-		opts.data.save();
+		opts.data = opts.data.save();
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
@@ -23999,7 +24000,7 @@ nv.models.multiBar = function() {
 			ADL.$(container).innerHTML = markup;
 		};
 	
-		opts.data.save();
+		opts.data = opts.data.save();
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
