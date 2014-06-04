@@ -695,7 +695,7 @@ if(!Array.isArray){
 	/*
 	 * Take grouped data and return number of entries in each group
 	 */
-	CollectionSync.prototype.count = function()
+	CollectionSync.prototype.count = function(level)
 	{
 		var data = this.contents;
 
@@ -705,6 +705,13 @@ if(!Array.isArray){
 				'group': 'all',
 				'data': data
 			}];
+		}
+		// if it's grouped and deep checking is requested, descend
+		else if(level && level > 0){
+			for(var i=0; i<data.length; i++){
+				data[i].data = (new CollectionSync(data[i].data)).count(level-1).contents;
+			}
+			return this;
 		}
 
 		// loop over each group
@@ -729,7 +736,7 @@ if(!Array.isArray){
 	/*
 	 * Take grouped data and return total of values of entries in each group
 	 */
-	CollectionSync.prototype.sum = function(path)
+	CollectionSync.prototype.sum = function(path,level)
 	{
 		if( !path )
 			return this;
@@ -743,6 +750,14 @@ if(!Array.isArray){
 				'data': data
 			}];
 		}
+		// if it's grouped and deep checking is requested, descend
+		else if(level && level > 0){
+			for(var i=0; i<data.length; i++){
+				data[i].data = (new CollectionSync(data[i].data)).sum(level-1).contents;
+			}
+			return this;
+		}
+
 
 		// loop over each group
 		var ret = [];
@@ -771,7 +786,7 @@ if(!Array.isArray){
 	/*
 	 * Take grouped data and return average of values of entries in each group
 	 */
-	CollectionSync.prototype.average = function(path)
+	CollectionSync.prototype.average = function(path,level)
 	{
 		if( !path )
 			return this;
@@ -785,6 +800,14 @@ if(!Array.isArray){
 				'data': data
 			}];
 		}
+		// if it's grouped and deep checking is requested, descend
+		else if(level && level > 0){
+			for(var i=0; i<data.length; i++){
+				data[i].data = (new CollectionSync(data[i].data)).average(level-1).contents;
+			}
+			return this;
+		}
+
 
 		// loop over each group
 		var ret = [];
@@ -813,7 +836,7 @@ if(!Array.isArray){
 	/*
 	 * Take grouped data and return minimum of values of entries in each group
 	 */
-	CollectionSync.prototype.min = function(path)
+	CollectionSync.prototype.min = function(path,level)
 	{
 		if( !path ) return this;
 		var data = this.contents;
@@ -826,6 +849,14 @@ if(!Array.isArray){
 				'data': data
 			}];
 		}
+		// if it's grouped and deep checking is requested, descend
+		else if(level && level > 0){
+			for(var i=0; i<data.length; i++){
+				data[i].data = (new CollectionSync(data[i].data)).min(level-1).contents;
+			}
+			return this;
+		}
+
 
 		// loop over each group
 		for(var i=0; i<data.length; i++)
@@ -853,7 +884,7 @@ if(!Array.isArray){
 	/*
 	 * Take grouped data and return maximum of values of entries in each group
 	 */
-	CollectionSync.prototype.max = function(path)
+	CollectionSync.prototype.max = function(path,level)
 	{
 		if( !path ) return this;
 		var data = this.contents;
@@ -865,6 +896,14 @@ if(!Array.isArray){
 				'data': data
 			}];
 		}
+		// if it's grouped and deep checking is requested, descend
+		else if(level && level > 0){
+			for(var i=0; i<data.length; i++){
+				data[i].data = (new CollectionSync(data[i].data)).max(level-1).contents;
+			}
+			return this;
+		}
+
 
 		// loop over each group
 		var ret = [];
