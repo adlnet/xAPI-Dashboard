@@ -105,7 +105,7 @@ if(!Array.isArray){
 	}
 
 	CollectionSync.prototype.append = function(data){
-		this.contents.push.apply(this.contents, data);
+		this.contents = this.contents.concat(data);
 		return this;
 	}
 
