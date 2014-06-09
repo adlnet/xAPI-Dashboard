@@ -517,6 +517,10 @@ if(!Array.isArray){
 		data.sort(function(a,b){
 			var aVal = getVal(path,a), bVal = getVal(path,b);
 
+			// guarantee case insensitivity
+			if(aVal.toLowerCase) aVal = aVal.toLowerCase();
+			if(bVal.toLowerCase) bVal = bVal.toLowerCase();
+
 			// any value is greater than null
 			if(aVal!=null && bVal==null)
 				return 1 * direction;
