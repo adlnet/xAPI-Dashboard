@@ -292,11 +292,11 @@ if(!Array.isArray){
 			// value := parseInt | parseFloat | "(.*)"
 			function value(str){
 				var val = null;
-				var cacheTrim = str.trim();
-				if(val = parseInt(str,10)){
+				str = str.trim();
+				/*if((val = parseInt(str,10)) !== NaN){
 					return val;
 				}
-				else if(val = parseFloat(str)){
+				else */if((val = parseFloat(str)) !== NaN){
 					return val;
 				}
 				else if(val = /^\s*"(.*)"\s*$/.exec(str)){
@@ -305,11 +305,11 @@ if(!Array.isArray){
 				else if(val = /^\s*\/(.*)\/(i?)\s*$/.exec(str)){
 					return new RegExp(val[1], val[2]);
 				}
-				else if(cacheTrim === 'null'){
+				else if(str === 'null'){
 					return null;
 				}
-				else if(cacheTrim === 'true' || cacheTrim === 'false'){
-					return cacheTrim === 'true';
+				else if(str === 'true' || str === 'false'){
+					return str === 'true';
 				}
 				else return PARSE_ERROR;
 			}
@@ -375,7 +375,7 @@ if(!Array.isArray){
 		 */
 
 		// no-op if no query
-		if( !query ) return;
+		if( !query ) return this;
 	
 		// parse the query, abort filter if query didn't parse
 		var parse = parseWhere(query);
@@ -383,7 +383,7 @@ if(!Array.isArray){
 			console.error('Invalid where expression: '+query);
 			return;
 		}
-	
+
 		// for each entry in the dataset
 		for(var i=0; i<this.contents.length; i++)
 		{
