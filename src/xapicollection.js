@@ -293,10 +293,8 @@ if(!Array.isArray){
 			function value(str){
 				var val = null;
 				str = str.trim();
-				/*if((val = parseInt(str,10)) !== NaN){
-					return val;
-				}
-				else */if((val = parseFloat(str)) !== NaN){
+				var isnan = Number.isNaN || isNaN;
+				if(!isnan(val = parseFloat(str))){
 					return val;
 				}
 				else if(val = /^\s*"(.*)"\s*$/.exec(str)){
