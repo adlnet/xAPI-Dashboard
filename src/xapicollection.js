@@ -1040,7 +1040,7 @@ if(!Array.isArray){
 
 	ADL.CollectionSync = CollectionSync;
 	ADL.CollectionAsync = CollectionAsync;
-	ADL.Collection = window.Worker ? CollectionAsync : CollectionSync;
+	ADL.Collection = CollectionSync;
 
 }(window.ADL));
 
