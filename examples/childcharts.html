@@ -75,6 +75,18 @@
 		var saveTest = '', scoreArr, totalStudents = 30;
 		
 		dash.addStatements(window.statements);
+		
+		var minMaxAverage = dash.createMultiBarChart({
+			pre: function(data){
+				return data.where("result.score.raw != null").orderBy("object.definition.name");
+			},
+			aggregate: ADL.multiAggregate("result.score.raw", ADL.min, ADL.average, ADL.max),
+			groupBy:  'object.definition.name',
+			customize: function(nvd3Chart){
+				nvd3Chart.forceY([0, 120]);
+				nvd3Chart.yAxis.axisLabel("Grade");			
+			}
+		});
 
 		var studentAnswersTable = dash.createTable({
 			container: '#table',
@@ -184,79 +196,8 @@
 			child: studentsInRange
 		});
 
-		var minMaxAverage = dash.createMultiBarChart({
-			pre: function(data){
-				return data.where("result.score.raw != null").orderBy("object.definition.name");
-			},
-			aggregate: ADL.multiAggregate("result.score.raw", ADL.min, ADL.average, ADL.max),
-			groupBy:  'object.definition.name',
-			customize: function(nvd3Chart){
-				nvd3Chart.forceY([0, 120]);
-				nvd3Chart.yAxis.axisLabel("Grade");			
-			}, 
-			child: [incorrectChart, scoreRanges, scoreRangesPie]
-		});
-		
+		minMaxAverage.addChild([incorrectChart, scoreRanges, scoreRangesPie]);
 		minMaxAverage.draw();		
-
-		/*$('#scores h1').textContent = 'High Scorers';
-		var data = test1Results.orderBy('result.score.raw','descending').selectFirst(10);
-		for(var i=0; i<data.contents.length; i++){
-			var block = document.createElement('li');
-			block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
-			block.querySelector('.name').textContent = data.contents[i].actor.name;
-			block.querySelector('.score').textContent = data.contents[i].result.score.raw;
-			$('#scores ol').appendChild(block);
-		}
-
-		$('#hard_questions h1').textContent = 'Hardest Questions';
-		var data = dash.statements.selectMatch('object.id',/test1/).selectMatch('verb.id',/answered$/);
-		data = data.groupBy('object.id', function(group){
-				return group.selectEqual('result.success',true).count() / group.count();
-			})
-			.orderBy('out').selectFirst(10);
-
-		for(var i=0; i<data.contents.length; i++){
-			var block = document.createElement('li');
-			block.innerHTML = '<span class="name"></span> (<span class="score"></span>)';
-			block.querySelector('.name').textContent = data.contents[i].in.slice(31);
-			block.querySelector('.score').textContent = data.contents[i].out*100 + '% correct';
-			$('#hard_questions ol').appendChild(block);
-			
-		}*/
-
-
-		/************************************
-		Chart customization tips and tricks:
-		*************************************
-
-		// tooltips are special divs, where h3 is the name and p is the content
-		chart.tooltips(true).tooltipContent(function(key,x,y,e,chart){
-			return '<h3>'
-				+e.point.sample.verb.id
-				+'</h3><p>'
-				+y
-				+'</p>';
-		});
-
-		// takes an array of color strings
-		chart.color(['#1f77b4'])
-
-		// rotate the x-axis labels 45 degress, useful for long strings
-		chart.xAxis.rotateLabels(45);
-
-		// apply some transformation to the x-axis labels
-		chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
-
-		chart.yAxis.tickFormat(d3.format(',d'));
-
-		chart.discretebar.dispatch.on('elementClick', function(e){
-			if(confirm('Go to '+e.point.result.sample.object.definition.moreInfo+'?')){
-				window.open(e.point.result.sample.object.definition.moreInfo, '_blank');
-		
-		chart.interpolate('monotone').showLegend(false);
-
-		**************************************/
 
 		/*if( window.statements ){
 			dash.addStatements(window.statements);

@@ -23758,8 +23758,10 @@ nv.models.multiBar = function() {
 									myNode.removeChild(myNode.firstChild);
 								}
 							}
-
-							next.event = e;
+							
+							if(next != self.parent)
+								next.event = e;
+								
 							next.draw();
 						}
 					});
