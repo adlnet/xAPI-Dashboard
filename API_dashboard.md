@@ -176,7 +176,7 @@ An object containing some/all of the following properties:
 	
 * `post` (`function(data)`)(optional)
 
-	Processes the data after everything has been aggregated and prepared for the chart, where `data` is the array of series to be drawn to the chart. Use this function to operate on the chart data. For example, you could sort the bars of a bar graph by height from here. Should return the processed data.
+	Processes the data after everything has been aggregated and prepared for the chart, where `data` is a Collection object containing the series to be drawn to the chart. Use this function to operate on the chart data. For example, you could sort the bars of a bar graph by height from here. May optionally return the processed data.
 
 * `customize` (`function(nvd3chart)`)(optional)
 
