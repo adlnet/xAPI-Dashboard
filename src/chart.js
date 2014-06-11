@@ -1,6 +1,6 @@
 "use strict";
 (function(ADL){
-
+	
 	//Base chart class
 	function Chart(opts)
 	{
@@ -47,8 +47,13 @@
 		}
 		
 		opts.cb = function(aggregateData){
-			if(opts.post)
-				aggregateData = opts.post.call(self, aggregateData, event) || aggregateData;	
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
 
 			nv.addGraph(function(){
 				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
@@ -113,7 +118,7 @@
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				opts.data.where(opts.pre);
+				opts.data.where(opts.pre.bind(self));
 			}
 			else{
 				opts.pre.call(self, opts.data, event);
