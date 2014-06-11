@@ -23,8 +23,7 @@ convenience function provided by the dashboard object:
 ```javascript
 var wrapper = ADL.XAPIWrapper;
 wrapper.changeConfig({"endpoint" : 'https://lrs.adlnet.gov/xAPI/'});
-var dash = new ADL.XAPIDashboard(),
-	set = ADL.Collection;
+var dash = new ADL.XAPIDashboard();
 
 window.onload = function(){
 	// get all statements made in the last two weeks
@@ -142,10 +141,8 @@ var chart = dash.createBarChart({
 	container: '#graphContainer svg',
 	groupBy: 'verb.id',
 	post: function(data){
-		return (new ADL.CollectionSync(data))
-			.orderBy('result.count', 'descending')
-			.slice(0,10)
-			.contents;
+		data.orderBy('result.count', 'descending')
+			.slice(0,10);
 	},
 	customize: function(chart){
 		chart.xAxis.rotateLabels(45);
