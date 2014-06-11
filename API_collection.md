@@ -4,7 +4,7 @@
 
 The `Collection` Class is designed to run advanced SQL-like queries over a body of [Experience API](http://www.adlnet.gov/tla/experience-api/faq/)-formatted activity statements. Simply load statements into the class by passing an array into the constructor or using the `append` method, and use the API documented below to map and filter through the statements.
 
-There are two implementations of this class, `CollectionSync` and `CollectionAsync`. Their APIs are the same, but the Async class runs the queries in a worker thread. The downside of this is that the statements must be serialized and passed into the worker, which can be slow. On the other hand, the UI does not lock up for heavy queries like the synchronous version will. If you don't care which one you use, or are worried that worker threads won't be supported on your target audience browsers, use the generic `Collection` class. It will detect whether or not workers are supported, and fall back on the Sync class if they are not.
+There are two implementations of this class, `CollectionSync` and `CollectionAsync`. Their APIs are the same, but the Async class runs the queries in a worker thread. The downside of this is that the statements must be serialized and passed into the worker, which can be slow. On the other hand, the UI does not lock up for heavy queries like the synchronous version will. However, in most cases the serialization of the data is considerably slower than the actual processing, so we generally recommend using the synchronous version.
 
 ### A Word About XPaths
 
