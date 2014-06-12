@@ -8,7 +8,7 @@
 			function ready(){
 
 				console.time('Total operating time');
-				var c = new ADL.CollectionAsync(window.statements);
+				var c = new ADL.CollectionSync(window.statements);
 				c
 					.where('result.score.raw != null')
 					.groupBy('actor.name')
