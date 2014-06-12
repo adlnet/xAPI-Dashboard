@@ -23665,7 +23665,7 @@ nv.models.multiBar = function() {
 }
 ;"use strict";
 (function(ADL){
-
+	
 	//Base chart class
 	function Chart(opts)
 	{
@@ -23701,91 +23701,46 @@ nv.models.multiBar = function() {
 	
 	Chart.prototype.draw = function(container){
 		var	opts = this.opts,
-			event = this.event,
-			self = this;
+			event = this.event;
 		
 		container = container ? container : this.opts.container;
 			
-		if(!opts.aggregate || !opts.chartType || !container){
+		if((!opts.aggregate && !opts.process) || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
 		
-		opts.cb = function(aggregateData){
-			if(opts.post)
-				aggregateData = opts.post.call(self, aggregateData, event) || aggregateData;	
-
-			nv.addGraph(function(){
-				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
-				
-				if(chart.staggerLabels)
-					chart.staggerLabels(false);
-
-				if( opts.customize )
-					opts.customize(chart, event);
-				
-				var next = self.child || self.parent;
-				if(next && opts.eventChartType){
-					
-					//Find a way to prevent the addition of click handlers every time this chart is drawn
-					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-						e.in = e.in ? e.in : e.point.in;
-						e.out = e.out ? e.out : e.point.out;
-						if(next instanceof Array){
-							for(var i = 0; i < next.length; i++){
-								if(self.opts.container == next[i].opts.container){
-									self.clear();
-								}
-								
-								next[i].event = e;
-								next[i].draw();
-								
-								if(next[i].child instanceof Array){
-									for(var g = 0; g < next[i].child.length; g++){
-										next[i].child[g].clear();
-									}
-								}
-								else if(next[i].child){
-									next[i].child.clear();
-								}
-							}
-						}
-						else if(next){
-							//If the containers are the same, then remove all nodes from the container
-							if(self.opts.container == next.opts.container){
-								var myNode = ADL.$(next.opts.container);
-								while (myNode.firstChild) {
-									myNode.removeChild(myNode.firstChild);
-								}
-							}
-							
-							if(next != self.parent)
-								next.event = e;
-								
-							next.draw();
-						}
-					});
-				}
-
-				self.pipeData(aggregateData, chart);
-				window.onResize = chart.update;
-				
-				//chart.update();
-				return chart;
-			});
-		};
+		//If user specified a process, then call it, pass its results to d3, and return
+		if(opts.process){
+			addChart(this, opts.process.call(this, event), opts);
+			return;
+		}
+		
+		opts.cb = cb;
 		opts.data = opts.data.save();
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				opts.data.where(opts.pre);
+				opts.data.where(opts.pre.bind(this));
 			}
 			else{
-				opts.pre.call(self, opts.data, event);
+				opts.pre.call(this, opts.data, event);
 			}
 		}
 
 		opts.aggregate(opts, event);
+		
+		function cb(aggregateData){
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(this, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
+
+			addChart(this, aggregateData, opts);
+		};
 	};
 	
 	Chart.prototype.addOptions = function(obj){
@@ -23801,6 +23756,67 @@ nv.models.multiBar = function() {
 		this.child = obj;
 		obj.parent = this;
 	};
+	
+	function addChart(self, aggregateData, opts){
+		nv.addGraph(function(){
+			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
+			
+			if(chart.staggerLabels)
+				chart.staggerLabels(false);
+
+			if( opts.customize )
+				opts.customize(chart, event);
+			
+			var next = self.child || self.parent;
+			if(next && opts.eventChartType){
+				
+				//Find a way to prevent the addition of click handlers every time this chart is drawn
+				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					e.in = e.in ? e.in : e.point.in;
+					e.out = e.out ? e.out : e.point.out;
+					if(next instanceof Array){
+						for(var i = 0; i < next.length; i++){
+							if(self.opts.container == next[i].opts.container){
+								self.clear();
+							}
+							
+							next[i].event = e;
+							next[i].draw();
+							
+							if(next[i].child instanceof Array){
+								for(var g = 0; g < next[i].child.length; g++){
+									next[i].child[g].clear();
+								}
+							}
+							else if(next[i].child){
+								next[i].child.clear();
+							}
+						}
+					}
+					else if(next){
+						//If the containers are the same, then remove all nodes from the container
+						if(self.opts.container == next.opts.container){
+							var myNode = ADL.$(next.opts.container);
+							while (myNode.firstChild) {
+								myNode.removeChild(myNode.firstChild);
+							}
+						}
+						
+						if(next != self.parent)
+							next.event = e;
+							
+						next.draw();
+					}
+				});
+			}
+
+			self.pipeData(aggregateData, chart);
+			window.onResize = chart.update;
+			
+			//chart.update();
+			return chart;
+		});
+	}
 	
 	//BarChart class extends Chart
 	function BarChart(opts){

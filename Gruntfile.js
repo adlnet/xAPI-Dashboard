@@ -3,6 +3,13 @@ module.exports = function(grunt) {
 	// Project configuration.
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
+		jison: {
+			my_parser: {
+				files: {
+					'dist/math.js': 'src/parsers/math.jison'
+				}
+			}
+		},
 		concat: {
 			options: {
 				separator: ';'
@@ -29,10 +36,11 @@ module.exports = function(grunt) {
 	});
 
 	// Load the plugin that provides the "uglify" task.
+	grunt.loadNpmTasks('grunt-jison');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
 	// Default task(s).
-	grunt.registerTask('default', ['concat', 'uglify']);
+	grunt.registerTask('default', ['jison', 'concat', 'uglify']);
 
 };
