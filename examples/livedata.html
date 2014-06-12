@@ -73,8 +73,7 @@
 					groupBy: 'verb.id',
 					aggregate: ADL.count(),
 					post: function(data){
-						data = new ADL.CollectionSync(data);
-						return data.orderBy('out','descending').slice(0,10).contents;
+						data.orderBy('out','descending').slice(0,10);
 					},
 					customize: function(nvd3chart){
 						nvd3chart.margin({bottom: 150, right: 50});
@@ -109,10 +108,9 @@
 					rangeLabel: 'start',
 					aggregate: ADL.count(),
 					post: function(data){
-						for(var i=0; i<data.length; i++){
-							data[i].in = Date.parse(data[i].in);
-						}
-						return data;
+						data.contents.map(function(el){
+							el.in = Date.parse(el.in);
+						});
 					},
 					customize: function(nvd3chart){
 						nvd3chart.xAxis.tickFormat(function(label){
@@ -134,8 +132,7 @@
 					groupBy: 'actor.mbox',
 					aggregate: ADL.count(),
 					post: function(data){
-						data = new ADL.CollectionSync(data);
-						return data.orderBy('out', 'descending').slice(0,10).contents;
+						data.orderBy('out', 'descending').slice(0,10);
 					},
 					customize: function(nvd3chart){
 						nvd3chart.xAxis.rotateLabels(45);

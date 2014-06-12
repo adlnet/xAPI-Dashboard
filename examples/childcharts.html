@@ -128,8 +128,7 @@
 		var incorrectStudentsTable = dash.createTable({
 			groupBy: 'actor.name',
 			pre: function(data, event){
-				data.where('result.success = false and object.definition.name = "' + saveTest + '/' + event.in + '"')
-					.orderBy("actor.name");
+				data.where('result.success = false and object.definition.name = "' + event.in + '"').orderBy("actor.name");
 			},
 			aggregate: ADL.select("actor.name"),
 			container: '#table2'
@@ -138,28 +137,18 @@
 		var incorrectChart = dash.createBarChart({
 			pre: function(data, event){
 				saveTest = event.in;
-				data.where('result.success = false');
+				data.where('result.success = false and context.contextActivities.parent.0.id = /'+saveTest+'$/');
 			},
 			aggregate: ADL.count(),
 			groupBy: 'object.definition.name',
 			post: function(data){
-				var newArr = [];
-				for(var i = 0; i < data.length; i++){
-					if(data[i].in && data[i].in.indexOf(saveTest) >= 0 && data[i].out != null){
-						data[i].in = data[i].in.split(saveTest + '/')[1];
-						data[i].out = data[i].out / totalStudents * 100;
-						newArr.push(data[i]);
-					}
-				}
-				
-				return ADL.CollectionSync.prototype.orderBy.call({contents: newArr}, "out", "descending").contents.slice(0, 10);
+				data.orderBy('out', 'desc').slice(0, 10);
 			},
 			customize: function(nvd3Chart){
-				nvd3Chart.forceY([0, 100]);
+				nvd3Chart.forceY([0, totalStudents]);
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Question");
 				nvd3Chart.yAxis.axisLabel("% Incorrect");
 				ADL.$('h2').textContent = saveTest.charAt(0).toUpperCase() + saveTest.substr(1, saveTest.length) + ' Data';
-				
 			},
 			container: '#svg5',
 			child: incorrectStudentsTable
@@ -172,11 +161,12 @@
 			pre: function(data, event){
 				return data.where('result.score.raw != null and object.definition.name = "' + saveTest + '"');
 			},
-			post: function(data){
-				for(var i = 0; i < data.length; i++)
-					data[i].out *= 1/totalStudents * 100;
-			},
 			aggregate: ADL.count(),
+			post: function(data){
+				data.contents.map(function(el){
+					el.out *= 1/totalStudents * 100;
+				});
+			},
 			customize: function(nvd3Chart, event){
 				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Grade Range");
 				nvd3Chart.yAxis.axisLabel("% of Class");
