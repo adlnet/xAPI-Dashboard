@@ -36,8 +36,7 @@
 	
 	Chart.prototype.draw = function(container){
 		var	opts = this.opts,
-			event = this.event,
-			self = this;
+			event = this.event;
 		
 		container = container ? container : this.opts.container;
 			
@@ -46,9 +45,9 @@
 			return;
 		}
 		
-		//If user specified a process, then pass its results to d3 and return
+		//If user specified a process, then call it, pass its results to d3, and return
 		if(opts.process){
-			addChart(self, opts.process.call(self, event), opts);
+			addChart(this, opts.process.call(this, event), opts);
 			return;
 		}
 		
@@ -57,10 +56,10 @@
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				opts.data.where(opts.pre.bind(self));
+				opts.data.where(opts.pre.bind(this));
 			}
 			else{
-				opts.pre.call(self, opts.data, event);
+				opts.pre.call(this, opts.data, event);
 			}
 		}
 
@@ -69,13 +68,13 @@
 		function cb(aggregateData){
 			if(opts.post){
 				var tempCollection = new ADL.CollectionSync(aggregateData);
-				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				var temp = opts.post.call(this, tempCollection, event) || tempCollection;
 				
 				//If temp is a collection, assign temp.contents. If not, then it's just an array.
 				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
 			}
 
-			addChart(self, aggregateData, opts);
+			addChart(this, aggregateData, opts);
 		};
 	};
 	
