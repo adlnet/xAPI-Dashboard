@@ -51,7 +51,8 @@ if(!Array.isArray){
 		}
 
 		else {
-			//var parts = /^([^\.]+)(?:\.(.+))?$/.exec(path);
+
+			// break xpath into individual keys
 			var parts;
 			if(Array.isArray(path)){
 				parts = path;
@@ -67,8 +68,32 @@ if(!Array.isArray){
 				}
 			}
 
+			// fetch deep path
 			var scoped = parts[0], rest = parts.slice(1);
-			return getVal(rest, obj[scoped]);
+			if( scoped === '*' )
+			{
+				var ret = [], keys = [];
+
+				if(Array.isArray(obj)){
+					for(var i=0; i<obj.length; i++) keys.push(i);
+				}
+				else {
+					keys = Object.keys(obj);
+				}
+
+				for(var i=0; i<keys.length; i++){
+					var keyout = getVal(rest, obj[keys[i]]);
+					if(Array.isArray(keyout))
+						ret.push.apply(ret,keyout);
+					else
+						ret.push(keyout);
+				}
+				
+				return ret;
+			}
+			else {
+				return getVal(rest, obj[scoped]);
+			}
 		}
 	}
 
@@ -339,8 +364,9 @@ if(!Array.isArray){
 				return false;
 			}
 		
-			// check for conditions, and if so evaluate
-			else if(parse.op){
+			// check for conditions without wildcard, and if so evaluate
+			else if(parse.op && !/\.\*\.?/.test(parse.xpath))
+			{
 				switch(parse.op){
 					case 'eq': return getVal(parse.xpath,stmt) === parse.value;
 					case 'neq': return getVal(parse.xpath,stmt) !== parse.value;
@@ -353,8 +379,37 @@ if(!Array.isArray){
 					default: return false;
 				}
 			}
+			// check for conditions with wildcard
+			else if(parse.op && /\.\*\.?/.test(parse.xpath))
+			{
+				var values = getVal(parse.xpath,stmt);
+				if(!values)
+					return false;
+
+				// loop over each returned value
+				for(var i=0; i<values.length; i++)
+				{
+					var result;
+					if(parse.op === 'eq')       result = values[i] === parse.value;
+					else if(parse.op === 'neq') result = values[i] !== parse.value;
+					else if(parse.op === 'geq') result = values[i] >= parse.value;
+					else if(parse.op === 'leq') result = values[i] <= parse.value;
+					else if(parse.op === 'lt')  result = values[i] < parse.value;
+					else if(parse.op === 'gt')  result = values[i] > parse.value;
+					else if(parse.op === 're')  result = parse.value.test( values[i] );
+					else if(parse.op === 'nre') result = !parse.value.test( values[i] );
+					else result = false;
+
+					if(result)
+						return true;
+				}
+
+				return false;
+			}
+
 			// check for and, and if so evaluate
-			else if(parse.and){
+			else if(parse.and)
+			{
 				// evaluate first operand
 				if( !evalConditions(parse.and[0], stmt) )
 					return false;
@@ -363,7 +418,8 @@ if(!Array.isArray){
 					return evalConditions({and: parse.and.slice(1)}, stmt);
 			}
 			// check for or, and if so evaluate
-			else if(parse.or){
+			else if(parse.or)
+			{
 				// evaluate first operand
 				if( evalConditions(parse.or[0], stmt) )
 					return true;
@@ -371,6 +427,7 @@ if(!Array.isArray){
 				else
 					return evalConditions({or: parse.or.slice(1)}, stmt);
 			}
+
 			// fail for any other structures. shouldn't happen
 			else {
 				return false;
