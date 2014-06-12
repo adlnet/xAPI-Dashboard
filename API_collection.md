@@ -4,7 +4,30 @@
 
 The `Collection` Class is designed to run advanced SQL-like queries over a body of [Experience API](http://www.adlnet.gov/tla/experience-api/faq/)-formatted activity statements. Simply load statements into the class by passing an array into the constructor or using the `append` method, and use the API documented below to map and filter through the statements.
 
-There are two implementations of this class, `CollectionSync` and `CollectionAsync`. Their APIs are the same, but the Async class runs the queries in a worker thread. The downside of this is that the statements must be serialized and passed into the worker, which can be slow. On the other hand, the UI does not lock up for heavy queries like the synchronous version will. If you don't care which one you use, or are worried that worker threads won't be supported on your target audience browsers, use the generic `Collection` class. It will detect whether or not workers are supported, and fall back on the Sync class if they are not.
+There are two implementations of this class, `CollectionSync` and `CollectionAsync`. Their APIs are the same, but the Async class runs the queries in a worker thread. The downside of this is that the statements must be serialized and passed into the worker, which can be slow. On the other hand, the UI does not lock up for heavy queries like the synchronous version will. However, in most cases the serialization of the data is considerably slower than the actual processing, so we generally recommend using the synchronous version.
+
+### A Word About XPaths
+
+Many parts of this class use what are called xpaths. These are strings that indicate a path into the data structure to find a particular value. They are composed of a period-delineated list of object keys. The syntax will be familiar for anyone that has used a C-like language like Javascript. Literal periods can be in the keys, but you will need to escape them with a literal backslash, e.g. `"adlnet\\.gov"`. 
+
+For example, if you had an object like this:
+
+```javascript
+{
+	"level1": {
+		"level2": {
+			"level3": [
+				{
+					"level5": some_value
+}]}}}
+```
+
+You could reference the value of `some_value` using the xpath `"level1.level2.level3.0.level5"`. Each dot indicates a nested object with the given key. Notice that the object under level 3 is an array. In this case, the key is an integer instead of a string, but the pattern holds otherwise.
+
+If any part of the xpath is not found in the object, then `null` is returned.
+
+Collections hold arrays of objects, so all operations implicitly apply xpaths for all top-level items. This means that you must not put an initial array index onto any xpaths.
+
 
 ### Constructors
 
@@ -80,11 +103,14 @@ A reference to the collection containing the previous set of data.
 <a id='where'></a>
 #### where(query)
 
-Filter the contents of the collection by some query, and return the filtered results collection. `where` queries use a similar syntax to the SQL SELECT WHERE clause. You can use `and`, `or`, and parentheses to combine different search terms in any way you wish. `where` supports only the basic comparison operators (`>,>=,<,<=,=,!=`), plus regular expressions to replace the SQL LIKE operator.
+Filter the contents of the collection by some query, and return the filtered results collection.
 
-Selecting fields inside of an xAPI statement is similarly simple. The selector is patterned after the Javascript object notation for property access: a dot-delineated list of property names. The property names can contain any non-whitespace character, though if you need to use a dot you'll need to escape it with a backslash (e.g. `adlnet\\.gov`). If the given field or any of its parent objects do not exist, then its value is considered `null`.
+`where` queries use a similar syntax to the SQL SELECT WHERE clause. You specify one or more conditions that, if met by a datum, will cause that datum to be in the result set.
 
-For example:
+Each condition consists of a field, a comparator, and a value. The field must be an xpath. The comparator can only be one of `>,>=,<,<=,=,!=`, where they have the same meaning as in Javascript. The value can be either a literal string (anything between two double quotes), a number (in base 8, 10, or 16), a regular expression (anything between two forward slashes), or one of the special tokens `true`, `false`, or `null`. Note that the operators are strongly typed, so `"5" != 5`. Also note that only `=` and `!=` are valid comparisons against a regular expression.
+
+You can use `and`, `or`, and parentheses to combine different conditions in any way you wish. For example:
+
 ```javascript
 stmts.where(
 	'actor.name = "Steven" and ('+
@@ -120,7 +146,7 @@ For each item in the dataset, pick out the requested fields and return them.
 **Arguments:**
 
 `fields` (`String`)  
-The comma-delineated list of selection fields. Each field can also use an alias via the `as` keyword. For example:
+The comma-delineated list of selection field xpaths. Each field can also use an alias via the `as` keyword. For example:
 
 ```javascript
 stmts.select('group, count as value');
@@ -157,7 +183,7 @@ Sort the data by the given field, in the given direction.
 **Arguments:**
 
 `field` (`String`)  
-The path to the field to be sorted by. E.g. `object.id`.
+The xpath of the field to be sorted by. E.g. `object.id`.
 
 `direction` (`String`)(optional)  
 If equal to "descending" or "desc", will sort the data from high to low. Otherwise will sort from low to high.
@@ -169,58 +195,125 @@ A reference to the collection containing the newly sorted data.
 <a id='groupBy'></a>
 #### groupBy(field, [intervals])
 
-Description
+Divide the contents of the collection into groups based on the value of each datum's `field`. If `intervals` is supplied, the grouping is based on if the value falls within a range, otherwise the data will be grouped by simple equality.
+
+For example:
+
+```javascript
+var stmts = new ADL.Collection([
+	{name: "Alice", age: 14},
+	{name: "Bob", age: 34},
+	{name: "Bob", age: 50}
+]);
+
+stmts.groupBy('name')
+>>> [{
+	group: "Alice",
+	data: [{name: "Alice", age: 14}]
+},{
+	group: "Bob",
+	data: [{name: "Bob", age: 34},{name: "Bob", age: 50}]
+}]
+
+stmts.groupBy('age', [0,40,20])
+>>> [{
+	group: "0-20",
+	groupStart: 0,
+	groupEnd: 20,
+	data: [{name: "Alice", age: 14}]
+},{
+	group: "20-40",
+	groupStart: 20,
+	groupEnd: 40,
+	data: [{name: "Bob", age: 34}]
+}]
+	
+```
+
+Notice that in the second example using `intervals`, the datum that fell outside the bounds was not included in the result at all.
 
 **Arguments:**
 
+`field` (`String`)  
+The xpath to the field on which the data will be grouped. E.g. `"actor.mbox"`.
+
+`intervals` (`Array`)(optional)  
+A 3-length array describing how the data should be divided. `intervals` must contain these exact three elements: a `start` value, an `end` value, and the `increment`. The value space between `start` and `end` is divided into groups of size `increment`, and each item in the collection is assigned a group based on if its `field` value is within the bounds of the group.
+
+If `start` and `end` are numeric, then groups are determined by simple addition (e.g. `[1,4,1]` -> 1-2,2-3,3-4). If they are strings, then the first letter will be used and incremented by `increment` letters (e.g. `["a","z",13]` -> a-n,n-z ). If `start` and `end` are ISO Date strings, then `increment` represents a length of time in milliseconds.
+
 **Returns:**
+
+A reference to the collection containing the newly created groups.
 
 
 <a id='count'></a>
 #### count()
 
-Description
+Determine the number of items in each group, or in the whole collection if not grouped.
 
 **Arguments:**
 
+*None*
+
 **Returns:**
+
+A reference to the resulting collection.
 
 
 <a id='sum'></a>
 #### sum(field)
 
-Description
+Determine the total value of each group's data, or all data if not grouped.
 
 **Arguments:**
 
+`field` (`String`)  
+An xpath indicating a field in each piece of data to be added to the total.
+
 **Returns:**
 
+A reference to the collection.
 
 <a id='average'></a>
 #### average(field)
 
-Description
+Determine the average value of each group's data, or all data if not grouped.
 
 **Arguments:**
 
+`field` (`String`)  
+An xpath indicating a field in each piece of data to be averaged.
+
 **Returns:**
 
+A reference to the resulting collection.
 
 <a id='min'></a>
 #### min(field)
 
-Description
+Determine the minimum value of each group's data, or all data if not grouped.
 
 **Arguments:**
 
+`field` (`String`)  
+An xpath indicating a field in each piece of data to be compared against the minimum.
+
 **Returns:**
+
+A reference to the resulting collection.
 
 
 <a id='max'></a>
 #### max(field)
 
-Description
+Determine the minimum value of each group's data, or all data if not grouped.
 
 **Arguments:**
 
+`field` (`String`)  
+An xpath indicating a field in each piece of data to be compared against the maximum.
+
 **Returns:**
+
+A reference to the resulting collection.
