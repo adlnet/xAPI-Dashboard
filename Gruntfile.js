@@ -4,7 +4,8 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		jison: {
-			my_parser: {
+			target: {
+				options: {moduleName: 'MathParser'},
 				files: {
 					'dist/math.js': 'src/parsers/math.jison'
 				}
