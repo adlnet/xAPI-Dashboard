@@ -465,18 +465,31 @@ if(!Array.isArray){
 	 * Perform numeric or string computations on the dataset
 	 * and write the result to another field
 	 */
-	CollectionSync.prototype.math = function(dest, expr)
+	CollectionSync.prototype.math = function(dest, expr, level)
 	{
-		var ptree = MathParser.parse(expr);
-
-		for(var i=0; i<this.contents.length; i++)
+		// check for recursive depth
+		if(level && level > 0)
 		{
-			var data = this.contents[i];
-			for(var path in ptree.xpaths){
-				ptree.xpaths[path] = getVal(path, data);
+			var data = this.contents;
+			for(var i=0; i<data.length; i++){
+				var subdata = new CollectionSync(data[i].data);
+				subdata.math(dest, expr, level-1);
+				data[i].data = subdata.contents;
 			}
+		}
+		else
+		{
+			var ptree = MathParser.parse(expr);
 
-			data[dest] = ptree.evaluate();
+			for(var i=0; i<this.contents.length; i++)
+			{
+				var data = this.contents[i];
+				for(var path in ptree.xpaths){
+					ptree.xpaths[path] = getVal(path, data);
+				}
+
+				data[dest] = ptree.evaluate();
+			}
 		}
 
 		// return the computed data
