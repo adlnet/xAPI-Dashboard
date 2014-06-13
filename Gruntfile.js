@@ -12,12 +12,14 @@ module.exports = function(grunt) {
 			}
 		},
 		concat: {
-			options: {
-				separator: ';'
-			},
 			dist: {
-				src: ['lib/d3.v3.js', 'lib/nv.d3.js', 'lib/xapiwrapper.min.js','src/dashboard.js', 'src/chart.js'],
-				dest: 'dist/xapidashboard.js'
+				options: {
+					separator: ';'
+				},
+				files: {
+					'dist/xapidashboard.js': ['lib/d3.v3.js', 'lib/nv.d3.js', 'lib/xapiwrapper.min.js','src/dashboard.js', 'src/chart.js'],
+					'dist/xapicollection.js': ['dist/math.js', 'src/xapicollection.js']
+				}
 			}
 		},
 		uglify: {

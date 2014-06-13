@@ -4,9 +4,9 @@
 %%
 
 [0-9]+(\.[0-9]+)?	return 'NUMBER';
-"\""[^"]+"\""		return 'QUOTE_XPATH';
-"|"[^|]+"|"			return 'PIPE_XPATH';
-"["[^\]]+"]"		return 'BRACKET_XPATH';
+"\""[^"]+"\""		return 'VALUE_XPATH';
+"|"[^|]+"|"			return 'LENGTH_XPATH';
+"["[^\]]+"]"		return 'SUM_XPATH';
 "+"					return 'PLUS';
 "-"					return 'MINUS';
 "*"					return 'TIMES';
@@ -50,9 +50,9 @@ value:
 	;
 
 xpath_op:
-	QUOTE_XPATH						{ $$ = {op:'xpath',value:$1.slice(1,-1)}; }
-	| PIPE_XPATH					{ $$ = {op:'lengthof',value:{op:'xpath',value:$1.slice(1,-1)}}; }
-	| BRACKET_XPATH					{ $$ = {op:'sum',value:{op:'xpath',value:$1.slice(1,-1)}}; }
+	VALUE_XPATH						{ $$ = {op:'xpath',value:$1.slice(1,-1)}; }
+	| LENGTH_XPATH					{ $$ = {op:'lengthof',value:{op:'xpath',value:$1.slice(1,-1)}}; }
+	| SUM_XPATH						{ $$ = {op:'sum',value:{op:'xpath',value:$1.slice(1,-1)}}; }
 	;
 
 expression:
@@ -90,7 +90,7 @@ expression:
 					return parse.value;
 				
 				else if(parse.op === 'xpath'){
-					if(!ret.xpaths[parse.value]){
+					if(ret.xpaths[parse.value] === null){
 						throw 'No value set for xpath '+parse.value;
 					}
 					else return ret.xpaths[parse.value];
