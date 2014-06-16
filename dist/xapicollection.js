@@ -74,9 +74,9 @@
 var MathParser = (function(){
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"expr":3,"OPEN_PAREN":4,"CLOSE_PAREN":5,"MINUS":6,"add_op":7,"PLUS":8,"mult_op":9,"TIMES":10,"DIVIDED_BY":11,"value":12,"NUMBER":13,"xpath_op":14,"VALUE_XPATH":15,"LENGTH_XPATH":16,"SUM_XPATH":17,"expression":18,"END":19,"$accept":0,"$end":1},
-terminals_: {2:"error",4:"OPEN_PAREN",5:"CLOSE_PAREN",6:"MINUS",8:"PLUS",10:"TIMES",11:"DIVIDED_BY",13:"NUMBER",15:"VALUE_XPATH",16:"LENGTH_XPATH",17:"SUM_XPATH",19:"END"},
-productions_: [0,[3,3],[3,2],[3,1],[7,3],[7,3],[7,1],[9,3],[9,3],[9,1],[12,1],[12,1],[14,1],[14,1],[14,1],[18,2]],
+symbols_: {"error":2,"expr":3,"OPEN_PAREN":4,"CLOSE_PAREN":5,"MINUS":6,"add_op":7,"PLUS":8,"mult_op":9,"TIMES":10,"DIVIDED_BY":11,"value":12,"NUMBER":13,"xpath_op":14,"VALUE_XPATH":15,"LENGTH_XPATH":16,"SUM_XPATH":17,"SLICE_XPATH":18,"expression":19,"END":20,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"OPEN_PAREN",5:"CLOSE_PAREN",6:"MINUS",8:"PLUS",10:"TIMES",11:"DIVIDED_BY",13:"NUMBER",15:"VALUE_XPATH",16:"LENGTH_XPATH",17:"SUM_XPATH",18:"SLICE_XPATH",20:"END"},
+productions_: [0,[3,3],[3,2],[3,1],[7,3],[7,3],[7,1],[9,3],[9,3],[9,1],[12,1],[12,1],[14,1],[14,1],[14,1],[14,1],[19,2]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -111,6 +111,17 @@ break;
 case 14: this.$ = {op:'sum',value:{op:'xpath',value:$$[$0].slice(1,-1)}}; 
 break;
 case 15:
+										var data = yytext.slice(1,-1);
+										data = data.split('|');
+										this.$ = {op:'slice',value:{op:'xpath',value:data[0]}};
+										data = data[1].split(',');
+										if(isNaN(this.$.start = parseInt(data[0])))
+											this.$.start = undefined;
+										if(isNaN(this.$.end = parseInt(data[1])))
+											this.$.end = undefined;
+									
+break;
+case 16:
 
 		var ret = {
 			xpaths: {}
@@ -145,7 +156,7 @@ case 15:
 				
 				else if(parse.op === 'xpath'){
 					if(ret.xpaths[parse.value] === null){
-						throw 'No value set for xpath '+parse.value;
+						throw 'No value for xpath '+parse.value;
 					}
 					else return ret.xpaths[parse.value];
 				}
@@ -171,6 +182,10 @@ case 15:
 				else if(parse.op === 'lengthof')
 					return evaluate(parse.value).length;
 
+				else if(parse.op === 'slice'){
+					return evaluate(parse.value).slice(parse.start,parse.end);
+				}
+
 				else
 					throw 'Unknown operation: '+parse.op;
 			})($$[$0-1]);
@@ -181,8 +196,8 @@ case 15:
 break;
 }
 },
-table: [{3:2,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:1},{1:[3]},{6:[1,15],8:[1,14],10:[1,16],11:[1,17],19:[1,13]},{3:18,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12]},{3:19,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12]},{5:[2,3],6:[2,3],8:[2,3],10:[2,3],11:[2,3],19:[2,3]},{5:[2,6],6:[2,6],8:[2,6],10:[2,6],11:[2,6],19:[2,6]},{5:[2,9],6:[2,9],8:[2,9],10:[2,9],11:[2,9],19:[2,9]},{5:[2,10],6:[2,10],8:[2,10],10:[2,10],11:[2,10],19:[2,10]},{5:[2,11],6:[2,11],8:[2,11],10:[2,11],11:[2,11],19:[2,11]},{5:[2,12],6:[2,12],8:[2,12],10:[2,12],11:[2,12],19:[2,12]},{5:[2,13],6:[2,13],8:[2,13],10:[2,13],11:[2,13],19:[2,13]},{5:[2,14],6:[2,14],8:[2,14],10:[2,14],11:[2,14],19:[2,14]},{1:[2,15]},{3:20,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12]},{3:21,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12]},{3:22,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12]},{3:23,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12]},{5:[1,24],6:[1,15],8:[1,14],10:[1,16],11:[1,17]},{5:[2,2],6:[2,2],8:[2,2],10:[2,2],11:[2,2],19:[2,2]},{5:[2,4],6:[2,4],8:[2,4],10:[1,16],11:[1,17],19:[2,4]},{5:[2,5],6:[2,5],8:[2,5],10:[1,16],11:[1,17],19:[2,5]},{5:[2,7],6:[2,7],8:[2,7],10:[2,7],11:[2,7],19:[2,7]},{5:[2,8],6:[2,8],8:[2,8],10:[2,8],11:[2,8],19:[2,8]},{5:[2,1],6:[2,1],8:[2,1],10:[2,1],11:[2,1],19:[2,1]}],
-defaultActions: {13:[2,15]},
+table: [{3:2,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13],19:1},{1:[3]},{6:[1,16],8:[1,15],10:[1,17],11:[1,18],20:[1,14]},{3:19,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13]},{3:20,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13]},{5:[2,3],6:[2,3],8:[2,3],10:[2,3],11:[2,3],20:[2,3]},{5:[2,6],6:[2,6],8:[2,6],10:[2,6],11:[2,6],20:[2,6]},{5:[2,9],6:[2,9],8:[2,9],10:[2,9],11:[2,9],20:[2,9]},{5:[2,10],6:[2,10],8:[2,10],10:[2,10],11:[2,10],20:[2,10]},{5:[2,11],6:[2,11],8:[2,11],10:[2,11],11:[2,11],20:[2,11]},{5:[2,12],6:[2,12],8:[2,12],10:[2,12],11:[2,12],20:[2,12]},{5:[2,13],6:[2,13],8:[2,13],10:[2,13],11:[2,13],20:[2,13]},{5:[2,14],6:[2,14],8:[2,14],10:[2,14],11:[2,14],20:[2,14]},{5:[2,15],6:[2,15],8:[2,15],10:[2,15],11:[2,15],20:[2,15]},{1:[2,16]},{3:21,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13]},{3:22,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13]},{3:23,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13]},{3:24,4:[1,3],6:[1,4],7:5,9:6,12:7,13:[1,8],14:9,15:[1,10],16:[1,11],17:[1,12],18:[1,13]},{5:[1,25],6:[1,16],8:[1,15],10:[1,17],11:[1,18]},{5:[2,2],6:[2,2],8:[2,2],10:[2,2],11:[2,2],20:[2,2]},{5:[2,4],6:[2,4],8:[2,4],10:[1,17],11:[1,18],20:[2,4]},{5:[2,5],6:[2,5],8:[2,5],10:[1,17],11:[1,18],20:[2,5]},{5:[2,7],6:[2,7],8:[2,7],10:[2,7],11:[2,7],20:[2,7]},{5:[2,8],6:[2,8],8:[2,8],10:[2,8],11:[2,8],20:[2,8]},{5:[2,1],6:[2,1],8:[2,1],10:[2,1],11:[2,1],20:[2,1]}],
+defaultActions: {14:[2,16]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -656,26 +671,28 @@ case 2:return 16;
 break;
 case 3:return 17;
 break;
-case 4:return 8;
+case 4:return 18;
 break;
-case 5:return 6;
+case 5:return 8;
 break;
-case 6:return 10;
+case 6:return 6;
 break;
-case 7:return 11;
+case 7:return 10;
 break;
-case 8:return 4;
+case 8:return 11;
 break;
-case 9:return 5;
+case 9:return 4;
 break;
-case 10:return 19;
+case 10:return 5;
 break;
-case 11:;
+case 11:return 20;
+break;
+case 12:;
 break;
 }
 },
-rules: [/^(?:[0-9]+(\.[0-9]+)?)/,/^(?:"[^"]+")/,/^(?:\|[^|]+\|)/,/^(?:\[[^\]]+\])/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:\()/,/^(?:\))/,/^(?:$)/,/^(?:[ \t\n])/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11],"inclusive":true}}
+rules: [/^(?:-?[0-9]+(\.[0-9]+)?)/,/^(?:"[^"]+")/,/^(?:\|[^|]+\|)/,/^(?:\{[^\}]+\})/,/^(?:\[[^|]+\|-?[0-9]+(,-?[0-9]+)?\])/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:\()/,/^(?:\))/,/^(?:$)/,/^(?:[ \t\n])/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12],"inclusive":true}}
 };
 return lexer;
 })();
@@ -1170,18 +1187,36 @@ if(!Array.isArray){
 	 * Perform numeric or string computations on the dataset
 	 * and write the result to another field
 	 */
-	CollectionSync.prototype.math = function(dest, expr)
+	CollectionSync.prototype.math = function(dest, expr, level)
 	{
-		var ptree = MathParser.parse(expr);
-
-		for(var i=0; i<this.contents.length; i++)
+		// check for recursive depth
+		if(level && level > 0)
 		{
-			var data = this.contents[i];
-			for(var path in ptree.xpaths){
-				ptree.xpaths[path] = getVal(path, data);
+			var data = this.contents;
+			for(var i=0; i<data.length; i++){
+				var subdata = new CollectionSync(data[i].data);
+				subdata.math(dest, expr, level-1);
+				data[i].data = subdata.contents;
 			}
+		}
+		else
+		{
+			var ptree = MathParser.parse(expr);
 
-			data[dest] = ptree.evaluate();
+			for(var i=0; i<this.contents.length; i++)
+			{
+				var data = this.contents[i];
+				for(var path in ptree.xpaths){
+					ptree.xpaths[path] = getVal(path, data);
+				}
+
+				try {
+					data[dest] = ptree.evaluate();
+				}
+				catch(e){
+					console.log(e);
+				}
+			}
 		}
 
 		// return the computed data

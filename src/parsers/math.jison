@@ -3,10 +3,12 @@
 
 %%
 
-[0-9]+(\.[0-9]+)?	return 'NUMBER';
+"-"?[0-9]+(\.[0-9]+)?	return 'NUMBER';
 "\""[^"]+"\""		return 'VALUE_XPATH';
 "|"[^|]+"|"			return 'LENGTH_XPATH';
-"["[^\]]+"]"		return 'SUM_XPATH';
+"{"[^\}]+"}"		return 'SUM_XPATH';
+"["[^|]+"|-"?[0-9]+(",-"?[0-9]+)?"]"				return 'SLICE_XPATH';
+
 "+"					return 'PLUS';
 "-"					return 'MINUS';
 "*"					return 'TIMES';
@@ -53,6 +55,16 @@ xpath_op:
 	VALUE_XPATH						{ $$ = {op:'xpath',value:$1.slice(1,-1)}; }
 	| LENGTH_XPATH					{ $$ = {op:'lengthof',value:{op:'xpath',value:$1.slice(1,-1)}}; }
 	| SUM_XPATH						{ $$ = {op:'sum',value:{op:'xpath',value:$1.slice(1,-1)}}; }
+	| SLICE_XPATH 					%{
+										var data = yytext.slice(1,-1);
+										data = data.split('|');
+										$$ = {op:'slice',value:{op:'xpath',value:data[0]}};
+										data = data[1].split(',');
+										if(isNaN($$.start = parseInt(data[0])))
+											$$.start = undefined;
+										if(isNaN($$.end = parseInt(data[1])))
+											$$.end = undefined;
+									%}
 	;
 
 expression:
@@ -91,7 +103,7 @@ expression:
 				
 				else if(parse.op === 'xpath'){
 					if(ret.xpaths[parse.value] === null){
-						throw 'No value set for xpath '+parse.value;
+						throw 'No value for xpath '+parse.value;
 					}
 					else return ret.xpaths[parse.value];
 				}
@@ -116,6 +128,10 @@ expression:
 
 				else if(parse.op === 'lengthof')
 					return evaluate(parse.value).length;
+
+				else if(parse.op === 'slice'){
+					return evaluate(parse.value).slice(parse.start,parse.end);
+				}
 
 				else
 					throw 'Unknown operation: '+parse.op;

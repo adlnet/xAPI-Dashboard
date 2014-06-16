@@ -488,7 +488,12 @@ if(!Array.isArray){
 					ptree.xpaths[path] = getVal(path, data);
 				}
 
-				data[dest] = ptree.evaluate();
+				try {
+					data[dest] = ptree.evaluate();
+				}
+				catch(e){
+					console.log(e);
+				}
 			}
 		}
 
