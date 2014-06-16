@@ -36,9 +36,10 @@
 	
 	Chart.prototype.draw = function(container){
 		var	opts = this.opts,
-			event = this.event;
+			event = this.event,
+			self = this;
 		
-		container = container ? container : this.opts.container;
+		container = container ? container : self.opts.container;
 			
 		if((!opts.aggregate && !opts.process) || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
@@ -47,7 +48,7 @@
 		
 		//If user specified a process, then call it, pass its results to d3, and return
 		if(opts.process){
-			addChart(this, opts.process.call(this, event), opts);
+			addChart(self, opts.process.call(self, event), opts);
 			return;
 		}
 		
@@ -56,10 +57,10 @@
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				opts.data.where(opts.pre.bind(this));
+				opts.data.where(opts.pre.bind(self));
 			}
 			else{
-				opts.pre.call(this, opts.data, event);
+				opts.pre.call(self, opts.data, event);
 			}
 		}
 
@@ -68,13 +69,13 @@
 		function cb(aggregateData){
 			if(opts.post){
 				var tempCollection = new ADL.CollectionSync(aggregateData);
-				var temp = opts.post.call(this, tempCollection, event) || tempCollection;
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
 				
 				//If temp is a collection, assign temp.contents. If not, then it's just an array.
 				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
 			}
 
-			addChart(this, aggregateData, opts);
+			addChart(self, aggregateData, opts);
 		};
 	};
 	
