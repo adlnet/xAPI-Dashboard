@@ -781,9 +781,8 @@ if(!Array.isArray){
 			}
 			else {
 				parts = path.split('.');
-				var i=0;
-				while(i<parts.length){
-					if(parts[i].charAt(parts[i].length-1) === '\\')
+				for(var i=0; i<parts.length;){
+					if(parts[i].slice(-1) === '\\')
 						parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
 					else
 						i++;
@@ -817,6 +816,37 @@ if(!Array.isArray){
 				return getVal(rest, obj[scoped]);
 			}
 		}
+	}
+
+	/*
+	 * Set some deep value in an object
+	 */
+	function setVal(obj,path,value)
+	{
+		// break xpath into individual keys
+		var parts;
+		if(Array.isArray(path)){
+			parts = path;
+		}
+		else {
+			parts = path.split('.');
+			var i=0;
+			while(i<parts.length){
+				if(parts[i].slice(-1) === '\\')
+					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
+				else
+					i++;
+			}
+		}
+
+		if(parts.length === 1){
+			obj[parts[0]] = value;
+			return obj;
+		}
+		else {
+			
+		}
+
 	}
 
 
@@ -1247,9 +1277,11 @@ if(!Array.isArray){
 			var cols = [];
 			var xpaths = selector.split(',');
 			// check for escaped commas
-			for( var i=0; i<xpaths.length; i++ ){
+			for(var i=0; i<xpaths.length;){
 				if(xpaths[i].slice(-1) === '\\')
-					xpaths.splice(i,2, xpaths[i].slice(0,-1)+','+xpaths[i+1]);
+					xpaths.splice(i, 2, xpaths[i].slice(0,-1)+','+xpaths[i+1]);
+				else
+					i++;
 			}
 
 			for( var i=0; i<xpaths.length; i++ )
