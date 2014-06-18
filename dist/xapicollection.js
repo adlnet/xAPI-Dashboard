@@ -1310,10 +1310,7 @@ if(!Array.isArray){
 				// for each selection field
 				for(var j=0; j<cols.length; j++){
 					// save as old name, or alias if provided
-					if(cols[j].alias)
-						setVal(row, cols[j].alias, getVal(cols[j].xpath, data[i]));
-					else
-						setVal(row, cols[j].xpath, getVal(cols[j].xpath, data[i]));
+					setVal(row, cols[j].alias || cols[j].xpath, getVal(cols[j].xpath, data[i]));
 				}
 				ret.push(row);
 			}
