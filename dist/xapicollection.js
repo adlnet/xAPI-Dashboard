@@ -830,8 +830,7 @@ if(!Array.isArray){
 		}
 		else {
 			parts = path.split('.');
-			var i=0;
-			while(i<parts.length){
+			for(var i=0; i<parts.length;){
 				if(parts[i].slice(-1) === '\\')
 					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
 				else
@@ -839,16 +838,22 @@ if(!Array.isArray){
 			}
 		}
 
+		if(!obj){
+			obj = {};
+		}
+
 		if(parts.length === 1){
 			obj[parts[0]] = value;
-			return obj;
 		}
 		else {
-			
+			if(obj[parts[0]] !== undefined)
+				obj[parts[0]] = setVal(obj[parts[0]], parts.slice(1), value);
+			else
+				obj[parts[0]] = setVal({}, parts.slice(1), value);
 		}
 
+		return obj;
 	}
-
 
 	/*************************************************************
 	 * CollectionSync - the core processor of statements
@@ -1241,7 +1246,7 @@ if(!Array.isArray){
 				}
 
 				try {
-					data[dest] = ptree.evaluate();
+					setVal(data, dest, ptree.evaluate());
 				}
 				catch(e){
 					console.log(e);
@@ -1306,9 +1311,9 @@ if(!Array.isArray){
 				for(var j=0; j<cols.length; j++){
 					// save as old name, or alias if provided
 					if(cols[j].alias)
-						row[cols[j].alias] = getVal(cols[j].xpath, data[i]);
+						setVal(row, cols[j].alias, getVal(cols[j].xpath, data[i]));
 					else
-						row[cols[j].xpath] = getVal(cols[j].xpath, data[i]);
+						setVal(row, cols[j].xpath, getVal(cols[j].xpath, data[i]));
 				}
 				ret.push(row);
 			}
