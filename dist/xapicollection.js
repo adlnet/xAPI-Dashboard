@@ -1252,8 +1252,6 @@ if(!Array.isArray){
 					xpaths.splice(i,2, xpaths[i].slice(0,-1)+','+xpaths[i+1]);
 			}
 
-			console.log(xpaths);
-
 			for( var i=0; i<xpaths.length; i++ )
 			{
 				// break into an xpath and an optional alias
