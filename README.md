@@ -166,6 +166,7 @@ Throw a header on there, and we get this final result:
 
 ## Resources
 
-* [Full API documentation](API.md)
+* [Collection API documentation](API_collection.md)
+* [Dashboard API documentation](API_dashboard.md)
 * [NVD3 website](http://nvd3.org/index.html)
 * [D3 website](http://d3js.org/)
