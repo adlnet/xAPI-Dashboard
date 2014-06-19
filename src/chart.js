@@ -92,12 +92,28 @@
 		this.child = obj;
 		obj.parent = this;
 	};
-	Chart.prototype.getDataURI = function(){
+	Chart.prototype.getSVGDataURI = function(){
 		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
+	};
+	Chart.prototype.getCSVString = function(){
+		if(!Array.isArray(this.opts.aggregateData)){
+			return '';
+		}
+		
+		var str = '', arr = this.opts.aggregateData;
+		for(var i = 0; i < arr.length; i++){
+			str += '"' + arr[i].in + '"' + ',"' + arr[i].out + '"\n';
+		}
+
+		return str;
+	};
+	Chart.prototype.getCSVDataURI = function(){
+		return 'data:application/octet-stream;charset=utf-8;base64,' + btoa(this.getCSVString());
 	};
 	
 	function addChart(self, aggregateData){
 		var event = self.event, opts = self.opts;
+		opts.aggregateData = aggregateData;
 		nv.addGraph(function(){
 			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 			
