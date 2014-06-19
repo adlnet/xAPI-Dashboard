@@ -48,7 +48,7 @@
 		
 		//If user specified a process, then call it, pass its results to d3, and return
 		if(opts.process){
-			addChart(self, opts.process.call(self, event), opts);
+			addChart(self, opts.process.call(self, event));
 			return;
 		}
 		
@@ -93,7 +93,8 @@
 		obj.parent = this;
 	};
 	
-	function addChart(self, aggregateData, opts){
+	function addChart(self, aggregateData){
+		var event = self.event, opts = self.opts;
 		nv.addGraph(function(){
 			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 			
