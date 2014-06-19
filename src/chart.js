@@ -276,6 +276,28 @@
 			.datum(obj)
 			.call(chart);
 	};
+	MultiBarChart.prototype.getCSVString = function(){
+		if(!Array.isArray(this.opts.aggregateData)){
+			return '';
+		}
+		
+		var str = '"' + this.opts.groupBy + '",', arr = this.opts.aggregateData;
+		for(var i = 0; i < arr.length; i++){
+			str += i == 0 ? '"' + arr[i].key + '"' : ',"' + arr[i].key + '"';
+		}
+		
+		str += '\n';
+		
+		for(var g = 0; g < arr[0].values.length; g++){
+			for(var i = 0; i < arr.length; i++){
+				str += i == 0 ? '"' + arr[0].values[g].in + '"' + ',"' + arr[i].values[g].out + '"' : 
+					',"' + arr[i].values[g].out + '"';
+			}
+			str += '\n';
+		}
+		
+		return str;
+	};
 	
 	//LinePlusBarChart class extends Chart
 	function LinePlusBarChart(opts){
