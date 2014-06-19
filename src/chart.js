@@ -92,6 +92,9 @@
 		this.child = obj;
 		obj.parent = this;
 	};
+	Chart.prototype.getDataURI = function(){
+		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
+	};
 	
 	function addChart(self, aggregateData){
 		var event = self.event, opts = self.opts;
