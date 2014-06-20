@@ -372,10 +372,12 @@
 				//If temp is a collection, assign temp.contents. If not, then it's just an array.
 				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
 			}
+			self.opts.aggregateData = aggregateData;
 			
 			var markup = '<table>';
 			
 			if(aggregateData[0] && aggregateData[0].values){
+				self.isMulti = true;
 				for(var i = -1; i < aggregateData[0].values.length; i++){
 					
 					var g = 0;
@@ -391,6 +393,7 @@
 			}
 			
 			else{
+				self.isMulti = false;
 				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
 				for(var i = 0; i < aggregateData.length; i++){
 					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
@@ -413,6 +416,19 @@
 		}
 
 		opts.aggregate(opts, event);	
+	};
+	
+	Table.prototype.getCSVString = function(){
+		if(this.isMulti){
+			return MultiBarChart.prototype.getCSVString.call(this);
+		}
+		else{
+			return Chart.prototype.getCSVString.call(this);
+		}
+	};	
+	Table.prototype.getSVGDataURI = function(){
+		console.error("Tables do not support SVG Data URIs");
+		return '';
 	};
 
 	ADL.Chart = Chart;

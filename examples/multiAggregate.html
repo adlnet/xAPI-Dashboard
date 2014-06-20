@@ -12,7 +12,8 @@
 	</head>
 	<body>
 		<svg style="height: 300px;" id="multi"></svg>
-		<div id='graphContainer'></div>
+		<div id='multiTableContainer' style="float:left;margin-left: 300px;"></div>
+		<div id='tableContainer' style="float:left;margin-left: 300px;"></div>
 		<script>
 			var dash = new ADL.XAPIDashboard();
 			dash.addStatements(window.statements);
@@ -22,10 +23,17 @@
 			
 			//Add a table
 			var table = dash.createTable({
-				container: '#graphContainer',
+				container: '#tableContainer',
+				groupBy: 'actor.name',
+				aggregate: ADL.min('result.score.raw'),
+			});	
+			
+			//Add a table
+			var multiTable = dash.createTable({
+				container: '#multiTableContainer',
 				groupBy: 'actor.name',
 				aggregate: ADL.multiAggregate('result.score.raw', ADL.count, ADL.min, ADL.max, ADL.average),
-			});			
+			});						
 
 			//Add a multiBarChart
 			var multiBar = dash.createMultiBarChart({
@@ -35,6 +43,7 @@
 			});
 
 			table.draw();
+			multiTable.draw();
 			multiBar.draw();
 		</script>
 	</body>
