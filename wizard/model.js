@@ -27,7 +27,7 @@ $(document).ready(function(){
 			dash.fetchAllStatements({}, function(){
 				console.log("Done");
 				self.hasData = true;
-				self.internalStatement(dash.statements.contents[0]);
+				self.internalStatement(dash.data.contents[0]);
 			});
 		};
 		
@@ -122,14 +122,15 @@ $(document).ready(function(){
 		
 			if(self.hasData && self.groupBy() && self.aggregationType() && self.lrsList().length > 0 && self.chartList().length > 0){
 				
-				dash.genBarGraph('#graphContainer svg', {
-					groupField: self.groupBy(),
+				dash.createBarChart({
+					container: '#graphContainer svg',
+					groupBy: self.groupBy(),
 					customize: function(chart){
 						chart.margin({'bottom': 100}).staggerLabels(false);
 						chart.xAxis.rotateLabels(45);
 						chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
 					}
-				});
+				}).draw();
 			}		
 		};
 		
