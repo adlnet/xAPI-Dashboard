@@ -269,9 +269,7 @@
 	MultiBarChart.prototype = new Chart();
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
-	MultiBarChart.prototype.pipeData = function(obj, chart){
-		console.log("MultiBar: ", obj);
-		
+	MultiBarChart.prototype.pipeData = function(obj, chart){		
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
