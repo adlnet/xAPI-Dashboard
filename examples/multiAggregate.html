@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Live LRS Demo</title>
+		<link rel='stylesheet' href='../lib/nv.d3.css'/>
+		<script type="text/javascript" src="../lib/d3.v3.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../lib/nv.d3.js"></script>
+		<script type="text/javascript" src="../src/chart.js"></script>
+		<script type="text/javascript" src="../src/dashboard.js"></script>
+		<script type="text/javascript" src="../src/xapicollection.js"></script>
+		<script src='../extra/gen-lrs-data.js'></script>
+	</head>
+	<body>
+		<svg style="height: 300px;" id="multi"></svg>
+		<div id='graphContainer'></div>
+		<script>
+			var dash = new ADL.XAPIDashboard();
+			dash.addStatements(window.statements);
+			
+			//We could have also added a "pre" option to each of the charts
+			dash.data.where('result.score.raw != null');
+			
+			//Add a table
+			var table = dash.createTable({
+				container: '#graphContainer',
+				groupBy: 'actor.name',
+				aggregate: ADL.multiAggregate('result.score.raw', ADL.count, ADL.min, ADL.max, ADL.average),
+			});			
+
+			//Add a multiBarChart
+			var multiBar = dash.createMultiBarChart({
+				container: '#multi',
+				groupBy: 'actor.name',
+				aggregate: ADL.multiAggregate('result.score.raw', ADL.min, ADL.max, ADL.average),
+			});
+
+			table.draw();
+			multiBar.draw();
+		</script>
+	</body>
+</html>

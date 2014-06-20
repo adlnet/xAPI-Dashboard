@@ -57,7 +57,7 @@
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				opts.data.where(opts.pre.bind(self));
+				opts.data.where(opts.pre);
 			}
 			else{
 				opts.pre.call(self, opts.data, event);
@@ -339,7 +339,7 @@
 			.call(chart);
 	};
 	
-	//LinePlusBarChart class extends Chart
+	//Table class extends Chart
 	function Table(opts){
 
 		Chart.call(this, opts);
@@ -365,8 +365,13 @@
 		
 		opts.cb = function(aggregateData){
 			
-			if(opts.post)
-				aggregateData = opts.post(aggregateData, event) || aggregateData;	
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
 			
 			var markup = '<table>';
 			
