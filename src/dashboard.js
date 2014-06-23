@@ -66,6 +66,7 @@
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
 			case "multiBarChart": opts.chart = new ADL.MultiBarChart(opts); break;
 			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
+			case "table": opts.chart = new ADL.Table(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
 		
