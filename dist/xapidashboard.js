@@ -22869,6 +22869,7 @@ nv.models.stackedAreaChart = function() {
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
 			case "multiBarChart": opts.chart = new ADL.MultiBarChart(opts); break;
 			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
+			case "table": opts.chart = new ADL.Table(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
 		
@@ -23713,7 +23714,7 @@ nv.models.multiBar = function() {
 		
 		//If user specified a process, then call it, pass its results to d3, and return
 		if(opts.process){
-			addChart(self, opts.process.call(self, event), opts);
+			addChart(self, opts.process.call(self, event));
 			return;
 		}
 		
@@ -23722,7 +23723,7 @@ nv.models.multiBar = function() {
 
 		if(opts.pre){
 			if(typeof opts.pre === "string"){
-				opts.data.where(opts.pre.bind(self));
+				opts.data.where(opts.pre);
 			}
 			else{
 				opts.pre.call(self, opts.data, event);
@@ -23757,8 +23758,28 @@ nv.models.multiBar = function() {
 		this.child = obj;
 		obj.parent = this;
 	};
+	Chart.prototype.getSVGDataURI = function(){
+		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
+	};
+	Chart.prototype.getCSVString = function(){
+		if(!Array.isArray(this.opts.aggregateData)){
+			return '';
+		}
+		
+		var str = '', arr = this.opts.aggregateData;
+		for(var i = 0; i < arr.length; i++){
+			str += '"' + arr[i].in + '"' + ',"' + arr[i].out + '"\n';
+		}
+
+		return str;
+	};
+	Chart.prototype.getCSVDataURI = function(){
+		return 'data:application/octet-stream;charset=utf-8;base64,' + btoa(this.getCSVString());
+	};
 	
-	function addChart(self, aggregateData, opts){
+	function addChart(self, aggregateData){
+		var event = self.event, opts = self.opts;
+		opts.aggregateData = aggregateData;
 		nv.addGraph(function(){
 			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 			
@@ -23914,12 +23935,32 @@ nv.models.multiBar = function() {
 	MultiBarChart.prototype = new Chart();
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
-	MultiBarChart.prototype.pipeData = function(obj, chart){
-		console.log("MultiBar: ", obj);
-		
+	MultiBarChart.prototype.pipeData = function(obj, chart){		
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
+	};
+	MultiBarChart.prototype.getCSVString = function(){
+		if(!Array.isArray(this.opts.aggregateData)){
+			return '';
+		}
+		
+		var str = '"' + this.opts.groupBy + '",', arr = this.opts.aggregateData;
+		for(var i = 0; i < arr.length; i++){
+			str += i == 0 ? '"' + arr[i].key + '"' : ',"' + arr[i].key + '"';
+		}
+		
+		str += '\n';
+		
+		for(var g = 0; g < arr[0].values.length; g++){
+			for(var i = 0; i < arr.length; i++){
+				str += i == 0 ? '"' + arr[0].values[g].in + '"' + ',"' + arr[i].values[g].out + '"' : 
+					',"' + arr[i].values[g].out + '"';
+			}
+			str += '\n';
+		}
+		
+		return str;
 	};
 	
 	//LinePlusBarChart class extends Chart
@@ -23962,7 +24003,7 @@ nv.models.multiBar = function() {
 			.call(chart);
 	};
 	
-	//LinePlusBarChart class extends Chart
+	//Table class extends Chart
 	function Table(opts){
 
 		Chart.call(this, opts);
@@ -23988,12 +24029,19 @@ nv.models.multiBar = function() {
 		
 		opts.cb = function(aggregateData){
 			
-			if(opts.post)
-				aggregateData = opts.post(aggregateData, event) || aggregateData;	
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
+			self.opts.aggregateData = aggregateData;
 			
 			var markup = '<table>';
 			
 			if(aggregateData[0] && aggregateData[0].values){
+				self.isMulti = true;
 				for(var i = -1; i < aggregateData[0].values.length; i++){
 					
 					var g = 0;
@@ -24009,6 +24057,7 @@ nv.models.multiBar = function() {
 			}
 			
 			else{
+				self.isMulti = false;
 				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
 				for(var i = 0; i < aggregateData.length; i++){
 					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
@@ -24031,6 +24080,19 @@ nv.models.multiBar = function() {
 		}
 
 		opts.aggregate(opts, event);	
+	};
+	
+	Table.prototype.getCSVString = function(){
+		if(this.isMulti){
+			return MultiBarChart.prototype.getCSVString.call(this);
+		}
+		else{
+			return Chart.prototype.getCSVString.call(this);
+		}
+	};	
+	Table.prototype.getSVGDataURI = function(){
+		console.error("Tables do not support SVG Data URIs");
+		return '';
 	};
 
 	ADL.Chart = Chart;

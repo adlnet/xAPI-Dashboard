@@ -1961,3 +1961,15 @@ if(!Array.isArray){
 
 }(window.ADL.CollectionAsync, window.ADL.CollectionSync));
 
+
+/*
+ * Node.js export code
+ */
+try {
+	exports.CollectionSync = window.ADL.CollectionSync;
+}
+catch(e){
+	if( e.message !== 'exports is not defined' )
+		throw e;
+}
+
