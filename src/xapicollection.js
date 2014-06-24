@@ -536,6 +536,7 @@ if(!Array.isArray){
 		return this;
 	}
 
+
 	/*
 	 * Pick out certain fields from each entry in the dataset
 	 * syntax of selector := xpath ['as' alias] [',' xpath ['as' alias]]*
@@ -1173,6 +1174,8 @@ if(!Array.isArray){
 
 	CollectionAsync.prototype.save    = proxyFactory('save');
 	CollectionAsync.prototype.where   = proxyFactory('where');
+	CollectionAsync.prototype.math    = proxyFactory('math');
+	CollectionAsync.prototype.toCSV   = proxyFactory('toCSV');
 	CollectionAsync.prototype.select  = proxyFactory('select');
 	CollectionAsync.prototype.join    = proxyFactory('join');
 	CollectionAsync.prototype.slice   = proxyFactory('slice');
@@ -1187,6 +1190,52 @@ if(!Array.isArray){
 	ADL.CollectionSync = CollectionSync;
 	ADL.CollectionAsync = CollectionAsync;
 	ADL.Collection = CollectionSync;
+
+	/*
+	 * Generate a CSV based on the contents of the collection
+	 * Takes a sync or async collection and returns a CSV string
+	 */
+	ADL.Collection.toCSV = function(c)
+	{
+		function sanitize(str){
+			if( typeof str === 'object' ) str = JSON.stringify(str);
+			if( typeof str === 'string' ) str = str.replace(/"/g, '""');
+			return '"' + str + '"';
+		}
+
+		// synchronous version (easier)
+		if(c.contents)
+		{
+			if(c.contents.length > 0)
+			{
+				var ret = '';
+				var headers = Object.keys(c.contents[0]);
+
+				ret += headers.map(sanitize).join(',') + '\r\n';
+				console.log(ret);
+
+				for(var i=0; i<c.contents.length; i++){
+					ret += headers.map(function(h){ return sanitize(c.contents[i][h]); }).join(',') + '\r\n';
+				}
+
+				return ret;
+
+			}
+			else {
+				return '';
+			}
+		}
+
+		else if(c._worker)
+		{
+			return '';
+		}
+
+		else {
+			return '';
+		}
+	}
+
 
 }(window.ADL));
 
