@@ -366,8 +366,8 @@ if(!Array.isArray){
 				else if(!isnan(val = parseFloat(str))){
 					return val;
 				}
-				else if(val = /^\s*"(.*)"\s*$/.exec(str)){
-					return val[1];
+				else if(val = /^\s*(["'])(.*)\1\s*$/.exec(str)){
+					return val[2];
 				}
 				else if(val = /^\s*\/(.*)\/(i?)\s*$/.exec(str)){
 					return new RegExp(val[1], val[2]);
