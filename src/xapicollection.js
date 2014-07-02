@@ -169,6 +169,39 @@ if(!Array.isArray){
 		return this;
 	}
 
+	/*
+	 * Generate a CSV based on the contents of the collection
+	 * Returns a CSV string
+	 */
+	CollectionSync.prototype.toCSV = function()
+	{
+		function sanitize(str){
+			if( typeof str === 'object' ) str = JSON.stringify(str);
+			if( typeof str === 'string' ) str = str.replace(/"/g, '""');
+			return '"' + str + '"';
+		}
+
+		if(this.contents.length > 0)
+		{
+			var ret = '';
+			var headers = Object.keys(this.contents[0]);
+			ret += headers.map(sanitize).join(',') + '\r\n';
+			console.log(ret);
+
+			for(var i=0; i<this.contents.length; i++){
+				ret += headers.map(function(h){
+					return sanitize(this.contents[i][h]);
+				})
+				.join(',') + '\r\n';
+			}
+			return ret;
+		}
+		else {
+			return '';
+		}
+	}
+
+
 
 	/*
 	 * Filter out data entries not matching the query expression
@@ -602,9 +635,9 @@ if(!Array.isArray){
 	}
 
 	/*
-	 * Perform a series of disjoint queries, and merge results
+	 * Form a relation between two fields in the data
 	 */
-	CollectionSync.prototype.join = function(keypath, valuepath, level)
+	CollectionSync.prototype.relate = function(keypath, valuepath, level)
 	{
 		var data = this.contents;
 
@@ -614,7 +647,7 @@ if(!Array.isArray){
 			// loop over datasets
 			for(var i=0; i<data.length; i++){
 				var subdata = new CollectionSync(data[i].data);
-				subdata.join(keypath, valuepath, level-1);
+				subdata.relate(keypath, valuepath, level-1);
 				data[i].data = subdata.contents;
 			}
 		}
@@ -1175,9 +1208,8 @@ if(!Array.isArray){
 	CollectionAsync.prototype.save    = proxyFactory('save');
 	CollectionAsync.prototype.where   = proxyFactory('where');
 	CollectionAsync.prototype.math    = proxyFactory('math');
-	CollectionAsync.prototype.toCSV   = proxyFactory('toCSV');
 	CollectionAsync.prototype.select  = proxyFactory('select');
-	CollectionAsync.prototype.join    = proxyFactory('join');
+	CollectionAsync.prototype.relate  = proxyFactory('relate');
 	CollectionAsync.prototype.slice   = proxyFactory('slice');
 	CollectionAsync.prototype.orderBy = proxyFactory('orderBy');
 	CollectionAsync.prototype.groupBy = proxyFactory('groupBy');
@@ -1190,52 +1222,6 @@ if(!Array.isArray){
 	ADL.CollectionSync = CollectionSync;
 	ADL.CollectionAsync = CollectionAsync;
 	ADL.Collection = CollectionSync;
-
-	/*
-	 * Generate a CSV based on the contents of the collection
-	 * Takes a sync or async collection and returns a CSV string
-	 */
-	ADL.Collection.toCSV = function(c)
-	{
-		function sanitize(str){
-			if( typeof str === 'object' ) str = JSON.stringify(str);
-			if( typeof str === 'string' ) str = str.replace(/"/g, '""');
-			return '"' + str + '"';
-		}
-
-		// synchronous version (easier)
-		if(c.contents)
-		{
-			if(c.contents.length > 0)
-			{
-				var ret = '';
-				var headers = Object.keys(c.contents[0]);
-
-				ret += headers.map(sanitize).join(',') + '\r\n';
-				console.log(ret);
-
-				for(var i=0; i<c.contents.length; i++){
-					ret += headers.map(function(h){ return sanitize(c.contents[i][h]); }).join(',') + '\r\n';
-				}
-
-				return ret;
-
-			}
-			else {
-				return '';
-			}
-		}
-
-		else if(c._worker)
-		{
-			return '';
-		}
-
-		else {
-			return '';
-		}
-	}
-
 
 }(window.ADL));
 
