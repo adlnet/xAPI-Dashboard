@@ -15,11 +15,10 @@ For example, if you had an object like this:
 ```javascript
 {
 	"level1": {
-		"level2": {
-			"level3": [
-				{
-					"level5": some_value
-}]}}}
+		"level2": [
+			{
+				"level3": some_value
+}]}}
 ```
 
 You could reference the value of `some_value` using the xpath `"level1.level2.level3.0.level5"`. Each dot indicates a nested object with the given key. Notice that the object under level 3 is an array. In this case, the key is an integer instead of a string, but the pattern holds otherwise.
@@ -107,7 +106,7 @@ Filter the contents of the collection by some query, and return the filtered res
 
 `where` queries use a similar syntax to the SQL SELECT WHERE clause. You specify one or more conditions that, if met by a datum, will cause that datum to be in the result set.
 
-Each condition consists of a field, a comparator, and a value. The field must be an xpath. The comparator can only be one of `>,>=,<,<=,=,!=`, where they have the same meaning as in Javascript. The value can be either a literal string (anything between two double quotes), a number (in base 8, 10, or 16), a regular expression (anything between two forward slashes), or one of the special tokens `true`, `false`, or `null`. Note that the operators are strongly typed, so `"5" != 5`. Also note that only `=` and `!=` are valid comparisons against a regular expression.
+Each condition consists of a field, a comparator, and a value. The field must be an xpath. The comparator can only be one of `>,>=,<,<=,=,!=`, where they have the same meaning as in Javascript. The value can be either a literal string (anything between two quotes), a number, a regular expression (anything between two forward slashes), or one of the special tokens `true`, `false`, or `null`. Note that the operators are strongly typed, so `"5" != 5`. Also note that only `=` and `!=` are valid comparisons against a regular expression.
 
 You can use `and`, `or`, and parentheses to combine different conditions in any way you wish. For example:
 
@@ -170,6 +169,57 @@ stmts.select('group, count as value');
 **Returns:**
 
 A reference to the collection containing the newly reduced datasets.
+
+
+<a id='relate'></a>
+#### relate(keypath, valuepath, [rootpath])
+
+Roll array-based values up into an indexed object. Given an array of objects, choose two fields from each object and map them into a key-value pair in the parent object.
+
+For example, if you had a group with student scores like so:
+
+```javascript
+[{
+	"group": "90-100",
+	"data": [{
+		"name": "Alice",
+		"score": 92
+	},{
+		"name": "Cassandra",
+		"score": 97
+	},{
+		"name": "Michael",
+		"score": 95
+	}]
+}]
+```
+
+You could run `collection.relate("name","score","data")` and end up with:
+
+```javascript
+[{
+	"group": "90-100",
+	"Alice": 92,
+	"Cassandra": 97,
+	"Michael": 95,
+	"data": [...]
+}]
+```
+
+**Arguments:**
+
+`keypath` (`String`)  
+The path to the value that will be used as the key in the resulting mapping.
+
+`valuepath` (`String`)  
+The path to the value that will be used as the value in the resulting mapping.
+
+`rootpath` (`String`) (optional)  
+A path pointing at an array. This array will be looped over and indexed by `relate`. If omitted, 
+
+**Returns:**
+
+A reference to the collection containing the newly indexed datasets.
 
 
 <a id='slice'></a>
