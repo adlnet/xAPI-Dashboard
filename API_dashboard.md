@@ -99,7 +99,7 @@ Generates an SVG chart or HTML table of the given `type` using the `options` spe
 **Arguments:**
 
 `type` (`string`)  
-Determines what kind of chart is generated. For SVG charts, type must be one of `lineChart`, `barChart`, `pieChart`, `multiBarChart`, or `linePlusBarChart`. For an HTML table, type must be `table`.
+Determines what kind of chart is generated. For SVG charts, type must be one of `lineChart`, `barChart`, `pieChart`, or `multiBarChart`. For an HTML table, type must be `table`.
 
 
 `options` (`Object`)  
@@ -212,11 +212,6 @@ The instance of the [Chart](#chart) class created by the function call. Must cal
 #### createLineChart(options)
 
 Equivalent to [createChart](#createChart)("lineChart", options).
-
-<a id='createLinePlusBarChart'></a>
-#### createLinePlusBarChart(options)
-
-Equivalent to [createChart](#createChart)("linePlusBarChart", options).
 
 <a id='createMultiBarChart'></a>
 #### createMultiBarChart(options)
