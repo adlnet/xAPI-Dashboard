@@ -99,7 +99,7 @@ Generates an SVG chart or HTML table of the given `type` using the `options` spe
 **Arguments:**
 
 `type` (`string`)  
-Determines what kind of chart is generated. For SVG charts, type must be one of `lineChart`, `barChart`, `pieChart`, `multiBarChart`, or `linePlusBarChart`. For an HTML table, type must be `table`.
+Determines what kind of chart is generated. For SVG charts, type must be one of `lineChart`, `barChart`, `pieChart`, or `multiBarChart`. For an HTML table, type must be `table`.
 
 
 `options` (`Object`)  
@@ -212,11 +212,6 @@ The instance of the [Chart](#chart) class created by the function call. Must cal
 #### createLineChart(options)
 
 Equivalent to [createChart](#createChart)("lineChart", options).
-
-<a id='createLinePlusBarChart'></a>
-#### createLinePlusBarChart(options)
-
-Equivalent to [createChart](#createChart)("linePlusBarChart", options).
 
 <a id='createMultiBarChart'></a>
 #### createMultiBarChart(options)
@@ -362,21 +357,12 @@ Will group the data based on the `groupBy` and `range` options to the chart, and
 `xpath` (`String`)  
 The field to find the minimum of. 
 
-### ADL.sum(xpath)
-
-Will group the data based on the `groupBy` and `range` options to the chart, and map the total value of the members' `xpath` fields to the y-axis of the resulting chart.
-
-**Arguments:**
-
-`xpath` (`String`)  
-The field to total. 
-
 
 ### ADL.multiAggregate([xpath], fn1, fn2, fn3, ...)
 
 Can only be used for chart types that support the simultaneous display of multiple streams of data. Currently, the only chart types that support this are `multiBarChart` and `table`. 
 
-`multiAggregate` will call each of the provided aggregation functions and pass in the optional `xpath` string to functions that are *passed by reference*. If `xpath` is omitted and an aggregation does not specify its own `xpath`, then an error is logged and that aggregation function is not included in the chart.
+`multiAggregate` will call each of the provided aggregation functions and pass the optional `xpath` string to functions that are *passed by reference*. If `xpath` is omitted and an aggregation does not specify its own `xpath`, then an error is logged and that aggregation function is not included in the chart.
 
 Examples:
 
@@ -399,8 +385,28 @@ aggregate: ADL.multiAggregate(ADL.min('result.score.raw'), ADL.average('result.s
 
 **Arguments:**
 
-`xpath` (`String`)(optional)
+`xpath` (`String`)(optional)  
 The field given to an aggregation function reference. 
 
-`fn1, fn2, fn3, ...` (`Aggregation Function`)
+`fn1, fn2, fn3, ...` (`Aggregation Function`)  
 An arbitrary number of aggregation functions to run.
+
+
+### ADL.select(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and will select the specified `xpath` value from the *first* xAPI statement in each group. Useful if outputting raw data is desired.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to select. 
+
+
+### ADL.sum(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the total value of the members' `xpath` fields to the y-axis of the resulting chart.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to total. 

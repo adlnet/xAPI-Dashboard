@@ -152,7 +152,7 @@ A reference to the collection containing the latest data.
 
 
 <a id='select'></a>
-#### select(fields)
+#### select(fields, [level])
 
 For each item in the dataset, pick out the requested fields and return them.
 
@@ -166,13 +166,64 @@ stmts.select('group, count as value');
 >>> [{group: 'someGroupId', value: 42}, ...]
 ```
 
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
+
 **Returns:**
 
 A reference to the collection containing the newly reduced datasets.
 
+<a id='relate'></a>
+#### math(resultPath, expression, [level])
+
+Evaluate some mathematical operation `expression` on a statement or group of statements, and store the result in the field identified by `resultPath`.
+
+Expressions use the standard mathematical syntax, with the basic arithmetic operators and literals (parentheses for grouping, *, /, +, -, integers, floats), as well as some special xpath syntax:
+
+* `$(xpath)` returns the actual value at the xpath.
+* `$|xpath|` returns the length of the value at the xpath for arrays or strings, or *undefined* for anything else.
+* `${xpath}` returns the sum total of the elements within the value of the xpath if the xpath points to an array, or *null* otherwise.
+* `$[xpath|start,end]` applies the *slice* operation to the value of the xpath if the value is a string or an array. *start* and *end* must be integers, and *end* is optional.
+
+For example:
+
+```javascript
+var a = new Collection([{'score':5, 'of':8},{'score':8, 'of':10}]);
+a.math('percentile', '( $(score)/$(of) ) * 100')
+>>> [
+	{'score': 5, 'of': 8,  'percentile': 62.5},
+	{'score': 8, 'of': 10, 'percentile': 80}
+]
+```
+
+This method also supports basic string manipulation. You can include literal strings by putting them in double quotes, and the slice, length, and addition operators all support strings.
+
+```javascript
+var a = new Collection([{'givenName': 'John', 'familyName': 'Smith'}])
+a.math('fullName', '$(givenName) + " " + $(familyName)')
+>>> [
+	{'givenName': 'John', 'familyName': 'Smith', 'fullName': 'John Smith'}
+]
+```
+
+**Arguments:**
+
+`resultPath` (`String`)  
+The xpath where you want the result of the expression stored.
+
+`expression` (`String`)  
+An expression that follows the grammar described above.
+
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
+
+**Returns:**
+
+A reference to the collection containing the newly computed fields.
+
 
 <a id='relate'></a>
-#### relate(keypath, valuepath, [rootpath])
+#### relate(keypath, valuepath, [level])
 
 Roll array-based values up into an indexed object. Given an array of objects, choose two fields from each object and map them into a key-value pair in the parent object.
 
@@ -214,8 +265,8 @@ The path to the value that will be used as the key in the resulting mapping.
 `valuepath` (`String`)  
 The path to the value that will be used as the value in the resulting mapping.
 
-`rootpath` (`String`) (optional)  
-A path pointing at an array. This array will be looped over and indexed by `relate`. If omitted, 
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
 
 **Returns:**
 
@@ -312,13 +363,14 @@ A reference to the collection containing the newly created groups.
 
 
 <a id='count'></a>
-#### count()
+#### count([level])
 
 Determine the number of items in each group, or in the whole collection if not grouped.
 
 **Arguments:**
 
-*None*
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
 
 **Returns:**
 
@@ -326,7 +378,7 @@ A reference to the resulting collection.
 
 
 <a id='sum'></a>
-#### sum(field)
+#### sum(field, [level])
 
 Determine the total value of each group's data, or all data if not grouped.
 
@@ -335,12 +387,15 @@ Determine the total value of each group's data, or all data if not grouped.
 `field` (`String`)  
 An xpath indicating a field in each piece of data to be added to the total.
 
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
+
 **Returns:**
 
 A reference to the collection.
 
 <a id='average'></a>
-#### average(field)
+#### average(field, [level])
 
 Determine the average value of each group's data, or all data if not grouped.
 
@@ -349,12 +404,15 @@ Determine the average value of each group's data, or all data if not grouped.
 `field` (`String`)  
 An xpath indicating a field in each piece of data to be averaged.
 
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
+
 **Returns:**
 
 A reference to the resulting collection.
 
 <a id='min'></a>
-#### min(field)
+#### min(field, [level])
 
 Determine the minimum value of each group's data, or all data if not grouped.
 
@@ -363,13 +421,16 @@ Determine the minimum value of each group's data, or all data if not grouped.
 `field` (`String`)  
 An xpath indicating a field in each piece of data to be compared against the minimum.
 
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
+
 **Returns:**
 
 A reference to the resulting collection.
 
 
 <a id='max'></a>
-#### max(field)
+#### max(field, [level])
 
 Determine the minimum value of each group's data, or all data if not grouped.
 
@@ -377,6 +438,9 @@ Determine the minimum value of each group's data, or all data if not grouped.
 
 `field` (`String`)  
 An xpath indicating a field in each piece of data to be compared against the maximum.
+
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
 
 **Returns:**
 

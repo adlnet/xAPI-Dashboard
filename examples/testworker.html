@@ -15,9 +15,9 @@
 					.count()
 					.groupBy('result.success')
 					.count(1)
-					.join('group','count')
+					.relate('group','count')
 					.select('group as actor, true as correct, count as total')
-					.math('percentile', '"correct"/"total"')
+					.math('percentile', '$(correct)/$(total)')
 					.exec(function(data){
 						console.timeEnd('Total operating time');
 						document.body.innerHTML += '<pre>'+JSON.stringify(data, null, '    ')+'</pre>';
