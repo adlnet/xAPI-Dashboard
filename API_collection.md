@@ -173,6 +173,54 @@ If supplied, will descend *level* levels into each member of each group, and run
 
 A reference to the collection containing the newly reduced datasets.
 
+<a id='relate'></a>
+#### math(resultPath, expression, [level])
+
+Evaluate some mathematical operation `expression` on a statement or group of statements, and store the result in the field identified by `resultPath`.
+
+Expressions use the standard mathematical syntax, with the basic arithmetic operators and literals (parentheses for grouping, *, /, +, -, integers, floats), as well as some special xpath syntax:
+
+* `$(xpath)` returns the actual value at the xpath.
+* `$|xpath|` returns the length of the value at the xpath for arrays or strings, or *undefined* for anything else.
+* `${xpath}` returns the sum total of the elements within the value of the xpath if the xpath points to an array, or *null* otherwise.
+* `$[xpath|start,end]` applies the *slice* operation to the value of the xpath if the value is a string or an array. *start* and *end* must be integers, and *end* is optional.
+
+For example:
+
+```javascript
+var a = new Collection([{'score':5, 'of':8},{'score':8, 'of':10}]);
+a.math('percentile', '( $(score)/$(of) ) * 100')
+>>> [
+	{'score': 5, 'of': 8,  'percentile': 62.5},
+	{'score': 8, 'of': 10, 'percentile': 80}
+]
+```
+
+This method also supports basic string manipulation. You can include literal strings by putting them in double quotes, and the slice, length, and addition operators all support strings.
+
+```javascript
+var a = new Collection([{'givenName': 'John', 'familyName': 'Smith'}])
+a.math('fullName', '$(givenName) + " " + $(familyName)')
+>>> [
+	{'givenName': 'John', 'familyName': 'Smith', 'fullName': 'John Smith'}
+]
+```
+
+**Arguments:**
+
+`resultPath` (`String`)  
+The xpath where you want the result of the expression stored.
+
+`expression` (`String`)  
+An expression that follows the grammar described above.
+
+`level` (`int`) (optional)  
+If supplied, will descend *level* levels into each member of each group, and run the operation in each member's scope, so all xpaths will be relative to that member. This should only be used in conjunction with multiple `groupBy`s.
+
+**Returns:**
+
+A reference to the collection containing the newly computed fields.
+
 
 <a id='relate'></a>
 #### relate(keypath, valuepath, [level])

@@ -4,10 +4,11 @@
 %%
 
 "-"?[0-9]+(\.[0-9]+)?	return 'NUMBER';
-"\""[^"]+"\""		return 'VALUE_XPATH';
-"|"[^|]+"|"			return 'LENGTH_XPATH';
-"{"[^\}]+"}"		return 'SUM_XPATH';
-"["[^|]+"|-"?[0-9]+(",-"?[0-9]+)?"]"				return 'SLICE_XPATH';
+"\""[^"]+"\""		return 'STRING';
+"$("[^\)]+")"		return 'VALUE_XPATH';
+"$|"[^|]+"|"		return 'LENGTH_XPATH';
+"${"[^\}]+"}"		return 'SUM_XPATH';
+"$["[^|]+"|-"?[0-9]+(",-"?[0-9]+)?"]"	return 'SLICE_XPATH';
 
 "+"					return 'PLUS';
 "-"					return 'MINUS';
@@ -48,15 +49,16 @@ mult_op:
 
 value:
 	NUMBER							{ $$ = {op:'literal',value:parseFloat(yytext)}; }
+	| STRING						{ $$ = {op:'literal',value:yytext.slice(1,-1)}; }
 	| xpath_op						{ $$ = $1; }
 	;
 
 xpath_op:
-	VALUE_XPATH						{ $$ = {op:'xpath',value:$1.slice(1,-1)}; }
-	| LENGTH_XPATH					{ $$ = {op:'lengthof',value:{op:'xpath',value:$1.slice(1,-1)}}; }
-	| SUM_XPATH						{ $$ = {op:'sum',value:{op:'xpath',value:$1.slice(1,-1)}}; }
+	VALUE_XPATH						{ $$ = {op:'xpath',value:yytext.slice(2,-1)}; }
+	| LENGTH_XPATH					{ $$ = {op:'lengthof',value:{op:'xpath',value:yytext.slice(2,-1)}}; }
+	| SUM_XPATH						{ $$ = {op:'sum',value:{op:'xpath',value:yytext.slice(2,-1)}}; }
 	| SLICE_XPATH 					%{
-										var data = yytext.slice(1,-1);
+										var data = yytext.slice(2,-1);
 										data = data.split('|');
 										$$ = {op:'slice',value:{op:'xpath',value:data[0]}};
 										data = data[1].split(',');
@@ -123,14 +125,23 @@ expression:
 				else if(parse.op === 'negate')
 					return -evaluate(parse.value);
 
-				else if(parse.op === 'sum')
-					return evaluate(parse.value).reduce(function(sum,val){return sum+val;},0);
+				else if(parse.op === 'sum'){
+					var val = evaluate(parse.value);
+					if(val.reduce)
+						return evaluate(parse.value).reduce(function(sum,val){return sum+val;},0);
+					else
+						return null;
+				}
 
 				else if(parse.op === 'lengthof')
-					return evaluate(parse.value).length;
+					return evaluate(parse.value).length || null;
 
 				else if(parse.op === 'slice'){
-					return evaluate(parse.value).slice(parse.start,parse.end);
+					var val = evaluate(parse.value);
+					if(val.slice)
+						return val.slice(parse.start,parse.end);
+					else
+						return null;
 				}
 
 				else
