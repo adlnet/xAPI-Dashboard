@@ -390,10 +390,10 @@ aggregate: ADL.multiAggregate(ADL.min('result.score.raw'), ADL.average('result.s
 
 **Arguments:**
 
-`xpath` (`String`)(optional)
+`xpath` (`String`)(optional)  
 The field given to an aggregation function reference. 
 
-`fn1, fn2, fn3, ...` (`Aggregation Function`)
+`fn1, fn2, fn3, ...` (`Aggregation Function`)  
 An arbitrary number of aggregation functions to run.
 
 
