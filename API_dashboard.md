@@ -282,7 +282,7 @@ Perform all requisite data processing, generate the chart, and place it in its c
 
 #### getCSVDataURI()
 
-Generates a data URI from the results of [getCSVDataString](#getCSVDataString)().
+Generates a data URI from the results of [getCSVDataString](#getcsvdatastring)().
 
 **Arguments:**
 
@@ -292,7 +292,7 @@ Generates a data URI from the results of [getCSVDataString](#getCSVDataString)()
 
 A data URI string of CSV data which can be used in the same way any other URI/URL is used.
 
-<a id='getCSVDataString'></a>
+<a id='getcsvdatastring'></a>
 #### getCSVDataString()
 
 Generates comma-separated values (CSV) from the aggregate data used to generate this chart. If downloaded (or copy-pasted), the returned CSV string can be directly imported into any application that supports the CSV format.
@@ -370,3 +370,37 @@ Will group the data based on the `groupBy` and `range` options to the chart, and
 
 `xpath` (`String`)  
 The field to total. 
+
+
+### ADL.multiAggregate([xpath], fn1, fn2, fn3, ...)
+
+Can only be used for chart types that support the simultaneous display of multiple streams of data. Currently, the only chart types that support this are `multiBarChart` and `table`. 
+
+`multiAggregate` will call each of the provided aggregation functions and pass in the optional `xpath` string to functions that are *passed by reference*. If `xpath` is omitted and an aggregation does not specify its own `xpath`, then an error is logged and that aggregation function is not included in the chart.
+
+Examples:
+
+```javascript
+groupBy: 'actor.name',
+aggregate: ADL.multiAggregate('result.score.raw', ADL.min, ADL.max, ADL.average)
+		
+```
+
+```javascript
+groupBy: 'actor.name',
+aggregate: ADL.multiAggregate('result.score.raw', ADL.min, ADL.max, ADL.select('verb.display.en-US'))
+		
+```
+
+```javascript
+groupBy: 'actor.name',
+aggregate: ADL.multiAggregate(ADL.min('result.score.raw'), ADL.average('result.score.raw'), ADL.select('verb.display.en-US'))
+```
+
+**Arguments:**
+
+`xpath` (`String`)(optional)
+The field given to an aggregation function reference. 
+
+`fn1, fn2, fn3, ...` (`Aggregation Function`)
+An arbitrary number of aggregation functions to run.
