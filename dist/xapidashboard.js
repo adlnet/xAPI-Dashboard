@@ -22930,7 +22930,7 @@ nv.models.stackedAreaChart = function() {
 			}
 			
 			opts.xpath = xpath;
-			if(!join){
+			if(join !== true){
 				if(opts.range){
 					return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 				}
@@ -22971,7 +22971,7 @@ nv.models.stackedAreaChart = function() {
 			}
 				
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23002,7 +23002,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23033,7 +23033,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23064,7 +23064,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23095,7 +23095,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
