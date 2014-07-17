@@ -99,6 +99,31 @@ A function that is passed the results of the query (an array of objects).
 A reference to the collection containing the previous set of data.
 
 
+<a id='tocsv'></a>
+#### toCSV() (CollectionSync only)
+
+Generate a comma-separated value string from the top level of the collection. Each property of the top-level objects (xAPI statements or groups) will become a column in the resulting CSV string. If the property value is an object, it will be converted to JSON and treated as a string.
+
+The output of this function is suitable for importing into Microsoft Excel or similar analytics tools.
+
+For example:
+
+```javascript
+var a = new Collection([{'name': 'Steven', 'age': 25},{'name': 'John', 'age': 35]);
+a.toCSV()
+>>> "name","age"
+    "Steven","25"
+    "John","35"
+```
+
+**Arguments:**
+
+*None*
+
+**Returns:**
+
+A CSV string representation of the current dataset.
+
 <a id='where'></a>
 #### where(query)
 
