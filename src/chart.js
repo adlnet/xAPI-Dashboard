@@ -96,16 +96,7 @@
 		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
 	};
 	Chart.prototype.getCSVString = function(){
-		if(!Array.isArray(this.opts.aggregateData)){
-			return '';
-		}
-		
-		var str = '', arr = this.opts.aggregateData;
-		for(var i = 0; i < arr.length; i++){
-			str += '"' + arr[i].in + '"' + ',"' + arr[i].out + '"\n';
-		}
-
-		return str;
+		return this.opts.aggregateData;
 	};
 	Chart.prototype.getCSVDataURI = function(){
 		return 'data:application/octet-stream;charset=utf-8;base64,' + btoa(this.getCSVString());
@@ -113,7 +104,14 @@
 	
 	function addChart(self, aggregateData){
 		var event = self.event, opts = self.opts;
-		opts.aggregateData = aggregateData;
+		
+		if(self.opts.chartType != 'multiBarChart'&& !(self.opts.chartType == 'table' && self.isMulti)){
+			opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+		}
+		else{
+			opts.aggregateData = aggregateData;
+		}
+		
 		nv.addGraph(function(){
 			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 			
@@ -370,7 +368,6 @@
 				//If temp is a collection, assign temp.contents. If not, then it's just an array.
 				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
 			}
-			self.opts.aggregateData = aggregateData;
 			
 			var markup = '<table>';
 			
@@ -400,6 +397,13 @@
 			
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
+			
+			if(!self.isMulti){
+				opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+			}
+			else{
+				opts.aggregateData = aggregateData;
+			}
 		};
 	
 		opts.data = opts.data.save();

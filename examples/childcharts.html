@@ -111,24 +111,15 @@
 		var studentsInRange = dash.createBarChart({
 			container: "#svg4",
 			groupBy: 'actor.name',
-			pre: function(data, event){
-				scoreArr = event.in.split('-');
-				return data.where('result.score.raw >= '+scoreArr[0]+' and result.score.raw < '+scoreArr[1]+' and result.score.raw != null and object.definition.name = "' + saveTest + '"')
-					.orderBy('result.score.raw', 'desc');
-			},
+			pre: "result.score.raw != null",
 			aggregate: ADL.select('result.score.raw'),
-			customize: function(nvd3Chart, event){
-				nvd3Chart.xAxis.rotateLabels(45).axisLabel("Student");
-				nvd3Chart.yAxis.axisLabel("Grade");
-				nvd3Chart.forceY([scoreArr[0] - 5, scoreArr[1]]);
-			},
 			child: studentAnswersTable
 		});
 		
 		var incorrectStudentsTable = dash.createTable({
 			groupBy: 'actor.name',
 			pre: function(data, event){
-				data.where('result.success = false and object.definition.name = "' + event.in + '"').orderBy("actor.name");
+				data.where('result.success = false').orderBy("actor.name");
 			},
 			aggregate: ADL.select("actor.name"),
 			container: '#table2'
