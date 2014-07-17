@@ -362,21 +362,12 @@ Will group the data based on the `groupBy` and `range` options to the chart, and
 `xpath` (`String`)  
 The field to find the minimum of. 
 
-### ADL.sum(xpath)
-
-Will group the data based on the `groupBy` and `range` options to the chart, and map the total value of the members' `xpath` fields to the y-axis of the resulting chart.
-
-**Arguments:**
-
-`xpath` (`String`)  
-The field to total. 
-
 
 ### ADL.multiAggregate([xpath], fn1, fn2, fn3, ...)
 
 Can only be used for chart types that support the simultaneous display of multiple streams of data. Currently, the only chart types that support this are `multiBarChart` and `table`. 
 
-`multiAggregate` will call each of the provided aggregation functions and pass in the optional `xpath` string to functions that are *passed by reference*. If `xpath` is omitted and an aggregation does not specify its own `xpath`, then an error is logged and that aggregation function is not included in the chart.
+`multiAggregate` will call each of the provided aggregation functions and pass the optional `xpath` string to functions that are *passed by reference*. If `xpath` is omitted and an aggregation does not specify its own `xpath`, then an error is logged and that aggregation function is not included in the chart.
 
 Examples:
 
@@ -404,3 +395,23 @@ The field given to an aggregation function reference.
 
 `fn1, fn2, fn3, ...` (`Aggregation Function`)
 An arbitrary number of aggregation functions to run.
+
+
+### ADL.select(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and will select the specified `xpath` value from the *first* xAPI statement in each group. Useful if outputting raw data is desired.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to select. 
+
+
+### ADL.sum(xpath)
+
+Will group the data based on the `groupBy` and `range` options to the chart, and map the total value of the members' `xpath` fields to the y-axis of the resulting chart.
+
+**Arguments:**
+
+`xpath` (`String`)  
+The field to total. 
