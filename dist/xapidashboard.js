@@ -22923,7 +22923,7 @@ nv.models.stackedAreaChart = function() {
 	 */	 
 	ADL.select = function(xpath){		
 		
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
@@ -22957,11 +22957,14 @@ nv.models.stackedAreaChart = function() {
 				
 				opts.cb(data);
 			}
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};
 
 	ADL.count = function(ignoreXpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
@@ -22984,11 +22987,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.count();
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.sum = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23012,11 +23018,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.sum(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.min = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23040,11 +23049,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.min(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.max = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23068,11 +23080,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.max(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.average = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23096,12 +23111,22 @@ nv.models.stackedAreaChart = function() {
 				return ret.average(opts.xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.multiAggregate = function(){
+	ADL.multiAggregate = function(xpath){
 		
-		var multi = Array.prototype.slice.call(arguments, 0);
+		var multi;
+		if(typeof xpath === "string"){
+			multi = Array.prototype.slice.call(arguments, 1);
+		}
+		else{
+			multi = Array.prototype.slice.call(arguments, 0);
+			xpath = null;
+		}
 
 		return function(opts)
 		{
@@ -23114,7 +23139,17 @@ nv.models.stackedAreaChart = function() {
 			opts.data = opts.data.groupBy(opts.groupBy);
 			
 			for( var i=0; i<multi.length; i++ ){
-				var temp = multi[i](opts, true);
+				
+				//This is a reference directly to the inner function
+				if(multi[i]._inner){
+					multi[i](opts, true);
+				}
+				else if(xpath != null){
+					multi[i](xpath)(opts, true);
+				}
+				else{
+					console.error("If an xpath is not provided to multiAggregate, then it must be provided to each aggregation function");
+				}
 			}
 			return opts.data = opts.data.exec(tempCb);
 			
@@ -23757,16 +23792,7 @@ nv.models.multiBar = function() {
 		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
 	};
 	Chart.prototype.getCSVString = function(){
-		if(!Array.isArray(this.opts.aggregateData)){
-			return '';
-		}
-		
-		var str = '', arr = this.opts.aggregateData;
-		for(var i = 0; i < arr.length; i++){
-			str += '"' + arr[i].in + '"' + ',"' + arr[i].out + '"\n';
-		}
-
-		return str;
+		return this.opts.aggregateData;
 	};
 	Chart.prototype.getCSVDataURI = function(){
 		return 'data:application/octet-stream;charset=utf-8;base64,' + btoa(this.getCSVString());
@@ -23774,7 +23800,14 @@ nv.models.multiBar = function() {
 	
 	function addChart(self, aggregateData){
 		var event = self.event, opts = self.opts;
-		opts.aggregateData = aggregateData;
+		
+		if(self.opts.chartType != 'multiBarChart'&& !(self.opts.chartType == 'table' && self.isMulti)){
+			opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+		}
+		else{
+			opts.aggregateData = aggregateData;
+		}
+		
 		nv.addGraph(function(){
 			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
 			
@@ -24031,7 +24064,6 @@ nv.models.multiBar = function() {
 				//If temp is a collection, assign temp.contents. If not, then it's just an array.
 				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
 			}
-			self.opts.aggregateData = aggregateData;
 			
 			var markup = '<table>';
 			
@@ -24061,6 +24093,13 @@ nv.models.multiBar = function() {
 			
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
+			
+			if(!self.isMulti){
+				opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+			}
+			else{
+				opts.aggregateData = aggregateData;
+			}
 		};
 	
 		opts.data = opts.data.save();
