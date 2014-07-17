@@ -186,7 +186,6 @@ if(!Array.isArray){
 			var ret = '';
 			var headers = Object.keys(this.contents[0]);
 			ret += headers.map(sanitize).join(',') + '\r\n';
-			console.log(ret);
 
 			for(var i=0; i<this.contents.length; i++){
 				ret += headers.map(function(h){
