@@ -51,19 +51,19 @@
 			var multiTable = dash.createTable({
 				container: '#multiTableContainer',
 				groupBy: 'actor.name',
-				aggregate: ADL.multiAggregate(ADL.select('verb.display.en-US'), ADL.select('context.instructor.name'), ADL.count(), ADL.min('result.score.raw'), ADL.max('result.score.raw'), ADL.average('result.score.raw'))
+				aggregate: ADL.multiAggregate('result.score.raw', ADL.count, ADL.min, ADL.max, ADL.average, ADL.select('verb.display.en-US'), ADL.select('context.instructor.name'))
 			});						
 
 			//Add a multiBarChart
-			/*var multiBar = dash.createMultiBarChart({
+			var multiBar = dash.createMultiBarChart({
 				container: '#multi',
 				groupBy: 'actor.name',
 				aggregate: ADL.multiAggregate('result.score.raw', ADL.min, ADL.max, ADL.average)
-			});*/
+			});
 
 			table.draw();
 			multiTable.draw();
-			//multiBar.draw();
+			multiBar.draw();
 			
 			//We use setTimeout before exporting the data because we must wait until 
 			//the charts have finished processing and asynchronously drawing
@@ -72,8 +72,8 @@
 				//ADL.$ is equal to window.querySelector. What we do is we select each of the links
 				//and set their href properties to either an SVG data URI or a CSV data URI. The browser
 				//should download the data because we've added the "download" attribute to each "a" tag in the HTML above
-			//	ADL.$('#mbSVG').href = multiBar.getSVGDataURI();
-			//	ADL.$('#mbCSV').href = multiBar.getCSVDataURI();
+				ADL.$('#mbSVG').href = multiBar.getSVGDataURI();
+				ADL.$('#mbCSV').href = multiBar.getCSVDataURI();
 				ADL.$('#mtCSV').href = multiTable.getCSVDataURI();
 				ADL.$('#stCSV').href = table.getCSVDataURI();
 			}, 3000);
