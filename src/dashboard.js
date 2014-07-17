@@ -127,7 +127,7 @@
 			}
 			
 			opts.xpath = xpath;
-			if(!join){
+			if(join !== true){
 				if(opts.range){
 					return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
 				}
@@ -168,7 +168,7 @@
 			}
 				
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -199,7 +199,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -230,7 +230,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -261,7 +261,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -292,7 +292,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
