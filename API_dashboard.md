@@ -134,6 +134,8 @@ An object containing some/all of the following properties:
 	Indicates that the aggregate function should be called for each group of statements with the same value for the field specified by this property. You can think of this as the *x* axis on the chart, whereas the result of the aggregate function is the *y* axis.
 	
 	For example, if you wanted to know how many times each actor is mentioned, you could say `aggregate: ADL.count(), groupBy: "actor.mbox"` or something similar, and would get a chart with a bar for each actor, and the bar's height would correspond to the number of statements that actor had.
+
+	You can refer to the grouped-by field with the xpath `group`, and the xAPI statement group members are in the `data` array.
 	
 * `range` (`Object`)
 
@@ -173,7 +175,20 @@ An object containing some/all of the following properties:
 		increment: 1000*60*60*24
 	}
 	```
-	
+
+	This option adds two extra fields to the group, in addition to that added by `groupBy`: the `groupStart` and `groupEnd` fields, which correspond to the bounds of the interval used for that group.
+
+* `rangeLabel` (`String`)
+
+	Specifies the field used for the label on the graph. The most common use case for this is to use the display name for a verb or activity on the graph label instead of the ID. This option has a special case for the fields `groupStart` and `groupEnd`, which can be referred to simply as `start` or `end`.
+
+	Example:
+
+	```javascript
+	groupBy: 'object.id',
+	rangeLabel: 'data.0.object.definition.name.en-US'
+	```
+
 * `post` (`function(data)`)(optional)
 
 	Processes the data after everything has been aggregated and prepared for the chart, where `data` is a Collection object containing the series to be drawn to the chart. Use this function to operate on the chart data. For example, you could sort the bars of a bar graph by height from here. May optionally return the processed data.

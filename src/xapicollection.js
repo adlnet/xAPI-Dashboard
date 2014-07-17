@@ -191,7 +191,7 @@ if(!Array.isArray){
 			for(var i=0; i<this.contents.length; i++){
 				ret += headers.map(function(h){
 					return sanitize(this.contents[i][h]);
-				})
+				}.bind(this))
 				.join(',') + '\r\n';
 			}
 			return ret;
