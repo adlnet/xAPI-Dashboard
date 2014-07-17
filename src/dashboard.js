@@ -275,7 +275,7 @@
 				return;
 			}
 				
-			opts.xpath = typeof xpath === "string" ? xpath : opts.xpath;
+			opts.xpath = xpath;
 			var ret = opts.data;
 			if(!join){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
