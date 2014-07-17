@@ -3,13 +3,23 @@ module.exports = function(grunt) {
 	// Project configuration.
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
+		jison: {
+			target: {
+				options: {moduleName: 'MathParser'},
+				files: {
+					'dist/math.js': 'src/parsers/math.jison'
+				}
+			}
+		},
 		concat: {
-			options: {
-				separator: ';'
-			},
 			dist: {
-				src: ['lib/d3.v3.js', 'lib/nv.d3.js', 'lib/xapiwrapper.min.js','src/dashboard.js', 'src/chart.js'],
-				dest: 'dist/xapidashboard.js'
+				options: {
+					separator: ';'
+				},
+				files: {
+					'dist/xapidashboard.js': ['lib/d3.v3.js', 'lib/nv.d3.js', 'lib/xapiwrapper.min.js','src/dashboard.js', 'src/chart.js'],
+					'dist/xapicollection.js': ['dist/math.js', 'src/xapicollection.js']
+				}
 			}
 		},
 		uglify: {
@@ -29,10 +39,11 @@ module.exports = function(grunt) {
 	});
 
 	// Load the plugin that provides the "uglify" task.
+	grunt.loadNpmTasks('grunt-jison');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
 	// Default task(s).
-	grunt.registerTask('default', ['concat', 'uglify']);
+	grunt.registerTask('default', ['jison', 'concat', 'uglify']);
 
 };

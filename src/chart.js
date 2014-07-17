@@ -1,6 +1,6 @@
 "use strict";
 (function(ADL){
-
+	
 	//Base chart class
 	function Chart(opts)
 	{
@@ -39,76 +39,20 @@
 			event = this.event,
 			self = this;
 		
-		container = container ? container : this.opts.container;
+		container = container ? container : self.opts.container;
 			
-		if(!opts.aggregate || !opts.chartType || !container){
+		if((!opts.aggregate && !opts.process) || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
 		
-		opts.cb = function(aggregateData){
-			if(opts.post)
-				aggregateData = opts.post.call(self, aggregateData, event) || aggregateData;	
-
-			nv.addGraph(function(){
-				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
-				
-				if(chart.staggerLabels)
-					chart.staggerLabels(false);
-
-				if( opts.customize )
-					opts.customize(chart, event);
-				
-				var next = self.child || self.parent;
-				if(next && opts.eventChartType){
-					
-					//Find a way to prevent the addition of click handlers every time this chart is drawn
-					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-						e.in = e.in ? e.in : e.point.in;
-						e.out = e.out ? e.out : e.point.out;
-						if(next instanceof Array){
-							for(var i = 0; i < next.length; i++){
-								if(self.opts.container == next[i].opts.container){
-									self.clear();
-								}
-								
-								next[i].event = e;
-								next[i].draw();
-								
-								if(next[i].child instanceof Array){
-									for(var g = 0; g < next[i].child.length; g++){
-										next[i].child[g].clear();
-									}
-								}
-								else if(next[i].child){
-									next[i].child.clear();
-								}
-							}
-						}
-						else if(next){
-							//If the containers are the same, then remove all nodes from the container
-							if(self.opts.container == next.opts.container){
-								var myNode = ADL.$(next.opts.container);
-								while (myNode.firstChild) {
-									myNode.removeChild(myNode.firstChild);
-								}
-							}
-							
-							if(next != self.parent)
-								next.event = e;
-								
-							next.draw();
-						}
-					});
-				}
-
-				self.pipeData(aggregateData, chart);
-				window.onResize = chart.update;
-				
-				//chart.update();
-				return chart;
-			});
-		};
+		//If user specified a process, then call it, pass its results to d3, and return
+		if(opts.process){
+			addChart(self, opts.process.call(self, event));
+			return;
+		}
+		
+		opts.cb = cb;
 		opts.data = opts.data.save();
 
 		if(opts.pre){
@@ -121,6 +65,18 @@
 		}
 
 		opts.aggregate(opts, event);
+		
+		function cb(aggregateData){
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
+
+			addChart(self, aggregateData, opts);
+		};
 	};
 	
 	Chart.prototype.addOptions = function(obj){
@@ -136,6 +92,85 @@
 		this.child = obj;
 		obj.parent = this;
 	};
+	Chart.prototype.getSVGDataURI = function(){
+		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
+	};
+	Chart.prototype.getCSVString = function(){
+		return this.opts.aggregateData;
+	};
+	Chart.prototype.getCSVDataURI = function(){
+		return 'data:application/octet-stream;charset=utf-8;base64,' + btoa(this.getCSVString());
+	};
+	
+	function addChart(self, aggregateData){
+		var event = self.event, opts = self.opts;
+		
+		if(self.opts.chartType != 'multiBarChart'&& !(self.opts.chartType == 'table' && self.isMulti)){
+			opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+		}
+		else{
+			opts.aggregateData = aggregateData;
+		}
+		
+		nv.addGraph(function(){
+			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
+			
+			if(chart.staggerLabels)
+				chart.staggerLabels(false);
+
+			if( opts.customize )
+				opts.customize(chart, event);
+			
+			var next = self.child || self.parent;
+			if(next && opts.eventChartType){
+				
+				//Find a way to prevent the addition of click handlers every time this chart is drawn
+				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					e.in = e.in ? e.in : e.point.in;
+					e.out = e.out ? e.out : e.point.out;
+					if(next instanceof Array){
+						for(var i = 0; i < next.length; i++){
+							if(self.opts.container == next[i].opts.container){
+								self.clear();
+							}
+							
+							next[i].event = e;
+							next[i].draw();
+							
+							if(next[i].child instanceof Array){
+								for(var g = 0; g < next[i].child.length; g++){
+									next[i].child[g].clear();
+								}
+							}
+							else if(next[i].child){
+								next[i].child.clear();
+							}
+						}
+					}
+					else if(next){
+						//If the containers are the same, then remove all nodes from the container
+						if(self.opts.container == next.opts.container){
+							var myNode = ADL.$(next.opts.container);
+							while (myNode.firstChild) {
+								myNode.removeChild(myNode.firstChild);
+							}
+						}
+						
+						if(next != self.parent)
+							next.event = e;
+							
+						next.draw();
+					}
+				});
+			}
+
+			self.pipeData(aggregateData, chart);
+			window.onResize = chart.update;
+			
+			//chart.update();
+			return chart;
+		});
+	}
 	
 	//BarChart class extends Chart
 	function BarChart(opts){
@@ -232,12 +267,32 @@
 	MultiBarChart.prototype = new Chart();
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
-	MultiBarChart.prototype.pipeData = function(obj, chart){
-		console.log("MultiBar: ", obj);
-		
+	MultiBarChart.prototype.pipeData = function(obj, chart){		
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
+	};
+	MultiBarChart.prototype.getCSVString = function(){
+		if(!Array.isArray(this.opts.aggregateData)){
+			return '';
+		}
+		
+		var str = '"' + this.opts.groupBy + '",', arr = this.opts.aggregateData;
+		for(var i = 0; i < arr.length; i++){
+			str += i == 0 ? '"' + arr[i].key + '"' : ',"' + arr[i].key + '"';
+		}
+		
+		str += '\n';
+		
+		for(var g = 0; g < arr[0].values.length; g++){
+			for(var i = 0; i < arr.length; i++){
+				str += i == 0 ? '"' + arr[0].values[g].in + '"' + ',"' + arr[i].values[g].out + '"' : 
+					',"' + arr[i].values[g].out + '"';
+			}
+			str += '\n';
+		}
+		
+		return str;
 	};
 	
 	//LinePlusBarChart class extends Chart
@@ -280,7 +335,7 @@
 			.call(chart);
 	};
 	
-	//LinePlusBarChart class extends Chart
+	//Table class extends Chart
 	function Table(opts){
 
 		Chart.call(this, opts);
@@ -306,12 +361,18 @@
 		
 		opts.cb = function(aggregateData){
 			
-			if(opts.post)
-				aggregateData = opts.post(aggregateData, event) || aggregateData;	
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
 			
 			var markup = '<table>';
 			
 			if(aggregateData[0] && aggregateData[0].values){
+				self.isMulti = true;
 				for(var i = -1; i < aggregateData[0].values.length; i++){
 					
 					var g = 0;
@@ -327,6 +388,7 @@
 			}
 			
 			else{
+				self.isMulti = false;
 				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
 				for(var i = 0; i < aggregateData.length; i++){
 					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
@@ -335,6 +397,13 @@
 			
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
+			
+			if(!self.isMulti){
+				opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+			}
+			else{
+				opts.aggregateData = aggregateData;
+			}
 		};
 	
 		opts.data = opts.data.save();
@@ -349,6 +418,19 @@
 		}
 
 		opts.aggregate(opts, event);	
+	};
+	
+	Table.prototype.getCSVString = function(){
+		if(this.isMulti){
+			return MultiBarChart.prototype.getCSVString.call(this);
+		}
+		else{
+			return Chart.prototype.getCSVString.call(this);
+		}
+	};	
+	Table.prototype.getSVGDataURI = function(){
+		console.error("Tables do not support SVG Data URIs");
+		return '';
 	};
 
 	ADL.Chart = Chart;

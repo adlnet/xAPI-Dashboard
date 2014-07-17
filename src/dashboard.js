@@ -66,6 +66,7 @@
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
 			case "multiBarChart": opts.chart = new ADL.MultiBarChart(opts); break;
 			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
+			case "table": opts.chart = new ADL.Table(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
 		
@@ -119,23 +120,30 @@
 	 */	 
 	ADL.select = function(xpath){		
 		
-		return function(opts){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
 			opts.xpath = xpath;
-			if(opts.range){
-				return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+			if(join !== true){
+				if(opts.range){
+					return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+				}
+				else {
+					return opts.data = opts.data.groupBy(opts.groupBy).exec(formatData);
+				}
 			}
-			else {
-				return opts.data = opts.data.groupBy(opts.groupBy).exec(formatData);
+			
+			else{
+				return opts.data.contents.map(function(element){
+					element[xpath] = xpathfn(xpath, element.data[0]);
+				});
 			}
 			
 			//Used as an intermediate callback for exec
 			function formatData(data){
-				
 				for(var i = 0; i < data.length; i++){
 					
 					data[i].in = data[i].group;
@@ -146,19 +154,21 @@
 				
 				opts.cb(data);
 			}
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};
 
-	ADL.count = function(ignoreXpath, join){
-		return function(opts){
+	ADL.count = function(ignoreXpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
-				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 				
-			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -174,11 +184,14 @@
 				return ret.count();
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.sum = function(xpath, join){
-		return function(opts){
+	ADL.sum = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -186,7 +199,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -202,11 +215,14 @@
 				return ret.sum(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.min = function(xpath, join){
-		return function(opts){
+	ADL.min = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -214,7 +230,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -230,11 +246,14 @@
 				return ret.min(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.max = function(xpath, join){
-		return function(opts){
+	ADL.max = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -242,7 +261,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -258,11 +277,14 @@
 				return ret.max(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.average = function(xpath, join){
-		return function(opts){
+	ADL.average = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -270,7 +292,7 @@
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -280,37 +302,64 @@
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return opts.data = ret.groupBy(opts.groupBy, range).average(xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).average(opts.xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
 			}
 			else {
-				return ret.average(xpath);
+				return ret.average(opts.xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.multiAggregate = function(xpath){
-	
-		var multi = Array.prototype.slice.call(arguments, 1);
+		
+		var multi;
+		if(typeof xpath === "string"){
+			multi = Array.prototype.slice.call(arguments, 1);
+		}
+		else{
+			multi = Array.prototype.slice.call(arguments, 0);
+			xpath = null;
+		}
 
 		return function(opts)
 		{
-			if(!opts.groupBy || !xpath){
-				console.error("group or xpath has not been specified, aborting aggregation", opts);
+			if(!opts.groupBy){
+				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
-			opts.xpath = xpath;
+			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+			opts.data = opts.data.groupBy(opts.groupBy);
 			
-			var tempCb = function(data)
+			for( var i=0; i<multi.length; i++ ){
+				
+				//This is a reference directly to the inner function
+				if(multi[i]._inner){
+					multi[i](opts, true);
+				}
+				else if(xpath != null){
+					multi[i](xpath)(opts, true);
+				}
+				else{
+					console.error("If an xpath is not provided to multiAggregate, then it must be provided to each aggregation function");
+				}
+			}
+			return opts.data = opts.data.exec(tempCb);
+			
+			function tempCb(data)
 			{
 				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
+					ignoreKeys = ['data', 'group', 'sample'],
 					g = 1;
 				
 				// create series from aggregate fields of data
 				for(var i in data[0]){
-					if( /^(count|sum|min|average|max)$/.test(i) ){
+					if( ignoreKeys.indexOf(i) < 0 ){
 						aggArr.push({key: i, values: [], color: colorRange[g]});
 						g += 2;
 					}
@@ -322,28 +371,10 @@
 						aggArr[g].values.push({in: data[i].group, out: data[i][aggArr[g].key], series: g});
 					}
 				}
-				
-				//sort ensuring that min is at the beginning and max is at the end
-				if(aggArr.length <= 3){
-					aggArr.sort(function(a, b){
-						if(a.key == "min") return 1;
-						else if(b.key == "min") return -1;				
-						else if(a.key == "max") return -1;
-						else if(b.key == "max") return 1;
-						else return 0;
-					});
-				}
 
 				opts.cb(aggArr);
-			};
-			
-			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-			opts.data = opts.data.groupBy(opts.groupBy);
-			for( var i=0; i<multi.length; i++ ){
-				multi[i](xpath,true)(opts);
 			}
-			return opts.data = opts.data.exec(tempCb);
-		}
+		};
 	};	 
 	
 	ADL.XAPIDashboard = XAPIDashboard;

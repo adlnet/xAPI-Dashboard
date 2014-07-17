@@ -2,30 +2,27 @@
 <html>
 	<head>
 		<title>WebWorker test</title>
-		<script src='../src/xapicollection.js'></script>
+		<script src='../dist/xapicollection.js'></script>
 		<script src='../extra/gen-lrs-data.js'></script>
 		<script>
 			function ready(){
 
 				console.time('Total operating time');
-				var c = new ADL.CollectionAsync(window.statements);
+				var c = new ADL.CollectionSync(window.statements);
 				c
-					.where('result.score.raw != null')
+					.where('result.success != null and context.contextActivities.parent.0.id = /test1$/')
 					.groupBy('actor.name')
-					.max('result.score.raw')
-					.min('result.score.raw')
-					.average('result.score.raw')
-					.join('object.id','result.score.raw')
-					.select('group as actor, min,max,average, '+
-						'http://myschool\\.edu/xapi/cop-3223/final as final, '+
-						'http://myschool\\.edu/xapi/cop-3223/test1 as test1, '+
-						'http://myschool\\.edu/xapi/cop-3223/test2 as test2, '+
-						'http://myschool\\.edu/xapi/cop-3223/test3 as test3, '+
-						'http://myschool\\.edu/xapi/cop-3223/test4 as test4')
-					.orderBy('actor')
+					.count()
+					.groupBy('result.success')
+					.count(1)
+					.relate('group','count')
+					.select('group as actor, true as correct, count as total')
+					.math('percentile', '$(correct)/$(total)')
 					.exec(function(data){
+						console.timeEnd('Total operating time');
 						document.body.innerHTML += '<pre>'+JSON.stringify(data, null, '    ')+'</pre>';
 					});
+
 			};
 		</script>
 	</head>

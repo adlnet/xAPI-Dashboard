@@ -22869,6 +22869,7 @@ nv.models.stackedAreaChart = function() {
 			case "pieChart": opts.chart = new ADL.PieChart(opts); break;
 			case "multiBarChart": opts.chart = new ADL.MultiBarChart(opts); break;
 			case "linePlusBarChart": opts.chart = new ADL.LinePlusBarChart(opts); break;
+			case "table": opts.chart = new ADL.Table(opts); break;
 			default: opts.chart = new ADL.Chart(opts);
 		}
 		
@@ -22922,23 +22923,30 @@ nv.models.stackedAreaChart = function() {
 	 */	 
 	ADL.select = function(xpath){		
 		
-		return function(opts){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
 			opts.xpath = xpath;
-			if(opts.range){
-				return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+			if(join !== true){
+				if(opts.range){
+					return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+				}
+				else {
+					return opts.data = opts.data.groupBy(opts.groupBy).exec(formatData);
+				}
 			}
-			else {
-				return opts.data = opts.data.groupBy(opts.groupBy).exec(formatData);
+			
+			else{
+				return opts.data.contents.map(function(element){
+					element[xpath] = xpathfn(xpath, element.data[0]);
+				});
 			}
 			
 			//Used as an intermediate callback for exec
 			function formatData(data){
-				
 				for(var i = 0; i < data.length; i++){
 					
 					data[i].in = data[i].group;
@@ -22949,19 +22957,21 @@ nv.models.stackedAreaChart = function() {
 				
 				opts.cb(data);
 			}
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};
 
-	ADL.count = function(ignoreXpath, join){
-		return function(opts){
+	ADL.count = function(ignoreXpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
-				console.error("group or xpath has not been specified, aborting aggregation", opts);
+				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 				
-			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -22977,11 +22987,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.count();
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.sum = function(xpath, join){
-		return function(opts){
+	ADL.sum = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -22989,7 +23002,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23005,11 +23018,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.sum(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.min = function(xpath, join){
-		return function(opts){
+	ADL.min = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23017,7 +23033,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23033,11 +23049,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.min(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.max = function(xpath, join){
-		return function(opts){
+	ADL.max = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23045,7 +23064,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23061,11 +23080,14 @@ nv.models.stackedAreaChart = function() {
 				return ret.max(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.average = function(xpath, join){
-		return function(opts){
+	ADL.average = function(xpath){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -23073,7 +23095,7 @@ nv.models.stackedAreaChart = function() {
 				
 			opts.xpath = xpath;
 			var ret = opts.data;
-			if(!join){
+			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
 				var rangeLabel;
 				if( opts.rangeLabel === 'start' )
@@ -23083,37 +23105,64 @@ nv.models.stackedAreaChart = function() {
 				else
 					rangeLabel = opts.rangeLabel || 'group';
 					
-				return opts.data = ret.groupBy(opts.groupBy, range).average(xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
+				return opts.data = ret.groupBy(opts.groupBy, range).average(opts.xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
 			}
 			else {
-				return ret.average(xpath);
+				return ret.average(opts.xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.multiAggregate = function(xpath){
-	
-		var multi = Array.prototype.slice.call(arguments, 1);
+		
+		var multi;
+		if(typeof xpath === "string"){
+			multi = Array.prototype.slice.call(arguments, 1);
+		}
+		else{
+			multi = Array.prototype.slice.call(arguments, 0);
+			xpath = null;
+		}
 
 		return function(opts)
 		{
-			if(!opts.groupBy || !xpath){
-				console.error("group or xpath has not been specified, aborting aggregation", opts);
+			if(!opts.groupBy){
+				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
 			
-			opts.xpath = xpath;
+			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
+			opts.data = opts.data.groupBy(opts.groupBy);
 			
-			var tempCb = function(data)
+			for( var i=0; i<multi.length; i++ ){
+				
+				//This is a reference directly to the inner function
+				if(multi[i]._inner){
+					multi[i](opts, true);
+				}
+				else if(xpath != null){
+					multi[i](xpath)(opts, true);
+				}
+				else{
+					console.error("If an xpath is not provided to multiAggregate, then it must be provided to each aggregation function");
+				}
+			}
+			return opts.data = opts.data.exec(tempCb);
+			
+			function tempCb(data)
 			{
 				var colorRange = d3.scale.category20().range(),
 					aggArr = [],
+					ignoreKeys = ['data', 'group', 'sample'],
 					g = 1;
 				
 				// create series from aggregate fields of data
 				for(var i in data[0]){
-					if( /^(count|sum|min|average|max)$/.test(i) ){
+					if( ignoreKeys.indexOf(i) < 0 ){
 						aggArr.push({key: i, values: [], color: colorRange[g]});
 						g += 2;
 					}
@@ -23125,28 +23174,10 @@ nv.models.stackedAreaChart = function() {
 						aggArr[g].values.push({in: data[i].group, out: data[i][aggArr[g].key], series: g});
 					}
 				}
-				
-				//sort ensuring that min is at the beginning and max is at the end
-				if(aggArr.length <= 3){
-					aggArr.sort(function(a, b){
-						if(a.key == "min") return 1;
-						else if(b.key == "min") return -1;				
-						else if(a.key == "max") return -1;
-						else if(b.key == "max") return 1;
-						else return 0;
-					});
-				}
 
 				opts.cb(aggArr);
-			};
-			
-			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-			opts.data = opts.data.groupBy(opts.groupBy);
-			for( var i=0; i<multi.length; i++ ){
-				multi[i](xpath,true)(opts);
 			}
-			return opts.data = opts.data.exec(tempCb);
-		}
+		};
 	};	 
 	
 	ADL.XAPIDashboard = XAPIDashboard;
@@ -23665,7 +23696,7 @@ nv.models.multiBar = function() {
 }
 ;"use strict";
 (function(ADL){
-
+	
 	//Base chart class
 	function Chart(opts)
 	{
@@ -23704,76 +23735,20 @@ nv.models.multiBar = function() {
 			event = this.event,
 			self = this;
 		
-		container = container ? container : this.opts.container;
+		container = container ? container : self.opts.container;
 			
-		if(!opts.aggregate || !opts.chartType || !container){
+		if((!opts.aggregate && !opts.process) || !opts.chartType || !container){
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
 		
-		opts.cb = function(aggregateData){
-			if(opts.post)
-				aggregateData = opts.post.call(self, aggregateData, event) || aggregateData;	
-
-			nv.addGraph(function(){
-				var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
-				
-				if(chart.staggerLabels)
-					chart.staggerLabels(false);
-
-				if( opts.customize )
-					opts.customize(chart, event);
-				
-				var next = self.child || self.parent;
-				if(next && opts.eventChartType){
-					
-					//Find a way to prevent the addition of click handlers every time this chart is drawn
-					chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
-						e.in = e.in ? e.in : e.point.in;
-						e.out = e.out ? e.out : e.point.out;
-						if(next instanceof Array){
-							for(var i = 0; i < next.length; i++){
-								if(self.opts.container == next[i].opts.container){
-									self.clear();
-								}
-								
-								next[i].event = e;
-								next[i].draw();
-								
-								if(next[i].child instanceof Array){
-									for(var g = 0; g < next[i].child.length; g++){
-										next[i].child[g].clear();
-									}
-								}
-								else if(next[i].child){
-									next[i].child.clear();
-								}
-							}
-						}
-						else if(next){
-							//If the containers are the same, then remove all nodes from the container
-							if(self.opts.container == next.opts.container){
-								var myNode = ADL.$(next.opts.container);
-								while (myNode.firstChild) {
-									myNode.removeChild(myNode.firstChild);
-								}
-							}
-							
-							if(next != self.parent)
-								next.event = e;
-								
-							next.draw();
-						}
-					});
-				}
-
-				self.pipeData(aggregateData, chart);
-				window.onResize = chart.update;
-				
-				//chart.update();
-				return chart;
-			});
-		};
+		//If user specified a process, then call it, pass its results to d3, and return
+		if(opts.process){
+			addChart(self, opts.process.call(self, event));
+			return;
+		}
+		
+		opts.cb = cb;
 		opts.data = opts.data.save();
 
 		if(opts.pre){
@@ -23786,6 +23761,18 @@ nv.models.multiBar = function() {
 		}
 
 		opts.aggregate(opts, event);
+		
+		function cb(aggregateData){
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
+
+			addChart(self, aggregateData, opts);
+		};
 	};
 	
 	Chart.prototype.addOptions = function(obj){
@@ -23801,6 +23788,85 @@ nv.models.multiBar = function() {
 		this.child = obj;
 		obj.parent = this;
 	};
+	Chart.prototype.getSVGDataURI = function(){
+		return 'data:image/svg+xml;base64,' + btoa('<svg>' + ADL.$(this.opts.container).innerHTML + '</svg>');
+	};
+	Chart.prototype.getCSVString = function(){
+		return this.opts.aggregateData;
+	};
+	Chart.prototype.getCSVDataURI = function(){
+		return 'data:application/octet-stream;charset=utf-8;base64,' + btoa(this.getCSVString());
+	};
+	
+	function addChart(self, aggregateData){
+		var event = self.event, opts = self.opts;
+		
+		if(self.opts.chartType != 'multiBarChart'&& !(self.opts.chartType == 'table' && self.isMulti)){
+			opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+		}
+		else{
+			opts.aggregateData = aggregateData;
+		}
+		
+		nv.addGraph(function(){
+			var chart = nv.models[opts.chartType]().options(opts.nvd3Opts);
+			
+			if(chart.staggerLabels)
+				chart.staggerLabels(false);
+
+			if( opts.customize )
+				opts.customize(chart, event);
+			
+			var next = self.child || self.parent;
+			if(next && opts.eventChartType){
+				
+				//Find a way to prevent the addition of click handlers every time this chart is drawn
+				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
+					e.in = e.in ? e.in : e.point.in;
+					e.out = e.out ? e.out : e.point.out;
+					if(next instanceof Array){
+						for(var i = 0; i < next.length; i++){
+							if(self.opts.container == next[i].opts.container){
+								self.clear();
+							}
+							
+							next[i].event = e;
+							next[i].draw();
+							
+							if(next[i].child instanceof Array){
+								for(var g = 0; g < next[i].child.length; g++){
+									next[i].child[g].clear();
+								}
+							}
+							else if(next[i].child){
+								next[i].child.clear();
+							}
+						}
+					}
+					else if(next){
+						//If the containers are the same, then remove all nodes from the container
+						if(self.opts.container == next.opts.container){
+							var myNode = ADL.$(next.opts.container);
+							while (myNode.firstChild) {
+								myNode.removeChild(myNode.firstChild);
+							}
+						}
+						
+						if(next != self.parent)
+							next.event = e;
+							
+						next.draw();
+					}
+				});
+			}
+
+			self.pipeData(aggregateData, chart);
+			window.onResize = chart.update;
+			
+			//chart.update();
+			return chart;
+		});
+	}
 	
 	//BarChart class extends Chart
 	function BarChart(opts){
@@ -23897,12 +23963,32 @@ nv.models.multiBar = function() {
 	MultiBarChart.prototype = new Chart();
 	MultiBarChart.prototype.constructor = MultiBarChart;
 	
-	MultiBarChart.prototype.pipeData = function(obj, chart){
-		console.log("MultiBar: ", obj);
-		
+	MultiBarChart.prototype.pipeData = function(obj, chart){		
 		d3.select(this.opts.container)
 			.datum(obj)
 			.call(chart);
+	};
+	MultiBarChart.prototype.getCSVString = function(){
+		if(!Array.isArray(this.opts.aggregateData)){
+			return '';
+		}
+		
+		var str = '"' + this.opts.groupBy + '",', arr = this.opts.aggregateData;
+		for(var i = 0; i < arr.length; i++){
+			str += i == 0 ? '"' + arr[i].key + '"' : ',"' + arr[i].key + '"';
+		}
+		
+		str += '\n';
+		
+		for(var g = 0; g < arr[0].values.length; g++){
+			for(var i = 0; i < arr.length; i++){
+				str += i == 0 ? '"' + arr[0].values[g].in + '"' + ',"' + arr[i].values[g].out + '"' : 
+					',"' + arr[i].values[g].out + '"';
+			}
+			str += '\n';
+		}
+		
+		return str;
 	};
 	
 	//LinePlusBarChart class extends Chart
@@ -23945,7 +24031,7 @@ nv.models.multiBar = function() {
 			.call(chart);
 	};
 	
-	//LinePlusBarChart class extends Chart
+	//Table class extends Chart
 	function Table(opts){
 
 		Chart.call(this, opts);
@@ -23971,12 +24057,18 @@ nv.models.multiBar = function() {
 		
 		opts.cb = function(aggregateData){
 			
-			if(opts.post)
-				aggregateData = opts.post(aggregateData, event) || aggregateData;	
+			if(opts.post){
+				var tempCollection = new ADL.CollectionSync(aggregateData);
+				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
+				
+				//If temp is a collection, assign temp.contents. If not, then it's just an array.
+				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
+			}
 			
 			var markup = '<table>';
 			
 			if(aggregateData[0] && aggregateData[0].values){
+				self.isMulti = true;
 				for(var i = -1; i < aggregateData[0].values.length; i++){
 					
 					var g = 0;
@@ -23992,6 +24084,7 @@ nv.models.multiBar = function() {
 			}
 			
 			else{
+				self.isMulti = false;
 				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
 				for(var i = 0; i < aggregateData.length; i++){
 					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
@@ -24000,6 +24093,13 @@ nv.models.multiBar = function() {
 			
 			markup += '</table>';
 			ADL.$(container).innerHTML = markup;
+			
+			if(!self.isMulti){
+				opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
+			}
+			else{
+				opts.aggregateData = aggregateData;
+			}
 		};
 	
 		opts.data = opts.data.save();
@@ -24014,6 +24114,19 @@ nv.models.multiBar = function() {
 		}
 
 		opts.aggregate(opts, event);	
+	};
+	
+	Table.prototype.getCSVString = function(){
+		if(this.isMulti){
+			return MultiBarChart.prototype.getCSVString.call(this);
+		}
+		else{
+			return Chart.prototype.getCSVString.call(this);
+		}
+	};	
+	Table.prototype.getSVGDataURI = function(){
+		console.error("Tables do not support SVG Data URIs");
+		return '';
 	};
 
 	ADL.Chart = Chart;
