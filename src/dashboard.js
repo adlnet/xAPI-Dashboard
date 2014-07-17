@@ -120,7 +120,7 @@
 	 */	 
 	ADL.select = function(xpath){		
 		
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
@@ -154,11 +154,14 @@
 				
 				opts.cb(data);
 			}
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};
 
 	ADL.count = function(ignoreXpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
@@ -181,11 +184,14 @@
 				return ret.count();
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.sum = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -209,11 +215,14 @@
 				return ret.sum(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.min = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -237,11 +246,14 @@
 				return ret.min(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.max = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -265,11 +277,14 @@
 				return ret.max(xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
 	ADL.average = function(xpath){
-		return function(opts, join){
+		var innerFn = function(opts, join){
 			if(!opts.groupBy || !xpath){
 				console.error("group or xpath has not been specified, aborting aggregation", opts);
 				return;
@@ -293,12 +308,22 @@
 				return ret.average(opts.xpath);
 			}
 
-		}
+		};
+		
+		innerFn._inner = true;
+		return innerFn;
 	};	
 	
-	ADL.multiAggregate = function(){
+	ADL.multiAggregate = function(xpath){
 		
-		var multi = Array.prototype.slice.call(arguments, 0);
+		var multi;
+		if(typeof xpath === "string"){
+			multi = Array.prototype.slice.call(arguments, 1);
+		}
+		else{
+			multi = Array.prototype.slice.call(arguments, 0);
+			xpath = null;
+		}
 
 		return function(opts)
 		{
@@ -311,7 +336,17 @@
 			opts.data = opts.data.groupBy(opts.groupBy);
 			
 			for( var i=0; i<multi.length; i++ ){
-				var temp = multi[i](opts, true);
+				
+				//This is a reference directly to the inner function
+				if(multi[i]._inner){
+					multi[i](opts, true);
+				}
+				else if(xpath != null){
+					multi[i](xpath)(opts, true);
+				}
+				else{
+					console.error("If an xpath is not provided to multiAggregate, then it must be provided to each aggregation function");
+				}
 			}
 			return opts.data = opts.data.exec(tempCb);
 			
