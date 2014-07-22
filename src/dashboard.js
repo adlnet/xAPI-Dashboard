@@ -37,7 +37,7 @@
 	XAPIDashboard.prototype.clearSavedStatements = function(){
 		
 		//Update to support async collections!
-		this.statements = new ADL.Collection();
+		this.data = new ADL.Collection();
 	};
 	
 	XAPIDashboard.prototype.addStatements = function(statementsArr){

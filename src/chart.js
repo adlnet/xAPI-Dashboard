@@ -358,7 +358,7 @@
 			console.error("Must specify aggregate function, chartType, and container before drawing chart", opts);
 			return;
 		}
-		
+
 		opts.cb = function(aggregateData){
 			
 			if(opts.post){
