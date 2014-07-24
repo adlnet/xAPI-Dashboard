@@ -187,6 +187,7 @@ $(document).ready(function(){
 				currentChart = dash.createBarChart({
 					container: '#graphContainer svg',
 					groupBy: chart.groupBy,
+					pre: chart.where,
 					customize: function(chart){
 						chart.margin({'bottom': 100}).staggerLabels(false);
 						chart.xAxis.rotateLabels(45);
@@ -201,6 +202,7 @@ $(document).ready(function(){
 				currentTable = dash.createTable({
 					container: '#tableDiv',
 					groupBy: chart.groupBy,
+					pre: chart.where,
 					aggregate: generateAggregation(chart),
 					customize: function(table){
 						//table.vertical = false;
