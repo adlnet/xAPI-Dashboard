@@ -166,7 +166,8 @@
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
 			}
-				
+			
+			opts.xpath = null;
 			var ret = opts.data;
 			if(join !== true){
 				var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;

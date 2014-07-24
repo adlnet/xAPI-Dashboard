@@ -10,9 +10,24 @@ var wrapper = ADL.XAPIWrapper,
 $(document).ready(function(){
 
 	wizardModel = localStorage.wizard ? ko.mapping.fromJSON(localStorage.wizard) : {};
+	
+	wizardModel.isFooterToggled = ko.observable(false);
+	wizardModel.toggleFooterHeight = function(obj){
+		
+		if(!wizardModel.isFooterToggled()){
+			$('.chart-footer').animate({'height': '50%'}, 750, 'swing', wizardModel.generateChart);
+			$('#graphContainer').animate({'height': '50%'}, 750, 'swing', wizardModel.generateChart);
+		}
+		else{
+			$('.chart-footer').animate({'height': '20%'}, 750, 'swing', wizardModel.generateChart);
+			$('#graphContainer').animate({'height': '80%'}, 750, 'swing', wizardModel.generateChart);
+		}
+		
+		wizardModel.isFooterToggled(!wizardModel.isFooterToggled());
+	};
 		
 	wizardModel.setMainObject = function(obj){
-		
+
 		wizardModel.mainObject(obj);
 		var lrsList = ko.toJS(wizardModel.lrsList),
 		plainObj = ko.toJS(obj);
@@ -40,8 +55,7 @@ $(document).ready(function(){
 		if(dash.data.contents.length == 0){
 				
 			wrapper.changeConfig(lrsConfig);
-			dash.fetchAllStatements({since: (new Date(Date.now()-1000*10*24*60*60)).toISOString()}, function(){
-
+			dash.fetchAllStatements({since: (new Date(Date.now()-1000*7*24*60*60)).toISOString()}, function(){
 				console.log("Done");
 				wizardModel.hasData = true;
 				wizardModel.internalStatement = dash.data.contents[0];
@@ -116,7 +130,17 @@ $(document).ready(function(){
 		var chartObj = ko.toJS(wizardModel.chartAddOpts);
 		
 		for(var i in chartObj){
-			chartObj[i] = ko.observable(chartObj[i]);
+		
+			if(i == "aggregationList"){
+				chartObj[i] = ko.observableArray([{aggregationType: ko.observable('count'), aggregationField: ko.observable('')}]);
+				chartObj[i]()[0].aggregationType.subscribe(wizardModel.generateChart);
+				chartObj[i]()[0].aggregationField.subscribe(wizardModel.generateChart);
+			}
+			else{
+				chartObj[i] = ko.observable(chartObj[i]);
+			}
+
+			chartObj[i].subscribe(wizardModel.generateChart);
 		}
 		
 		if(chartObj.title && chartObj.title().length > 0){
@@ -145,12 +169,22 @@ $(document).ready(function(){
 	};
 	
 	//Chart configuration stuff
+	wizardModel.addAggregationClick = function(obj){
+		console.log(obj);
+		var aggListLength = obj.aggregationList().length;
+		obj.aggregationList.push({aggregationType: ko.observable('count'), aggregationField: ko.observable('')});
+		obj.aggregationList()[aggListLength].aggregationType.subscribe(wizardModel.generateChart);
+		obj.aggregationList()[aggListLength].aggregationField.subscribe(wizardModel.generateChart);
+		
+		return false;
+	};
 			
 	wizardModel.generateChart = function(){
+		wizardModel.saveToLocalStorage();
 		var chart = ko.toJS(wizardModel.mainObject);
-		if(wizardModel.hasData && chart.groupBy && chart.aggregationType && wizardModel.lrsList().length > 0 && wizardModel.chartList().length > 0){
+		if(wizardModel.hasData && chart.groupBy && wizardModel.lrsList().length > 0 && wizardModel.chartList().length > 0){
 			if(chart.type == "bar"){				
-				currentChart = !currentChart ? dash.createBarChart({
+				currentChart = dash.createBarChart({
 					container: '#graphContainer svg',
 					groupBy: chart.groupBy,
 					customize: function(chart){
@@ -158,17 +192,46 @@ $(document).ready(function(){
 						chart.xAxis.rotateLabels(45);
 						chart.xAxis.tickFormat(function(d){ return /[^\/]+$/.exec(d)[0]; });
 					}
-				}) : currentChart;
+				});
 				
 				currentChart.draw();
+				window.setTimeout(wizardModel.saveSVG, 1000);
 			}
 			else if(chart.type == "table"){
-				currentTable = !currentTable ? dash.createTable({
+				currentTable = dash.createTable({
 					container: '#tableDiv',
 					groupBy: chart.groupBy,
-					aggregate: ADL.multiAggregate(ADL.count(), ADL.count())
-				}) : currentTable;
+					aggregate: generateAggregation(chart),
+					customize: function(table){
+						//table.vertical = false;
+					}
+				});
 				currentTable.draw();
+			}
+			
+			window.setTimeout(wizardModel.saveCSV, 1000);
+		}
+		
+		function generateAggregation(chart){
+		
+			if(chart.aggregationList.length > 1){
+				
+				var tempArr = [chart.groupBy];
+				for(var i = 0; i < chart.aggregationList.length; i++){
+					if(chart.aggregationList[i].aggregationType == "count")
+						tempArr.push(ADL.count(chart.aggregationList[i].aggregationField || chart.groupBy));
+						
+					else if(chart.aggregationList[i].aggregationType == "select")
+						tempArr.push(ADL.select(chart.aggregationList[i].aggregationField || chart.groupBy));
+						
+					else if(chart.aggregationList[i].aggregationType == "count")
+						tempArr.push(ADL.count(chart.aggregationList[i].aggregationField || chart.groupBy));
+				}
+				
+				return ADL.multiAggregate.apply(ADL.multiAggregate, tempArr);
+			}
+			else{
+			
 			}
 		}
 	};
@@ -182,6 +245,25 @@ $(document).ready(function(){
 		return arr;
 	};	
 	
+	wizardModel.csvReady = ko.observable(false);
+	wizardModel.saveCSV = function(){
+		var obj = ko.toJS(wizardModel.mainObject);
+		if(obj.type == "bar"){
+			$('#csvDownload').attr('href', currentChart.getCSVDataURI());
+		}
+		else if(obj.type == "table"){
+			$('#csvDownload').attr('href', currentTable.getCSVDataURI());
+		}
+		wizardModel.csvReady(true);
+	};		
+	wizardModel.svgReady = ko.observable(false);
+	wizardModel.saveSVG = function(){
+		var obj = ko.toJS(wizardModel.mainObject);
+		if(obj.type == "bar"){
+			$('#svgDownload').attr('href', currentChart.getSVGDataURI());
+		}
+		wizardModel.svgReady(true);
+	};	
 	wizardModel.saveToLocalStorage = function(){
 		localStorage.wizard = ko.mapping.toJSON(wizardModel);
 	};
@@ -207,8 +289,8 @@ $(document).ready(function(){
 			type: ko.observable(""),
 			lrs: ko.observable(""),
 			groupBy: 'verb.display.en-US',
-			aggregationType: 'count',
-			aggregationField: ''
+			where: '',
+			aggregationList: []
 		};
 		
 		//Chart options
@@ -225,6 +307,14 @@ $(document).ready(function(){
 	wizardModel.mainObject = ko.observable("");
 	wizardModel.chartList.subscribe(wizardModel.generateChart);
 	wizardModel.lrsList.subscribe(wizardModel.generateChart);
+	
+	//debugger;
+	for(var i = 0; i < wizardModel.chartList().length; i++){
+		for(var key in wizardModel.chartList()[i]){
+			wizardModel.chartList()[i][key].subscribe(wizardModel.generateChart);
+			console.log(key);
+		}
+	}
 	//wizardModel.internalStatement.subscribe(wizardModel.generateChart);
 
 	ko.applyBindings(wizardModel);

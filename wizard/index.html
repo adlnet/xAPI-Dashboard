@@ -19,7 +19,7 @@
 	<script type="text/javascript" src="../src/dashboard.js"></script>
 	
 	<script type="text/javascript" src="model.js"></script>
-	<script src='../extra/gen-lrs-data.js'></script>
+	<script src='../extra/lz-string-1.3.3-min.js'></script>
 	
 	<link rel='stylesheet' href='../lib/nv.d3.css'></link>
 	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
@@ -33,9 +33,9 @@
 			<div class="side-element">
 				<ul data-bind="foreach:lrsList">
 					<li data-bind="text: endpoint"></li>
-					<ul>
-						<li data-bind="text: 'User: ' + user()"></li>
-						<li><span data-bind="if: password().length > 0">Pass: xxxxx</span></li>
+					<ul data-bind="if: user().length > 0">
+						<li><span data-bind="text: 'User: ' + user()"></span></li>
+						<li data-bind="if: password().length > 0"><span>Pass: xxxxx</span></li>
 					</ul>					
 				</ul>
 				<button class="btn" data-bind="click:setModalType('Add LRS')" data-toggle="modal" data-target="#myModal">Add LRS</button>
@@ -48,8 +48,9 @@
 				</ul>
 				<button class="btn" data-bind="click:setModalType('Add Chart'), visible: lrsList().length>0" data-toggle="modal" data-target="#myModal">New Chart</button>
 			</div>
-			<div class="side-element">
-				<button class="btn" data-bind="click:saveToLocalStorage">Save Data</button>
+			<div class="side-element" data-bind="visible:csvReady()">
+				<a class="btn btn-default" id="csvDownload" download="chartData.csv">Download CSV</a><br/><br/>
+				<a class="btn btn-default" id="svgDownload" download="chartImage.svg" data-bind="visible:mainObject() && mainObject().type() == 'bar' ">Download SVG</a>
 			</div>
 		</div>
 		<div class="main">
@@ -62,36 +63,43 @@
 				</div>
 			</div>
 			<div class="chart-footer" data-bind="if:mainObject && mainObject()">
-				<div data-bind="with:mainObject">
+				<div data-bind="with:mainObject" class="mainObject">
 					<div class="col-md-3">
 						
 						<div class="single-option">
-							<span>Group field:</span><input type="text" data-bind="value:groupBy" /><br/>
+							<span>Group field: </span><input type="text" data-bind="value:groupBy" /><br/>
 							<a href="#" data-bind="click:$root.setModalType('Sample Statement')" data-toggle="modal" data-target="#myModal">Choose from sample statement</a>
 						</div>
 						<div class="single-option">
-							<span>Aggregation type:</span>
-							<select data-bind="value:aggregationType">
-								<option value="count">Count</option>
-								<option value="accumulate">Accumulate</option>
-								<option value="average">Average</option>
-							</select>
+							<span>Where filter: </span><br/>
+							<textarea type="text" data-bind="value:where" style="width: 100%;"></textarea><br/>
 						</div>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-6">
+					<!-- ko foreach: aggregationList -->
 						
-						Testing width
-						
+						<div class="col-md-6">
+							<div class="single-option" style="border-bottom:none;">
+								<span>Aggregation type:</span>
+								<select data-bind="value:aggregationType">
+									<option value="count">Count</option>
+									<option value="select">Select</option>
+									<option value="accumulate">Accumulate</option>
+									<option value="average">Average</option>
+								</select>
+							</div>
+							<div class="single-option">
+								<span>Aggregation field: </span><input type="text" data-bind="value:aggregationField" /><br/>
+								<a href="#" data-bind="click:$root.setModalType('Sample Statement')" data-toggle="modal" data-target="#myModal">Choose from sample statement</a>
+							</div>
+						</div>
+					<!-- /ko -->
 					</div>
-					<div class="col-md-3">
-						
-						Testing width
-						
-					</div>
-					<div class="col-md-3">
-						
-						Testing width
-						
+					<div class="col-md-3" style="border-right:none;">
+						<div class="single-option">
+							<a href="" data-bind="click:$root.addAggregationClick" class="btn btn-default">Add aggregation</a>
+							<a href="" data-bind="click:$root.toggleFooterHeight, text: $root.isFooterToggled() ? 'Collapse View' : 'Expand View'" class="btn btn-default"></a>
+						</div>
 					</div>
 				</div>
 				<div data-bind="if:!mainObject()">

@@ -361,6 +361,7 @@
 
 		opts.cb = function(aggregateData){
 			
+			var customOpts = {vertical: true};
 			if(opts.post){
 				var tempCollection = new ADL.CollectionSync(aggregateData);
 				var temp = opts.post.call(self, tempCollection, event) || tempCollection;
@@ -369,30 +370,63 @@
 				aggregateData = temp.contents && temp.contents.length >= 0 ? temp.contents : temp;	
 			}
 			
+			if( opts.customize ){
+				opts.customize(customOpts, event);
+			}
+			
 			var markup = '<table>';
 			
 			if(aggregateData[0] && aggregateData[0].values){
 				self.isMulti = true;
-				for(var i = -1; i < aggregateData[0].values.length; i++){
-					
-					var g = 0;
-					markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.groupBy +'</th>';
-					
-					for(; g < aggregateData.length; g++){
-						if(i >= 0) markup += '<td>'+aggregateData[g].values[i].out+'</td>';
-						else markup += '<th>'+aggregateData[g].key+'</th>';
+				if(customOpts.vertical === true){
+					for(var i = -1; i < aggregateData[0].values.length; i++){
+						
+						var g = 0;
+						markup += i >= 0 ? '<tr><td>' + aggregateData[g].values[i].in + '</td>' : '<tr><th>' + opts.groupBy +'</th>';
+						
+						for(; g < aggregateData.length; g++){
+							if(i >= 0) markup += '<td>'+aggregateData[g].values[i].out+'</td>';
+							else markup += '<th>'+aggregateData[g].key+'</th>';
+						}
+						
+						markup += '</tr>';
 					}
-					
-					markup += '</tr>';
+				}
+				else{
+					for(var i = -1; i < aggregateData.length; i++){
+						
+						markup += i >= 0 ? '<tr><th>'+aggregateData[i].key+'</th>' : '<tr><th>' + opts.groupBy +'</th>';
+						
+						for(var g = 0; g < aggregateData[0].values.length; g++){
+							if(i >= 0) markup += '<td>'+aggregateData[i].values[g].out+'</td>';
+							else markup += '<th>'+aggregateData[0].values[g].in +'</th>';
+						}
+						
+						markup += '</tr>';
+					}
 				}
 			}
-			
 			else{
 				self.isMulti = false;
-				markup += '<tr><th>'+opts.groupBy+'</th><th>'+opts.xpath+'</th></tr>';
-				for(var i = 0; i < aggregateData.length; i++){
-					markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
+				if(customOpts.vertical === true){
+					markup += '<tr><th>'+opts.groupBy+'</th><th>'+(opts.xpath ? opts.xpath : 'count')+'</th></tr>';
+					for(var i = 0; i < aggregateData.length; i++){
+						markup += '<tr><td>'+aggregateData[i].in+'</td><td>'+aggregateData[i].out+'</td></tr>';
+					}
 				}
+				else{
+					var tempMarkup = '';
+					
+					markup += '<tr><th>'+opts.groupBy+'</th>';
+					tempMarkup += '</tr><tr><th>'+ (opts.xpath ? opts.xpath : 'count') +'</th>';
+					
+					for(var i = 0; i < aggregateData.length; i++){
+						markup += '<td>'+aggregateData[i].in+'</td>';
+						tempMarkup += '<td>' + aggregateData[i].out +'</td>';
+					}
+
+					markup += tempMarkup + '</tr>';
+				}			
 			}
 			
 			markup += '</table>';

@@ -24,6 +24,11 @@ pre{
 	height: 270px !important;
 }
 
+table{
+	table-layout: fixed;
+	width: auto;
+}
+
 #verbs{
 	height: 95%;
 }
@@ -34,6 +39,8 @@ pre{
 
 #graphContainer{
 	height: 80%;
+	position:relative;
+	z-index:1;
 }
 
 #tableDiv{
@@ -48,6 +55,10 @@ pre{
 
 	border: 1px solid #aaa;
 	padding: 5px;
+}
+
+.col-md-3{
+	height: 100%;
 }
 
 .sidebar{
@@ -80,14 +91,16 @@ pre{
 	text-align: center;
 	color: #aaa;
 }
-
 .chart-footer{
 
-	width: 100%;
+	min-width: 100%;
 	background-color: #eee;
 	border-top: 1px solid #DFDFDF;
 	float: left;
 	height: 20%;
+	overflow-y: scroll;
+	position:relative;
+	z-index:2;
 }
 
 .modal-body{
@@ -118,4 +131,8 @@ pre{
 	border-bottom: 1px solid #D8D8D8;
 	text-align: center;
 	padding: 13px;
+}
+.mainObject > div {
+	height: 100%;
+	border-right:1px solid #ccc;
 }
