@@ -184,10 +184,11 @@ $(document).ready(function(){
 		var chart = ko.toJS(wizardModel.mainObject);
 		if(wizardModel.hasData && chart.groupBy && wizardModel.lrsList().length > 0 && wizardModel.chartList().length > 0){
 			if(chart.type == "bar"){				
-				currentChart = dash.createBarChart({
+				currentChart = (chart.aggregationList.length > 1 ? dash.createMultiBarChart : dash.createBarChart).bind(dash)({
 					container: '#graphContainer svg',
 					groupBy: chart.groupBy,
 					pre: chart.where,
+					aggregate: generateAggregation(chart),
 					customize: function(chart){
 						chart.margin({'bottom': 100}).staggerLabels(false);
 						chart.xAxis.rotateLabels(45);
@@ -220,20 +221,13 @@ $(document).ready(function(){
 				
 				var tempArr = [chart.groupBy];
 				for(var i = 0; i < chart.aggregationList.length; i++){
-					if(chart.aggregationList[i].aggregationType == "count")
-						tempArr.push(ADL.count(chart.aggregationList[i].aggregationField || chart.groupBy));
-						
-					else if(chart.aggregationList[i].aggregationType == "select")
-						tempArr.push(ADL.select(chart.aggregationList[i].aggregationField || chart.groupBy));
-						
-					else if(chart.aggregationList[i].aggregationType == "count")
-						tempArr.push(ADL.count(chart.aggregationList[i].aggregationField || chart.groupBy));
+						tempArr.push(ADL[chart.aggregationList[i].aggregationType](chart.aggregationList[i].aggregationField || chart.groupBy));
 				}
 				
 				return ADL.multiAggregate.apply(ADL.multiAggregate, tempArr);
 			}
-			else{
-			
+			else if(chart.aggregationList.length === 1){
+				return ADL[chart.aggregationList[0].aggregationType](chart.aggregationList[0].aggregationField || chart.groupBy);
 			}
 		}
 	};
