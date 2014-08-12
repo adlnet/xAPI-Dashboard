@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>WebWorker test</title>
+		<title>Simple Table Layout</title>
 		<script src='lib/xapicollection.min.js'></script>
 		<script src='lib/gen-lrs-data.js'></script>
 		<script src='lib/knockout-3.1.0.js'></script>
@@ -14,7 +14,7 @@
 					.where('result.score.raw != null')
 					.groupBy('actor.name')
 					.average('result.score.raw')
-					.join('object.id','result.score.raw')
+					.relate('object.id','result.score.raw')
 					.select('group as actor,average, '+
 						'http://myschool\\.edu/xapi/cop-3223/final as final, '+
 						'http://myschool\\.edu/xapi/cop-3223/test1 as test1, '+
@@ -23,7 +23,7 @@
 						'http://myschool\\.edu/xapi/cop-3223/test4 as test4')
 					.orderBy('actor')
 					.exec(function(data){
-						document.body.innerHTML += '<pre>'+JSON.stringify(data, null, '    ')+'</pre>';
+						document.body.innerHTML += '<pre>'+ADL.CollectionSync.prototype.toCSV.call({contents:data})+'</pre>';
 						ko.applyBindings(data);
 					});
 			};
