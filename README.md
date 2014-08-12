@@ -6,6 +6,8 @@ allows developers to run SQL-like queries, filters, and aggregations over xAPI d
 part, the *XAPIDashboard* class, can generate numerous types of charts and visualizations based on
 that aggregated xAPI data.
 
+If you'd rather learn by reference, we have a set of live demos at this repo's
+[Github.io](https://adlnet.github.io/xAPI-Dashboard) page.
 
 ## Making Your First Chart
 
