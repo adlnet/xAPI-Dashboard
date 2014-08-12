@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>WebWorker test</title>
+		<title>Sample Table</title>
 		<script src='../src/xapicollection.js'></script>
 		<script src='../extra/gen-lrs-data.js'></script>
 		<script src='../extra/knockout-3.1.0.js'></script>
@@ -14,7 +14,7 @@
 					.where('result.score.raw != null')
 					.groupBy('actor.name')
 					.average('result.score.raw')
-					.join('object.id','result.score.raw')
+					.relate('object.id','result.score.raw')
 					.select('group as actor,average, '+
 						'http://myschool\\.edu/xapi/cop-3223/final as final, '+
 						'http://myschool\\.edu/xapi/cop-3223/test1 as test1, '+
