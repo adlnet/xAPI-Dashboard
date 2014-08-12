@@ -1,92 +1,268 @@
-<!doctype html>
-<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
-<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<head>
+		<!-- include dependencies -->
+		<script type='text/javascript' src='lib/xapicollection.min.js'></script>
+		<script type='text/javascript' src='lib/xapidashboard.min.js'></script>
+		<script type='text/javascript' src='lib/gen-lrs-data.js'></script>
+		<link rel='stylesheet' href='lib/nv.d3.css'></script>
+		
+		<!-- include a basic style for laying out the graphs -->
+		<style>
+			h2,p {
+				text-align: center;
+			}
+			.container {
+				display: flex;
+				flex-direction: row;
+				flex-wrap: wrap;
+				justify-content: center;
+				align-items: center;
+			}
+			.graph svg {
+				width: 800px;
+				height: 400px;
+			}
+			.graph svg#pie {
+				width: 400px;
+				height: 400px;
+			}
+		</style>
+	</head>
 
-  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen">
-  <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/script.js"></script>
+	<body>
+		<div class='container'>
 
-  <title>Xapi-dashboard</title>
-  <meta name="description" content="Provides a quick and easy way to generate graphs from your xAPI data, as well as a powerful query language to manipulate it">
+			<!-- graph for the first question: mix, max, and average of tests -->
+			<div class='graph' id='testScores'>
+				<h2>Class Test Statistics</h2>
+				<svg></svg>
+			</div>
 
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+			<!-- graph for the second question: student count per letter grade -->
+			<div class='graph' id='scoreBrackets'>
+				<h2>Class Scores For All Tests</h2>
+				<p>(<a href='javascript:;' onclick='resetScoreBrackets()'>reset</a>)</p>
+				<div class='container'>
+					<svg id='bar'></svg>
+					<svg id='pie'></svg>
+				</div>
+			</div>
 
-</head>
+			<!-- graph for third question: students who scored in a particular range -->
+			<div class='graph' id='studentScores'>
+				<h2>Student High Scores</h2>
+				<p>(<a href='javascript:;' onclick='resetStudentScores()'>reset</a>)</p>
+				<svg></svg>
+			</div>
 
-<body>
+		</div>
 
-  <div class="wrapper">
-    <header>
-      <h1 class="title">Xapi-dashboard</h1>
-    </header>
-    <div id="container">
-      <p class="tagline">Provides a quick and easy way to generate graphs from your xAPI data, as well as a powerful query language to manipulate it</p>
-      <div id="main" role="main">
-        <div class="download-bar">
-        <div class="inner">
-          <a href="https://github.com/adlnet/xAPI-Dashboard/tarball/master" class="download-button tar"><span>Download</span></a>
-          <a href="https://github.com/adlnet/xAPI-Dashboard/zipball/master" class="download-button zip"><span>Download</span></a>
-          <a href="https://github.com/adlnet/xAPI-Dashboard" class="code">View Xapi-dashboard on GitHub</a>
-        </div>
-        <span class="blc"></span><span class="trc"></span>
-        </div>
-        <article class="markdown-body">
-          <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+		<!-- pushed to the end of body for quicker load times -->
+		<script>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+		
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+			var dash = new ADL.XAPIDashboard();
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+			// do this to fetch live data from an LRS
+			/*ADL.XAPIWrapper.changeConfig({
+				'endpoint': 'https://lrs.adlnet.gov/xAPI/'
+			});
+			dash.fetchAllStatements({}, function(){*/
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+			// do this to use the pre-loaded handwaved LRS data
+			(function(cb){dash.addStatements(window.statements);cb();})(function(){
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+				// create the student scores chart
+				dash.studentScores = dash.createBarChart({
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+					// in the appropriate container
+					container: '#studentScores svg',
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+					// using only the data from the clicked parts of the ancestor charts
+					pre: function(data,evt)
+					{
+						var filter = '';
+						var title = 'Student Scores';
+						var parentEvent = dash.scoreBrackets.event;
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+						// if a test was clicked in grandparent
+						if(parentEvent)
+						{
+							// update chart title
+							var testName = /([^\/]+?)(\d?)$/.exec(parentEvent.in);
+							testName = testName[1].charAt(0).toUpperCase() + testName[1].slice(1) + (testName[2]?' '+testName[2]:'');
+							title += ' For '+testName;
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+							// only use data from that test
+							filter += ' and object.id = "'+parentEvent.in+'"';
+						}
+						// if a score range was clicked
+						if(evt)
+						{
+							// update chart title
+							var range = evt.in.split('-');
+							title += ' Between '+range[0]+' and '+range[1];
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+							// only use data from that column
+							filter += ' and result.score.raw >= '+range[0]+' and result.score.raw < '+range[1];
+						}
+						// apply title and filter changes
+						document.querySelector('#studentScores h2').innerHTML = title;
+						return data.where('result.score.raw != null'+filter);
+					},
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-        </article>
-      </div>
-    </div>
-    <footer>
-      <div class="owner">
-      <p><a href="https://github.com/adlnet" class="avatar"><img src="https://avatars1.githubusercontent.com/u/1256328?v=2&amp;s=60" width="48" height="48"></a> <a href="https://github.com/adlnet">adlnet</a> maintains <a href="https://github.com/adlnet/xAPI-Dashboard">Xapi-dashboard</a></p>
+					// put student names on x-axis
+					groupBy: 'actor.name',
 
+					// put their scores on the y-axis
+					aggregate: ADL.select('result.score.raw'),
 
-      </div>
-      <div class="creds">
-        <small>This page generated using <a href="http://pages.github.com/">GitHub Pages</a><br>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
-      </div>
-    </footer>
-  </div>
-  <div class="current-section">
-    <a href="#top">Scroll to top</a>
-    <a href="https://github.com/adlnet/xAPI-Dashboard/tarball/master" class="tar">tar</a><a href="https://github.com/adlnet/xAPI-Dashboard/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
-    <p class="name"></p>
-  </div>
+					// sort by score and limit to 15 students on the chart
+					post: function(data){
+						data
+							.orderBy('out','desc')
+							.slice(0,15)
+							.contents;
+					},
 
-  
-</body>
+					// tilt the x-axis labels and scale y-axis down to clicked range
+					customize: function(nvd3chart, evt){
+						nvd3chart.xAxis.rotateLabels(45);
+						if(evt){
+							var parts = evt.in.split('-').map(parseInt);
+							nvd3chart.forceY(parts);
+						}
+					}
+				});
+
+				// create the class scores pie chart
+				dash.scoreBracketsPie = dash.createPieChart({
+
+					// in the appropriate container
+					container: '#scoreBrackets svg#pie',
+
+					// selecting only the clicked-on test, or all tests if no click event
+					pre: function(data, evt){
+						var filter = '';
+						if(evt){
+							filter = ' and object.id = "'+evt.in+'"';
+						}
+						return data.where('result.score.raw != null'+filter);
+					},
+
+					// put the raw scores on the arcs
+					groupBy: 'result.score.raw',
+
+					// in groups of 10, from 50 to 100
+					range: {start: 50, end: 100, increment: 10},
+
+					// put the size of the groups on the radius
+					aggregate: ADL.count(),
+
+					// and hide the redundant legend
+					customize: function(nvd3chart){
+						nvd3chart.showLegend(false);
+					},
+
+					// if it's clicked on, pass click data to the studentScores chart
+					child: dash.studentScores
+				});
+
+				// create the class scores chart
+				dash.scoreBrackets = dash.createBarChart({
+
+					// in the appropriate container
+					container: '#scoreBrackets svg#bar',
+
+					// selecting only the clicked-on test, or all tests if no click event
+					pre: function(data, evt)
+					{
+						var filter = '';
+
+						// if the parent chart was clicked on
+						if(evt)
+						{
+							// update the chart title
+							var testName = /([^\/]+?)(\d?)$/.exec(evt.in);
+							testName = testName[1].charAt(0).toUpperCase() + testName[1].slice(1) + (testName[2]?' '+testName[2]:'');
+							document.querySelector('#scoreBrackets h2').innerHTML = 'Class Scores For '+testName;
+
+							// filter data down to clicked column
+							filter = ' and object.id = "'+evt.in+'"';
+						}
+						// otherwise draw generic title
+						else {
+							document.querySelector('#scoreBrackets h2').innerHTML = 'Class Scores For All Tests';
+						}
+						// update the child chart with new click data
+						dash.studentScores.draw();
+
+						// apply filter
+						return data.where('result.score.raw != null'+filter);
+					},
+
+					// put the raw score on the x-axis
+					groupBy: 'result.score.raw',
+
+					// in groups of 5, from 50 to 100
+					range: {start: 50, end: 100, increment: 5},
+
+					// put the number of items in each group on the y-axis
+					aggregate: ADL.count(),
+
+					// filter and redraw student scores on click
+					child: dash.studentScores
+				});
+
+				// draw the min/max/average chart
+				dash.testScores = dash.createMultiBarChart({
+
+					// in the appropriate container
+					container: '#testScores.graph svg',
+
+					// selecting only statements with scores, and sorting by test id
+					pre: function(data){
+						return data.where('result.score.raw != null').orderBy('object.id');
+					},
+
+					// put the test id on the x-axis
+					groupBy: 'object.id',
+
+					// put the min, max, and average of each group on the y-axis
+					aggregate: ADL.multiAggregate('result.score.raw', ADL.min, ADL.average, ADL.max),
+
+					// clean up axis labels, force y-axis scale
+					customize: function(nvd3chart){
+						nvd3chart.xAxis.tickFormat(function(label){
+							return /[^\/]*$/.exec(label)[0];
+						});
+						nvd3chart.forceY([0,100]);
+					},
+
+					// and on click, update these charts
+					child: [dash.scoreBrackets, dash.scoreBracketsPie]
+				});
+
+				dash.testScores.draw();
+				dash.scoreBrackets.draw();
+				dash.scoreBracketsPie.draw();
+			});
+
+			// clear the filter and redraw chart
+			function resetScoreBrackets(){
+				dash.scoreBrackets.event = null;
+				dash.scoreBracketsPie.event = null;
+				dash.scoreBrackets.draw();
+				dash.scoreBracketsPie.draw();
+			}
+
+			function resetStudentScores(){
+				dash.studentScores.event = null;
+				dash.studentScores.draw();
+			}
+
+		</script>
+	</body>
 </html>
