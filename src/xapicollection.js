@@ -1281,7 +1281,7 @@ try {
 	exports.CollectionSync = window.ADL.CollectionSync;
 }
 catch(e){
-	if( ! /'?exports'? is not defined/.test(e.message) )
+	if( ! /'?exports'? is (?:not |un)defined/.test(e.message) )
 		throw e;
 }
 
