@@ -2016,7 +2016,7 @@ try {
 	exports.CollectionSync = window.ADL.CollectionSync;
 }
 catch(e){
-	if( e.message !== 'exports is not defined' )
+	if( ! /'?exports'? is not defined/.test(e.message) )
 		throw e;
 }
 
