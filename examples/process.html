@@ -15,57 +15,35 @@
 </head>
 <body>
 	<style>
-		.nv-axislabel {
-			font-size: 18px;
-		}
-		#main{
-			width: 100%;
-		}
 		svg{
 			width: 65%;
 			height: 55%;
 			margin: 0 auto;
-			float: none;
 		}
 	</style>
-	<div id="main">
-		<svg id="svg"></svg>
-	</div>
+	<svg id="svg"></svg>
 
 	<script type="text/javascript">
-		//To-do: add comments
-	
-		var wrapper = new XAPIWrapper({"endpoint" : 'https://lrs.adlnet.gov/xAPI/'});
+		//We could have also added a "container" option to the chart.
 		var dash = new ADL.XAPIDashboard('#svg');
-		var saveTest = '', scoreArr, totalStudents = 30;
 		
 		dash.addStatements(window.statements);
-		
-		var minMaxAverage = dash.createBarChart({
+		dash.createBarChart({
 			process: function(data, event, opts){
 				/* 
-				   opts is the chart's options object. You can access groupBy, range, and other properties.
-				   opts.cb is a callback used to call "addChart" internally. It must be given to exec. 
+					With process, you are responsible for the formatting of the data (see the call to select below).
+					opts is the chart's options object. You can access groupBy, range, and other properties.
+					opts.cb is a callback used internally. It must be given to exec. 
 				*/
 				
 				data.where("result.score.raw != null").orderBy("object.definition.name");
-				data.groupBy('object.definition.name').count().select('group as in, count as out').exec(opts.cb);				
+				data.groupBy('object.definition.name').average('result.score.raw').select('group as in, average as out').exec(opts.cb);				
 			},
 			customize: function(nvd3Chart){
-				nvd3Chart.forceY([0, 120]);
+				nvd3Chart.forceY([70, 85]);
 				nvd3Chart.yAxis.axisLabel("Grade");			
 			}
-		});
-		minMaxAverage.draw();		
-
-		/*if( window.statements ){
-			dash.addStatements(window.statements);
-			window.statements = null;
-			generateGraphs();
-		}
-		else {
-			dash.fetchAllStatements({'since': new Date(Date.now() - set.day * 30).toISOString()}, wrapper, generateGraphs);
-		}*/
+		}).draw();		
 	</script>
 </body>
 </html>
