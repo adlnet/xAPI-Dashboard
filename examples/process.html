@@ -1,0 +1,71 @@
+<html>
+<head>
+	<title>xAPI Dashboard</title>
+	<link rel='stylesheet' href='../lib/nv.d3.css'></link>
+	<!--<script type="text/javascript" src="dist/xapidashboard.min.js"></script>-->
+	
+	<script type="text/javascript" src="../lib/d3.v3.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../lib/nv.d3.js"></script>
+	<script type="text/javascript" src="../lib/xapiwrapper.min.js"></script>
+	<script type="text/javascript" src="../src/chart.js"></script>
+	<script type="text/javascript" src="../src/dashboard.js"></script>
+	<script type="text/javascript" src="../src/xapicollection.js"></script>
+	
+	<script src='../extra/gen-lrs-data.js'></script>
+</head>
+<body>
+	<style>
+		.nv-axislabel {
+			font-size: 18px;
+		}
+		#main{
+			width: 100%;
+		}
+		svg{
+			width: 65%;
+			height: 55%;
+			margin: 0 auto;
+			float: none;
+		}
+	</style>
+	<div id="main">
+		<svg id="svg"></svg>
+	</div>
+
+	<script type="text/javascript">
+		//To-do: add comments
+	
+		var wrapper = new XAPIWrapper({"endpoint" : 'https://lrs.adlnet.gov/xAPI/'});
+		var dash = new ADL.XAPIDashboard('#svg');
+		var saveTest = '', scoreArr, totalStudents = 30;
+		
+		dash.addStatements(window.statements);
+		
+		var minMaxAverage = dash.createBarChart({
+			process: function(data, event, opts){
+				/* 
+				   opts is the chart's options object. You can access groupBy, range, and other properties.
+				   opts.cb is a callback used to call "addChart" internally. It must be given to exec. 
+				*/
+				
+				data.where("result.score.raw != null").orderBy("object.definition.name");
+				data.groupBy('object.definition.name').count().select('group as in, count as out').exec(opts.cb);				
+			},
+			customize: function(nvd3Chart){
+				nvd3Chart.forceY([0, 120]);
+				nvd3Chart.yAxis.axisLabel("Grade");			
+			}
+		});
+		minMaxAverage.draw();		
+
+		/*if( window.statements ){
+			dash.addStatements(window.statements);
+			window.statements = null;
+			generateGraphs();
+		}
+		else {
+			dash.fetchAllStatements({'since': new Date(Date.now() - set.day * 30).toISOString()}, wrapper, generateGraphs);
+		}*/
+	</script>
+</body>
+</html>
