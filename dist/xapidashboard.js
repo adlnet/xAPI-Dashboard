@@ -23744,7 +23744,10 @@ nv.models.multiBar = function() {
 		
 		//If user specified a process, then call it, pass its results to d3, and return
 		if(opts.process){
-			addChart(self, opts.process.call(self, event));
+			opts.cb = function(aggregateData){
+				addChart(self, aggregateData);
+			}
+			opts.process.call(self, opts.data, event, opts)
 			return;
 		}
 		

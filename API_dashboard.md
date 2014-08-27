@@ -109,7 +109,7 @@ An object containing some/all of the following properties:
 
 	A CSS-style selector indicating where in the DOM the chart should be placed. If omitted, the chart is placed in the default location for this dashboard (from the Dashboard constructor).
 	
-* `pre` (`function(data,event)` or `String`)(optional)
+* `pre` (`function(data, event)` or `String`)(optional)
 
 	Preprocesses the raw xAPI data however the user chooses. Takes in a Collection of statements, and must output another Collection, usually some filtered subset of the input (e.g. `return data.where(...);`). All Collection methods are available, but the system will break if `exec` is called at this stage.
 	
@@ -189,9 +189,36 @@ An object containing some/all of the following properties:
 	rangeLabel: 'data.0.object.definition.name.en-US'
 	```
 
-* `post` (`function(data)`)(optional)
+* `post` (`function(data, event)`)(optional)
 
 	Processes the data after everything has been aggregated and prepared for the chart, where `data` is a Collection object containing the series to be drawn to the chart. Use this function to operate on the chart data. For example, you could sort the bars of a bar graph by height from here. May optionally return the processed data.
+
+* `process` (`function(data, event, opts)`)(optional)
+
+	Bypasses the pre, aggregate, and post options and handles all processing and data formatting that would have otherwise been handled internally by the Chart and Dashboard. This option is generally not needed for most use cases and should only be used by more advanced users. This option is currently ignored in charts that use `multiAggregate`.
+
+	The `data` argument is simply the same Collection of statements given to or fetched by the Dashboard and may be operated on in arbitrary ways (filtering, aggregating, grouping, etc.). The `opts` object is this chart's configuration options object (the same one that includes this `process` function) from which you can access `groupBy`, `range`, `child`, and other properties. The `opts.cb` callback *must* be called and given an array of objects that have `in` and `out` keys. The `in` key is used as a way to label its respective `out` value, which must always be a number. For example:
+	
+	```javascript
+	process: function(data, event, opts){
+		opts.cb([{in: 'count1', out: 90}, {in: 'count2', out: 47}]);
+	}
+	```
+	
+	This generates a trivial chart where the charted value at `count1` is 90 and the value at `count2` is 47. To take a similar action using the provided `data` Collection:
+	
+	```javascript
+	process: function(data, event, opts){
+		data.where('actor.name != null')
+		.groupBy('actor.name')
+		.count()
+		.orderBy('count', 'desc')
+		.select('group as in, count as out')
+		.exec(opts.cb);	
+	}
+	```
+	
+	Note that in this example, the process function is handling filtering (`pre`), grouping (`groupBy`), aggregating, ordering according to the results of the aggregation (`post`), selecting the `in` and `out` keys, and running `exec` with `opts.cb` given as a callback function. For more information about how these functions work, refer to the [Collection API documentation](API_collection.md).
 
 * `customize` (`function(nvd3chart)`)(optional)
 
