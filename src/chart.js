@@ -5,6 +5,7 @@
 	function Chart(opts)
 	{
 		this.opts = opts || {};
+		this.opts.smoothTransition = !!this.opts.smoothTransition;
 		
 		if(this.opts.child){
 			this.child = opts.child;
@@ -134,7 +135,7 @@
 					if(next instanceof Array){
 						for(var i = 0; i < next.length; i++){
 							//always clear the next chart before redrawing
-							next[i].clear();
+							if(!next[i].opts.smoothTransition) next[i].clear();
 							
 							next[i].event = e;
 							next[i].draw();
@@ -151,7 +152,7 @@
 					}
 					else if(next){
 						//always clear the next chart before redrawing
-						next.clear();
+						if(!next.opts.smoothTransition) next.clear();
 						
 						if(next != self.parent)
 							next.event = e;
