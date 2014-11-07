@@ -133,9 +133,8 @@
 					e.out = e.out ? e.out : e.point.out;
 					if(next instanceof Array){
 						for(var i = 0; i < next.length; i++){
-							if(self.opts.container == next[i].opts.container){
-								self.clear();
-							}
+							//always clear the next chart before redrawing
+							next[i].clear();
 							
 							next[i].event = e;
 							next[i].draw();
@@ -151,13 +150,8 @@
 						}
 					}
 					else if(next){
-						//If the containers are the same, then remove all nodes from the container
-						if(self.opts.container == next.opts.container){
-							var myNode = ADL.$(next.opts.container);
-							while (myNode.firstChild) {
-								myNode.removeChild(myNode.firstChild);
-							}
-						}
+						//always clear the next chart before redrawing
+						next.clear();
 						
 						if(next != self.parent)
 							next.event = e;
