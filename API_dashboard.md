@@ -229,6 +229,14 @@ An object containing some/all of the following properties:
 	Pass click event data from this chart into these "child" charts when a data point is clicked on. Used to "drill into" the data further, and examine derivative relationships.
 	
 	This property should contain an array of `Chart` objects. They will be redrawn when this chart is clicked on.
+	
+* `smoothTransition` (`Boolean`)(optional)
+
+	If `true`, this chart is not cleared before being redrawn by its parent. While this produces a smooth transition between this chart's current state and its final state, it is also the cause of bugs with tooltip positioning. 
+	
+	If `false`, this chart is cleared before being redrawn by its parent. This produces a subtle flicker as the container is cleared and refilled, but it elimates bugs related to tooltip positioning.
+	
+	This property is `false` by default. It has no effect on Tables.
 
 **Returns:**
 
