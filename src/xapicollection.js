@@ -934,7 +934,7 @@ if(!Array.isArray){
 		// if it's grouped and deep checking is requested, descend
 		else if(level && level > 0){
 			for(var i=0; i<data.length; i++){
-				data[i].data = (new CollectionSync(data[i].data)).sum(level-1).contents;
+				data[i].data = (new CollectionSync(data[i].data)).sum(path, level-1).contents;
 			}
 			return this;
 		}
@@ -984,7 +984,7 @@ if(!Array.isArray){
 		// if it's grouped and deep checking is requested, descend
 		else if(level && level > 0){
 			for(var i=0; i<data.length; i++){
-				data[i].data = (new CollectionSync(data[i].data)).average(level-1).contents;
+				data[i].data = (new CollectionSync(data[i].data)).average(path, level-1).contents;
 			}
 			return this;
 		}
@@ -1033,7 +1033,7 @@ if(!Array.isArray){
 		// if it's grouped and deep checking is requested, descend
 		else if(level && level > 0){
 			for(var i=0; i<data.length; i++){
-				data[i].data = (new CollectionSync(data[i].data)).min(level-1).contents;
+				data[i].data = (new CollectionSync(data[i].data)).min(path, level-1).contents;
 			}
 			return this;
 		}
@@ -1080,7 +1080,7 @@ if(!Array.isArray){
 		// if it's grouped and deep checking is requested, descend
 		else if(level && level > 0){
 			for(var i=0; i<data.length; i++){
-				data[i].data = (new CollectionSync(data[i].data)).max(level-1).contents;
+				data[i].data = (new CollectionSync(data[i].data)).max(path, level-1).contents;
 			}
 			return this;
 		}
