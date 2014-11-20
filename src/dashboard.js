@@ -355,21 +355,18 @@
 			
 			function tempCb(data)
 			{
-				
-				var colorRange = d3.scale.category20().range(),
+				var colorRange = d3.scale.category10().range(),
 					aggArr = [],
 					ignoreKeys = ['data', 'group', 'sample'],
-					g = 1,
+					g = 0,
 					tempData = opts.groupByLevel > 0 ? data[0].data[0] : data[0];
-				
-				
-				
+
 				// create series from aggregate fields of data
 				if(opts.groupByLevel == 0){
 					for(var i in data[0]){
 						if( ignoreKeys.indexOf(i) < 0 ){
 							aggArr.push({key: i, values: [], color: colorRange[g]});
-							g += 2;
+							g++;
 						}
 					}
 				}
@@ -392,7 +389,7 @@
 								}
 								
 								aggArr.push({key: keyName, values: [], color: colorRange[g]});
-								g += 2;
+								g++;
 							}
 						}
 					}
@@ -400,9 +397,7 @@
 				
 				// add data to series
 				for(var i = 0; i < data.length; i++){
-					
-					var tempData = data[i];
-					var j = 0;
+					var tempData = data[i], j = 0;
 					
 					do{
 						if(opts.groupByLevel > 0) tempData = data[i].data[j];
@@ -416,7 +411,6 @@
 					}
 					while(opts.groupByLevel > 0 && data[i].data.length > j);
 				}
-				
 				
 				opts.cb(aggArr);
 			}
