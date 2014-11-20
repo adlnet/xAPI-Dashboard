@@ -386,7 +386,8 @@
 										data[z].data[j][keyName] = data[z].data[j][i] == undefined ? 0 : data[z].data[j][i];
 									}
 									else{
-										
+										//Should anything be done when data is missing? Ex: group by test, second group by verb (pass/fail). Well,
+										//it's possible for all students to pass a test, leaving that test without fail statements.
 									}
 								}
 								
@@ -398,7 +399,6 @@
 				}
 				
 				// add data to series
-				debugger;
 				for(var i = 0; i < data.length; i++){
 					
 					var tempData = data[i];
@@ -414,7 +414,7 @@
 						
 						j++;
 					}
-					while(data[i].data && data[i].data.length > j);
+					while(opts.groupByLevel > 0 && data[i].data.length > j);
 				}
 				
 				
