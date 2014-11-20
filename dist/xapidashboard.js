@@ -22941,7 +22941,8 @@ nv.models.stackedAreaChart = function() {
 			
 			else{
 				return opts.data.contents.map(function(element){
-					element[xpath] = xpathfn(xpath, element.data[0]);
+					var retrieve = element.data[0];
+					element[xpath] = xpathfn(xpath, retrieve);
 				});
 			}
 			
@@ -22984,7 +22985,7 @@ nv.models.stackedAreaChart = function() {
 				return opts.data = ret.groupBy(opts.groupBy, range).count().select(rangeLabel+' as in, count as out').exec(opts.cb);
 			}
 			else {
-				return ret.count();
+				return ret.count(opts.groupByLevel);
 			}
 
 		};
@@ -23015,7 +23016,7 @@ nv.models.stackedAreaChart = function() {
 				return opts.data = ret.groupBy(opts.groupBy, range).sum(xpath).select(rangeLabel+' as in, sum as out').exec(opts.cb);
 			}
 			else {
-				return ret.sum(xpath);
+				return ret.sum(xpath, opts.groupByLevel);
 			}
 
 		};
@@ -23046,7 +23047,7 @@ nv.models.stackedAreaChart = function() {
 				return opts.data = ret.groupBy(opts.groupBy, range).min(xpath).select(rangeLabel+' as in, min as out').exec(opts.cb);
 			}
 			else {
-				return ret.min(xpath);
+				return ret.min(xpath, opts.groupByLevel);
 			}
 
 		};
@@ -23077,7 +23078,7 @@ nv.models.stackedAreaChart = function() {
 				return opts.data = ret.groupBy(opts.groupBy, range).max(xpath).select(rangeLabel+' as in, max as out').exec(opts.cb);
 			}
 			else {
-				return ret.max(xpath);
+				return ret.max(xpath, opts.groupByLevel);
 			}
 
 		};
@@ -23108,7 +23109,8 @@ nv.models.stackedAreaChart = function() {
 				return opts.data = ret.groupBy(opts.groupBy, range).average(opts.xpath).select(rangeLabel+' as in, average as out').exec(opts.cb);
 			}
 			else {
-				return ret.average(opts.xpath);
+				
+				return ret.average(xpath, opts.groupByLevel);
 			}
 
 		};
@@ -23135,8 +23137,9 @@ nv.models.stackedAreaChart = function() {
 				return;
 			}
 			
+			opts.groupByLevel = opts.innerGroupBy ? 1 : 0;
 			var range = opts.range ? [opts.range.start, opts.range.end, opts.range.increment] : null;
-			opts.data = opts.data.groupBy(opts.groupBy);
+			opts.data = opts.groupByLevel > 0 ? opts.data.groupBy(opts.groupBy).groupBy(opts.innerGroupBy) : opts.data.groupBy(opts.groupBy);
 			
 			for( var i=0; i<multi.length; i++ ){
 				
@@ -23155,26 +23158,63 @@ nv.models.stackedAreaChart = function() {
 			
 			function tempCb(data)
 			{
-				var colorRange = d3.scale.category20().range(),
+				var colorRange = d3.scale.category10().range(),
 					aggArr = [],
 					ignoreKeys = ['data', 'group', 'sample'],
-					g = 1;
-				
+					g = 0,
+					tempData = opts.groupByLevel > 0 ? data[0].data[0] : data[0];
+
 				// create series from aggregate fields of data
-				for(var i in data[0]){
-					if( ignoreKeys.indexOf(i) < 0 ){
-						aggArr.push({key: i, values: [], color: colorRange[g]});
-						g += 2;
+				if(opts.groupByLevel == 0){
+					for(var i in data[0]){
+						if( ignoreKeys.indexOf(i) < 0 ){
+							aggArr.push({key: i, values: [], color: colorRange[g]});
+							g++;
+						}
+					}
+				}
+				else{
+					var firstElem = data[0].data;
+					for(var j = 0; j < firstElem.length; j++){
+						for(var i in firstElem[j]){
+							if( ignoreKeys.indexOf(i) < 0 ){
+								var keyName =  firstElem[j].group + " " + i;
+								
+								//
+								for(var z = 0; z < data.length; z++){
+									if(data[z].data[j]){
+										data[z].data[j][keyName] = data[z].data[j][i] == undefined ? 0 : data[z].data[j][i];
+									}
+									else{
+										//Should anything be done when data is missing? Ex: group by test, second group by verb (pass/fail). Well,
+										//it's possible for all students to pass a test, leaving that test without fail statements.
+									}
+								}
+								
+								aggArr.push({key: keyName, values: [], color: colorRange[g]});
+								g++;
+							}
+						}
 					}
 				}
 				
 				// add data to series
 				for(var i = 0; i < data.length; i++){
-					for(var g = 0; g < aggArr.length; g++){
-						aggArr[g].values.push({in: data[i].group, out: data[i][aggArr[g].key], series: g});
+					var tempData = data[i], j = 0;
+					
+					do{
+						if(opts.groupByLevel > 0) tempData = data[i].data[j];
+						for(g = 0; g < aggArr.length; g++){
+							if(tempData[aggArr[g].key] != undefined){
+								aggArr[g].values.push({in: data[i].group, out: tempData[aggArr[g].key], series: g});
+							}
+						}
+						
+						j++;
 					}
+					while(opts.groupByLevel > 0 && data[i].data.length > j);
 				}
-
+				
 				opts.cb(aggArr);
 			}
 		};
@@ -23805,6 +23845,9 @@ nv.models.multiBar = function() {
 	function addChart(self, aggregateData){
 		var event = self.event, opts = self.opts;
 		
+		//clear the next chart before redrawing if smoothTransition is false
+		if(!self.opts.smoothTransition) self.clear();
+		
 		if(self.opts.chartType != 'multiBarChart'&& !(self.opts.chartType == 'table' && self.isMulti)){
 			opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
 		}
@@ -23831,8 +23874,6 @@ nv.models.multiBar = function() {
 					if(next instanceof Array){
 						for(var i = 0; i < next.length; i++){
 							//always clear the next chart before redrawing
-							if(!next[i].opts.smoothTransition) next[i].clear();
-							
 							next[i].event = e;
 							next[i].draw();
 							
@@ -23846,10 +23887,7 @@ nv.models.multiBar = function() {
 							}
 						}
 					}
-					else if(next){
-						//always clear the next chart before redrawing
-						if(!next.opts.smoothTransition) next.clear();
-						
+					else if(next){						
 						if(next != self.parent)
 							next.event = e;
 							
