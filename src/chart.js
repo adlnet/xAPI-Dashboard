@@ -109,6 +109,9 @@
 	function addChart(self, aggregateData){
 		var event = self.event, opts = self.opts;
 		
+		//clear the next chart before redrawing if smoothTransition is false
+		if(!self.opts.smoothTransition) self.clear();
+		
 		if(self.opts.chartType != 'multiBarChart'&& !(self.opts.chartType == 'table' && self.isMulti)){
 			opts.aggregateData = ADL.CollectionSync.prototype.toCSV.call({contents:aggregateData});
 		}
@@ -135,8 +138,6 @@
 					if(next instanceof Array){
 						for(var i = 0; i < next.length; i++){
 							//always clear the next chart before redrawing
-							if(!next[i].opts.smoothTransition) next[i].clear();
-							
 							next[i].event = e;
 							next[i].draw();
 							
@@ -150,10 +151,7 @@
 							}
 						}
 					}
-					else if(next){
-						//always clear the next chart before redrawing
-						if(!next.opts.smoothTransition) next.clear();
-						
+					else if(next){						
 						if(next != self.parent)
 							next.event = e;
 							
