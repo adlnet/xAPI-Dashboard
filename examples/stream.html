@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Statement Streaming</title>
+		<script src='../src/xapistream.js'></script>
+		<script src='../extra/gen-lrs-data.js'></script>
+		<script>
+
+			function FibonacciProducer()
+			{
+				return new ADL.XAPIStream.Processor(function(data, state)
+				{
+					var sum = state.n1 + state.n2;
+					state.n1 = state.n2;
+					state.n2 = sum;
+					setTimeout(this.process.bind(this), 2000);
+					return sum;
+
+				}, {n1:0, n2:1});
+			}
+
+			function OneProducer()
+			{
+				return new ADL.XAPIStream.Processor(function(){
+					setTimeout(this.process.bind(this), 2000);
+					return 1;
+				});
+			}
+
+			function Sum()
+			{
+				return new ADL.XAPIStream.Processor(function(data, state)
+				{
+					return state.sum = state.sum + data;
+				}, {sum:0});
+			}
+
+			function BodyConsumer()
+			{
+				return new ADL.XAPIStream.Processor(function(data, state, evt)
+				{
+					state[evt.type] = data;
+
+					var streams = [];
+					for(var i in state){
+						streams.push( /(.*)_data$/.exec(i)[1] + ': ' + state[i] );
+					}
+
+					document.body.innerHTML = streams.join('<br/>');
+				});
+			}
+
+
+			function ready()
+			{
+				var root = OneProducer();
+				root.then( ADL.XAPIStream.ConsoleLogger('Value is') );
+				var sum = root.then(Sum());
+				sum.then( ADL.XAPIStream.ConsoleLogger('Sum is'));
+				var body = BodyConsumer();
+				body.subscribe(root, sum);
+				root.process();
+			};
+		</script>
+	</head>
+	<body onload='ready()'>
+	</body>
+</html>
