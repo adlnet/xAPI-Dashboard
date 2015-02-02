@@ -1,6 +1,11 @@
 "use strict";
 
-(function(ADL){
+(function(ADL)
+{
+
+	/**
+	 * Processor - Receive input, process data, pass along output
+	 */
 
 	function Processor(proc, initState)
 	{
@@ -34,8 +39,10 @@
 		}
 
 		var procdata = this.proc(data, this.state, evt);
-		var evt = new CustomEvent(this.toString()+'_data', {detail: procdata});
-		window.dispatchEvent(evt);
+		if(procdata){
+			var evt = new CustomEvent(this.toString()+'_data', {detail: procdata});
+			window.dispatchEvent(evt);
+		}
 	}
 
 	Processor.prototype.then = function(consumer)
@@ -57,11 +64,22 @@
 
 	Processor._procmap = {};
 
+
+
+
 	function ConsoleLogger(prefix)
 	{
-		return new ADL.XAPIStream.Processor(function(data){
-			console.log( (prefix ? prefix : '') + data );
-			return data;
+		return new Processor(function(data)
+		{
+			var outputString = '';
+			if( prefix )
+				outputString = prefix + data;
+			else
+				outputString = data;
+
+			console.log(outputString);
+
+			return outputString;
 		});
 	}
 
