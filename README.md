@@ -142,6 +142,7 @@ of bars to 10. We can do all of this by providing a post-format hook to our `cre
 var chart = dash.createBarChart({
 	container: '#graphContainer svg',
 	groupBy: 'verb.id',
+	aggregate: ADL.count(),
 	post: function(data){
 		data.orderBy('result.count', 'descending')
 			.slice(0,10);
