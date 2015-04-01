@@ -158,6 +158,7 @@
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "select";
 		return innerFn;
 	};
 
@@ -188,6 +189,7 @@
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "count";
 		return innerFn;
 	};	
 	
@@ -219,6 +221,7 @@
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "sum";
 		return innerFn;
 	};	
 	
@@ -250,6 +253,7 @@
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "min";
 		return innerFn;
 	};	
 	
@@ -281,6 +285,7 @@
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "max";
 		return innerFn;
 	};	
 	
@@ -313,6 +318,7 @@
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "average";
 		return innerFn;
 	};	
 	
@@ -326,9 +332,8 @@
 			multi = Array.prototype.slice.call(arguments, 0);
 			xpath = null;
 		}
-
-		return function(opts)
-		{
+		
+		var innerFn = function(opts){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
@@ -415,6 +420,9 @@
 				opts.cb(aggArr);
 			}
 		};
+		
+		innerFn._name = "multiAggregate";
+		return innerFn;
 	};	 
 	
 	ADL.XAPIDashboard = XAPIDashboard;
