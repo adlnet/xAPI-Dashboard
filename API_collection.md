@@ -1,12 +1,38 @@
 ﻿# xAPI Collection API Reference
 
+## Table of Contents
+
+* [A Word About XPaths](#xpaths)
+* Constructors
+	* [new Collection([statements])](#constructor)
+* Properties
+	* [contents](#contents)
+* Methods
+	* [append](#append)
+	* [save](#save)
+	* [exec](#exec)
+	* [toCSV](#tocsv)
+	* [where](#where)
+	* [select](#select)
+	* [math](#math)
+	* [relate](#relate)
+	* [slice](#slice)
+	* [orderBy](#orderBy)
+	* [groupBy](#groupBy)
+	* [count](#count)
+	* [sum](#sum)
+	* [average](#average)
+	* [min](#min)
+	* [max](#max)
+
 ## ADL.Collection
 
 The `Collection` Class is designed to run advanced SQL-like queries over a body of [Experience API](http://www.adlnet.gov/tla/experience-api/faq/)-formatted activity statements. Simply load statements into the class by passing an array into the constructor or using the `append` method, and use the API documented below to map and filter through the statements.
 
 There are two implementations of this class, `CollectionSync` and `CollectionAsync`. Their APIs are the same, but the Async class runs the queries in a worker thread. The downside of this is that the statements must be serialized and passed into the worker, which can be slow. On the other hand, the UI does not lock up for heavy queries like the synchronous version will. However, since in most cases the serialization of the data is an order of magnitude slower than the actual processing, we generally recommend using the synchronous version.
 
-### A Word About XPaths
+<a id='xpaths'></a>
+## A Word About XPaths
 
 Many parts of this class use what are called xpaths. These are strings that indicate a path into the data structure to find a particular value. They are composed of a period-delineated list of object keys. The syntax will be familiar for anyone that has used a C-like language like Javascript.
 
@@ -36,10 +62,10 @@ If any part of the xpath is not found in the object, then `null` is returned.
 
 All xpaths are evaluated relative to each top-level object in the Collection.
 
-### Constructors
+## Constructors
 
 <a id='constructor'></a>
-#### new Collection([statements])
+### new Collection([statements])
 
 **Arguments:**
 
@@ -52,21 +78,21 @@ An instantiated Collection class (either sync or async, see [introduction](#)).
 
 
 
-### Properties
+## Properties
 
 <a id='contents'></a>
-#### contents (CollectionSync only)
+### contents (CollectionSync only)
 
 Type: `Array`
 
 The contents of the current dataset. This is the same data as would be passed into the callback of [exec](#exec), but may be more convenient than `exec` for `CollectionSync` users.
 
 
-### Methods
+## Methods
 
 
 <a id='append'></a>
-#### append(statements)
+### append(statements)
 
 **Arguments:**
 
@@ -79,7 +105,7 @@ A reference to the collection with the new data appended to the end of the old d
 
 
 <a id='save'></a>
-#### save()
+### save()
 
 Takes a snapshot of the current data in the collection, and stores it for use after the next [exec](#exec).
 
@@ -93,7 +119,7 @@ A reference to the collection containing the latest data.
 
 
 <a id='exec'></a>
-#### exec(callback)
+### exec(callback)
 
 Calls the provided callback with the results of the query.
 
@@ -108,7 +134,7 @@ A reference to the collection containing the previous set of data.
 
 
 <a id='tocsv'></a>
-#### toCSV() (CollectionSync only)
+### toCSV() (CollectionSync only)
 
 Generate a comma-separated value string from the top level of the collection. Each property of the top-level objects (xAPI statements or groups) will become a column in the resulting CSV string. If the property value is an object, it will be converted to JSON and treated as a string.
 
@@ -133,7 +159,7 @@ a.toCSV()
 A CSV string representation of the current dataset.
 
 <a id='where'></a>
-#### where(query)
+### where(query)
 
 Filter the contents of the collection by some query, and return the filtered results collection.
 
@@ -185,7 +211,7 @@ A reference to the collection containing the latest data.
 
 
 <a id='select'></a>
-#### select(fields, [level])
+### select(fields, [level])
 
 For each item in the dataset, pick out the requested fields and return them.
 
@@ -207,7 +233,7 @@ If supplied, will descend *level* levels into each member of each group, and run
 A reference to the collection containing the newly reduced datasets.
 
 <a id='relate'></a>
-#### math(resultPath, expression, [level])
+### math(resultPath, expression, [level])
 
 Evaluate some mathematical operation `expression` on a statement or group of statements, and store the result in the field identified by `resultPath`.
 
@@ -256,7 +282,7 @@ A reference to the collection containing the newly computed fields.
 
 
 <a id='relate'></a>
-#### relate(keypath, valuepath, [level])
+### relate(keypath, valuepath, [level])
 
 Roll array-based values up into an indexed object. Given an array of objects, choose two fields from each object and map them into a key-value pair in the parent object.
 
@@ -307,7 +333,7 @@ A reference to the collection containing the newly indexed datasets.
 
 
 <a id='slice'></a>
-#### slice(start, [end])
+### slice(start, [end])
 
 Just like the `Array` function of the same name, throw out all data except for those whose position in the dataset falls between `start` and `end`.
 
@@ -324,7 +350,7 @@ The end of the selection. Data at this index will NOT be included in the result.
 A reference to the collection containing the newly reduced data.
 
 <a id='orderBy'></a>
-#### orderBy(field, [direction])
+### orderBy(field, [direction])
 
 Sort the data by the given field, in the given direction.
 
@@ -341,7 +367,7 @@ If equal to "descending" or "desc", will sort the data from high to low. Otherwi
 A reference to the collection containing the newly sorted data.
 
 <a id='groupBy'></a>
-#### groupBy(field, [intervals])
+### groupBy(field, [intervals])
 
 Divide the contents of the collection into groups based on the value of each datum's `field`. If `intervals` is supplied, the grouping is based on if the value falls within a range, otherwise the data will be grouped by simple equality.
 
@@ -396,7 +422,7 @@ A reference to the collection containing the newly created groups.
 
 
 <a id='count'></a>
-#### count([level])
+### count([level])
 
 Determine the number of items in each group, or in the whole collection if not grouped.
 
@@ -411,7 +437,7 @@ A reference to the resulting collection.
 
 
 <a id='sum'></a>
-#### sum(field, [level])
+### sum(field, [level])
 
 Determine the total value of each group's data, or all data if not grouped.
 
@@ -428,7 +454,7 @@ If supplied, will descend *level* levels into each member of each group, and run
 A reference to the collection.
 
 <a id='average'></a>
-#### average(field, [level])
+### average(field, [level])
 
 Determine the average value of each group's data, or all data if not grouped.
 
@@ -445,7 +471,7 @@ If supplied, will descend *level* levels into each member of each group, and run
 A reference to the resulting collection.
 
 <a id='min'></a>
-#### min(field, [level])
+### min(field, [level])
 
 Determine the minimum value of each group's data, or all data if not grouped.
 
@@ -463,7 +489,7 @@ A reference to the resulting collection.
 
 
 <a id='max'></a>
-#### max(field, [level])
+### max(field, [level])
 
 Determine the minimum value of each group's data, or all data if not grouped.
 
