@@ -34,8 +34,7 @@ Each dot or bracket set indicates a nested object with the given key. Notice tha
 
 If any part of the xpath is not found in the object, then `null` is returned.
 
-Collections hold arrays of objects, so all operations implicitly apply xpaths for all top-level items. This means that you must not put an initial array index onto any xpaths.
-
+All xpaths are evaluated relative to each top-level object in the Collection.
 
 ### Constructors
 
