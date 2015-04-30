@@ -16,11 +16,11 @@
 					.average('result.score.raw')
 					.relate('object.id','result.score.raw')
 					.select('group as actor,average, '+
-						'http://myschool\\.edu/xapi/cop-3223/final as final, '+
-						'http://myschool\\.edu/xapi/cop-3223/test1 as test1, '+
-						'http://myschool\\.edu/xapi/cop-3223/test2 as test2, '+
-						'http://myschool\\.edu/xapi/cop-3223/test3 as test3, '+
-						'http://myschool\\.edu/xapi/cop-3223/test4 as test4')
+						'[http://myschool.edu/xapi/cop-3223/final] as final, '+
+						'[http://myschool.edu/xapi/cop-3223/test1] as test1, '+
+						'[http://myschool.edu/xapi/cop-3223/test2] as test2, '+
+						'[http://myschool.edu/xapi/cop-3223/test3] as test3, '+
+						'[http://myschool.edu/xapi/cop-3223/test4] as test4')
 					.orderBy('actor')
 					.exec(function(data){
 						document.body.innerHTML += '<pre>'+JSON.stringify(data, null, '    ')+'</pre>';
