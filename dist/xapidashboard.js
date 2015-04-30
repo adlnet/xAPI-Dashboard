@@ -22961,6 +22961,7 @@ nv.models.stackedAreaChart = function() {
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "select";
 		return innerFn;
 	};
 
@@ -22991,6 +22992,7 @@ nv.models.stackedAreaChart = function() {
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "count";
 		return innerFn;
 	};	
 	
@@ -23022,6 +23024,7 @@ nv.models.stackedAreaChart = function() {
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "sum";
 		return innerFn;
 	};	
 	
@@ -23053,6 +23056,7 @@ nv.models.stackedAreaChart = function() {
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "min";
 		return innerFn;
 	};	
 	
@@ -23084,6 +23088,7 @@ nv.models.stackedAreaChart = function() {
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "max";
 		return innerFn;
 	};	
 	
@@ -23116,6 +23121,7 @@ nv.models.stackedAreaChart = function() {
 		};
 		
 		innerFn._inner = true;
+		innerFn._name = "average";
 		return innerFn;
 	};	
 	
@@ -23129,9 +23135,8 @@ nv.models.stackedAreaChart = function() {
 			multi = Array.prototype.slice.call(arguments, 0);
 			xpath = null;
 		}
-
-		return function(opts)
-		{
+		
+		var innerFn = function(opts){
 			if(!opts.groupBy){
 				console.error("group has not been specified, aborting aggregation", opts);
 				return;
@@ -23218,6 +23223,9 @@ nv.models.stackedAreaChart = function() {
 				opts.cb(aggArr);
 			}
 		};
+		
+		innerFn._name = "multiAggregate";
+		return innerFn;
 	};	 
 	
 	ADL.XAPIDashboard = XAPIDashboard;
