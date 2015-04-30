@@ -8,20 +8,29 @@ There are two implementations of this class, `CollectionSync` and `CollectionAsy
 
 ### A Word About XPaths
 
-Many parts of this class use what are called xpaths. These are strings that indicate a path into the data structure to find a particular value. They are composed of a period-delineated list of object keys. The syntax will be familiar for anyone that has used a C-like language like Javascript. Literal periods can be in the keys, but you will need to escape them with a literal backslash, e.g. `"adlnet\\.gov"`. 
+Many parts of this class use what are called xpaths. These are strings that indicate a path into the data structure to find a particular value. They are composed of a period-delineated list of object keys. The syntax will be familiar for anyone that has used a C-like language like Javascript.
+
+If you prefer, you can use bracket notation for keys too. Everything between the brackets is considered part of the key, so you can use this as an escape if your key contains periods. Double brackets are treated as a single literal bracket.
+
+**Note**: The previously supported syntax of using backslashes to escape literal periods (e.g. `\\.`) is no longer supported. Use bracket notation instead.
 
 For example, if you had an object like this:
 
 ```javascript
 {
 	"level1": {
-		"level2": [
+		"level.2": [
 			{
 				"level3": some_value
 }]}}
 ```
 
-You could reference the value of `some_value` using the xpath `"level1.level2.level3.0.level5"`. Each dot indicates a nested object with the given key. Notice that the object under level 3 is an array. In this case, the key is an integer instead of a string, but the pattern holds otherwise.
+You could reference the value `some_value` using either of the following:
+
+* `level1[level.2].0.level3`
+* `level1[level.2][0].level3`
+
+Each dot or bracket set indicates a nested object with the given key. Notice that the object under level 2 is an array. In this case, the key is an integer instead of a string, but the pattern holds otherwise.
 
 If any part of the xpath is not found in the object, then `null` is returned.
 
