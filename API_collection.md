@@ -232,7 +232,7 @@ If supplied, will descend *level* levels into each member of each group, and run
 
 A reference to the collection containing the newly reduced datasets.
 
-<a id='relate'></a>
+<a id='math'></a>
 ### math(resultPath, expression, [level])
 
 Evaluate some mathematical operation `expression` on a statement or group of statements, and store the result in the field identified by `resultPath`.
