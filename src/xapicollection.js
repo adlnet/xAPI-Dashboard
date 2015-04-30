@@ -29,6 +29,15 @@ if(!Array.isArray){
 	}
 }
 
+if(!String.prototype.reverse){
+	String.prototype.reverse = function(){
+		var ret = '';
+		for(var i=this.length-1; i>=0; i--)
+			ret += this.charAt(i);
+		return ret;
+	}
+}
+
 /*
  * Client scope
  */
@@ -38,6 +47,54 @@ if(!Array.isArray){
 	/*
 	 * Retrieves some deep value at path from an object
 	 */
+
+	function parseXPath(path)
+	{
+		// break xpath into individual keys
+		var parts;
+		if(Array.isArray(path)){
+			parts = path;
+		}
+		else
+		{
+			/*parts = path.split('.');
+			for(var i=0; i<parts.length;){
+				if(parts[i].slice(-1) === '\\')
+					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
+				else
+					i++;
+			}*/
+			parts = [];
+
+			// sanitize escaping (RtL for open brackets, LtR for close)
+			var subpath = path
+				.reverse()
+				.replace('[[', '\x0E')
+				.reverse()
+				.replace(']]', '\x0F');
+
+			while( subpath )
+			{
+				// pull the next part from the front of the path
+				// if bracket, read to close bracket. if no bracket, read to dot or open bracket
+				var match = /^(?:([^\[\.]+)|\[([^\]]+)\])\.?/.exec(subpath);
+				console.log(match);
+				if( !match ){
+					console.error('Invalid xpath:', path);
+					return null;
+				}
+				else {
+					var part = (match[1] || match[2] || '').replace('\x0E', '[').replace('\x0F', ']');
+					parts.push( part );
+					subpath = subpath.slice(match[0].length);
+				}
+			}
+			console.log(parts);
+		}
+
+		return parts;
+	}
+
 	function getVal(path,obj)
 	{
 		// if nothing to search, return null
@@ -51,22 +108,8 @@ if(!Array.isArray){
 		}
 
 		else {
-
-			// break xpath into individual keys
-			var parts;
-			if(Array.isArray(path)){
-				parts = path;
-			}
-			else {
-				parts = path.split('.');
-				for(var i=0; i<parts.length;){
-					if(parts[i].slice(-1) === '\\')
-						parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
-					else
-						i++;
-				}
-			}
-
+			var parts = parseXPath(path);
+			
 			// fetch deep path
 			var scoped = parts[0], rest = parts.slice(1);
 			if( scoped === '*' )
@@ -101,20 +144,7 @@ if(!Array.isArray){
 	 */
 	function setVal(obj,path,value)
 	{
-		// break xpath into individual keys
-		var parts;
-		if(Array.isArray(path)){
-			parts = path;
-		}
-		else {
-			parts = path.split('.');
-			for(var i=0; i<parts.length;){
-				if(parts[i].slice(-1) === '\\')
-					parts.splice(i, 2, parts[i].slice(0,-1)+'.'+parts[i+1]);
-				else
-					i++;
-			}
-		}
+		var parts = parseXPath(path);
 
 		if(!obj){
 			obj = {};
