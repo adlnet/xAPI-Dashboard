@@ -137,6 +137,24 @@ An object containing some/all of the following properties:
 
 	You can refer to the grouped-by field with the xpath `group`, and the xAPI statement group members are in the `data` array.
 	
+* `innerGroupBy` (`String`) (optional)
+
+	Organizes data into subgroups by performing an additional `groupBy`. If this option is not used with `multiAggregate`, then it is ignored.
+	
+	Example:
+	```javascript
+	groupBy: 'actor.name', 
+	innerGroupBy: 'object.definition.name.en-US'
+	aggregate: ADL.multiAggregate(ADL.select('result.score.raw'))
+	```
+	
+	| Name   | Object   | Score 
+	| ---    | ---      | --- 
+	| Ashley | Test 1   | 86    
+	|        | Test 2   | 95    
+	| Ben    | Test 1   | 92
+	|        | Test 2   | 89
+	
 * `range` (`Object`)
 
 	Modifies the `groupBy` option by allowing similar values to be grouped instead of just equal values. The value of this property must be an object containing `start`, `end`, and `increment` properties. The value space between `start` and `end` will be divided up into groups of size `increment`.
