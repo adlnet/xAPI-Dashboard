@@ -128,11 +128,12 @@
 			
 			opts.xpath = xpath;
 			if(join !== true){
+				var selectStr = 'group, ' + "data.0." + xpath + ' as $internalValue';
 				if(opts.range){
-					return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).exec(formatData);
+					return opts.data = opts.data.groupBy(opts.groupBy, [opts.range.start, opts.range.end, opts.range.increment]).select(selectStr).exec(formatData);
 				}
 				else {
-					return opts.data = opts.data.groupBy(opts.groupBy).exec(formatData);
+					return opts.data = opts.data.groupBy(opts.groupBy).select(selectStr).exec(formatData);
 				}
 			}
 			
@@ -146,9 +147,8 @@
 			//Used as an intermediate callback for exec
 			function formatData(data){
 				for(var i = 0; i < data.length; i++){
-					
 					data[i].in = data[i].group;
-					data[i].out = xpathfn(xpath, data[i].data[0]);
+					data[i].out = data[i]['$internalValue'];
 					delete data[i].group;
 					delete data[i].data;
 				}
