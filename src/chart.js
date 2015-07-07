@@ -129,7 +129,9 @@
 				opts.customize(chart, event);
 			
 			var next = self.child || self.parent;
-			if(next && opts.eventChartType){
+			
+			if(opts.click) chart[opts.eventChartType].dispatch.on("elementClick", opts.click);
+			else if(next && opts.eventChartType){
 				
 				//Find a way to prevent the addition of click handlers every time this chart is drawn
 				chart[opts.eventChartType].dispatch.on("elementClick", function(e) {
