@@ -78,7 +78,7 @@ if(!String.prototype.reverse){
 				// pull the next part from the front of the path
 				// if bracket, read to close bracket. if no bracket, read to dot or open bracket
 				var match = /^(?:([^\[\.]+)|\[([^\]]+)\])\.?/.exec(subpath);
-				console.log(match);
+				//console.log(match);
 				if( !match ){
 					console.error('Invalid xpath:', path);
 					return null;
@@ -89,7 +89,7 @@ if(!String.prototype.reverse){
 					subpath = subpath.slice(match[0].length);
 				}
 			}
-			console.log(parts);
+			//console.log(parts);
 		}
 
 		return parts;
