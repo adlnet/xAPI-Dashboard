@@ -9,6 +9,16 @@ that aggregated xAPI data.
 If you'd rather learn by reference, we have a set of live demos at this repo's
 [Github.io](https://adlnet.github.io/xAPI-Dashboard) page.
 
+## Installation
+
+Either clone:
+
+`git clone https://github.com/adlnet/xAPI-Dashboard`
+
+or 
+
+[Download directly](https://github.com/adlnet/xAPI-Dashboard/archive/v1.2.2.zip)
+
 ## Making Your First Chart
 
 Generating your first chart is easy. First, include the libraries:
@@ -171,3 +181,21 @@ Throw a header on there, and we get this final result:
 * [Dashboard API documentation](API_dashboard.md)
 * [NVD3 website](http://nvd3.org/index.html)
 * [D3 website](http://d3js.org/)
+
+## Contributing to the project
+We welcome contributions to this project. Fork this repository, make changes, and submit pull requests. If you're not comfortable with editing the code, please [submit an issue](https://github.com/adlnet/xAPI-Dashboard/issues) and we'll be happy to address it. 
+
+## License
+   Copyright &copy;2016 Advanced Distributed Learning
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
